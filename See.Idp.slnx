@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/See.Idp.Api/See.Idp.Api.csproj" />
+    <Project Path="src/See.Idp.Core/See.Idp.Core.csproj" />
+    <Project Path="src/See.Idp.Infrastructure/See.Idp.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/See.Idp.Tests/See.Idp.Tests.csproj" />
+  </Folder>
+</Solution>
