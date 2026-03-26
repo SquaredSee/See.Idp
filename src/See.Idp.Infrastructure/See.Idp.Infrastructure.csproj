@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\See.Idp.Core\See.Idp.Core.csproj" />
   </ItemGroup>
 
