@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/See.Idp.Api/See.Idp.Api.csproj" />
+    <Project Path="src/See.Idp.Web/See.Idp.Web.csproj" />
     <Project Path="src/See.Idp.Core/See.Idp.Core.csproj" />
     <Project Path="src/See.Idp.Infrastructure/See.Idp.Infrastructure.csproj" />
   </Folder>
