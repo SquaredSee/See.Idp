@@ -31,6 +31,23 @@ builder.Services.AddOpenIddict()
         // Configure OpenIddict to use the Entity Framework Core stores and models.
         // Note: call ReplaceDefaultEntities() to replace the default entities.
         options.UseEntityFrameworkCore().UseDbContext<ApplicationDbContext>();
+    })
+    // Register the OpenIddict server components.
+    .AddServer(options =>
+    {
+        // Enable the token endpoint.
+        options.SetTokenEndpointUris("connect/token");
+
+        // Enable the client credentials flow.
+        options.AllowClientCredentialsFlow();
+
+        // Register the signing and encryption credentials.
+        options.AddDevelopmentEncryptionCertificate()
+            .AddDevelopmentSigningCertificate();
+
+        // Register the ASP.NET Core host and configure the ASP.NET Core options.
+        options.UseAspNetCore()
+            .EnableTokenEndpointPassthrough();
     });
 
 var app = builder.Build();
@@ -41,6 +58,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
