@@ -24,6 +24,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseOpenIddict();
 });
 
+builder.Services.AddOpenIddict()
+    // Register the OpenIddict core components.
+    .AddCore(options =>
+    {
+        // Configure OpenIddict to use the Entity Framework Core stores and models.
+        // Note: call ReplaceDefaultEntities() to replace the default entities.
+        options.UseEntityFrameworkCore().UseDbContext<ApplicationDbContext>();
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
