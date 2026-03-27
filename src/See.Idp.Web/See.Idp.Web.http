@@ -1,6 +1,11 @@
 @See.Idp.Web_HostAddress = http://localhost:5001
 
-GET {{See.Idp.Web_HostAddress}}/weatherforecast/
+### OpenID Configuration
+GET {{See.Idp.Web_HostAddress}}/.well-known/openid-configuration
+Accept: application/json
+
+### JWKS (signing keys)
+GET {{See.Idp.Web_HostAddress}}/.well-known/jwks
 Accept: application/json
 
 ###
