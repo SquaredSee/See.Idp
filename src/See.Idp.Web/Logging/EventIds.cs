@@ -6,19 +6,12 @@ namespace See.Idp.Web.Logging;
 public static class EventIds
 {
     // UiClientSeeder: 1000 - 1099
-
-    /// <summary>
-    ///     Indicates that the client seeding process has started for the user interface.
-    /// </summary>
     public const int SeedingClient = 1000;
-
-    /// <summary>
-    ///     Indicates that the client has been successfully seeded for the user interface.
-    /// </summary>
     public const int ClientSeeded = 1001;
-
-    /// <summary>
-    ///     Indicates that the client already exists and seeding is skipped for the user interface.
-    /// </summary>
     public const int ClientAlreadyExists = 1002;
+
+    // UserSeeder: 1100 - 1199
+    public const int SeedingUser = 1100;
+    public const int UserSeeded = 1101;
+    public const int UserAlreadyExists = 1102;
 }

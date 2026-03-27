@@ -62,6 +62,7 @@ builder
     .AddDefaultTokenProviders();
 
 builder.Services.AddHostedService<UiClientSeeder>();
+builder.Services.AddHostedService<UserSeeder>();
 
 builder.Services.AddRazorPages();
 
