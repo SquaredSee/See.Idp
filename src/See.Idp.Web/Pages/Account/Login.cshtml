@@ -1,0 +1,33 @@
+@page
+@model See.Idp.Web.Pages.Account.LoginModel
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<h2>Sign in</h2>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="ReturnUrl" />
+
+    <div>
+        <label asp-for="Input.Email">Email</label>
+        <input asp-for="Input.Email" type="email" autocomplete="email" />
+        <span asp-validation-for="Input.Email"></span>
+    </div>
+
+    <div>
+        <label asp-for="Input.Password">Password</label>
+        <input asp-for="Input.Password" type="password" autocomplete="current-password" />
+        <span asp-validation-for="Input.Password"></span>
+    </div>
+
+    <div>
+        <input asp-for="Input.RememberMe" type="checkbox" />
+        <label asp-for="Input.RememberMe">Remember me</label>
+    </div>
+
+    <div asp-validation-summary="All"></div>
+
+    <button type="submit">Sign in</button>
+</form>
