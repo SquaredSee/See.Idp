@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using See.Idp.Infrastructure;
+using See.Idp.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,8 @@ builder
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
+
+builder.Services.AddHostedService<UiClientSeeder>();
 
 var app = builder.Build();
 
