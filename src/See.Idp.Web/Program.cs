@@ -46,9 +46,16 @@ builder.Services.AddOpenIddict()
             .AddDevelopmentSigningCertificate();
 
         // Register the ASP.NET Core host and configure the ASP.NET Core options.
-        options.UseAspNetCore()
+        var openIddictAspNetCoreOptions = options.UseAspNetCore()
             .EnableTokenEndpointPassthrough();
+        if (builder.Environment.IsDevelopment())
+        {
+            openIddictAspNetCoreOptions.DisableTransportSecurityRequirement();
+        }
     });
+
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -56,6 +63,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseDeveloperExceptionPage();
 }
 
 // app.UseHttpsRedirection();
