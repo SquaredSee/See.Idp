@@ -15,7 +15,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     // Configure Entity Framework Core to use PostgreSQL.
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    var connectionString =
+        builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     options.UseNpgsql(connectionString);
 
@@ -24,7 +25,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseOpenIddict();
 });
 
-builder.Services.AddOpenIddict()
+builder
+    .Services.AddOpenIddict()
     // Register the OpenIddict core components.
     .AddCore(options =>
     {
@@ -42,12 +44,10 @@ builder.Services.AddOpenIddict()
         options.AllowClientCredentialsFlow();
 
         // Register the signing and encryption credentials.
-        options.AddDevelopmentEncryptionCertificate()
-            .AddDevelopmentSigningCertificate();
+        options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
 
         // Register the ASP.NET Core host and configure the ASP.NET Core options.
-        var openIddictAspNetCoreOptions = options.UseAspNetCore()
-            .EnableTokenEndpointPassthrough();
+        var openIddictAspNetCoreOptions = options.UseAspNetCore().EnableTokenEndpointPassthrough();
         if (builder.Environment.IsDevelopment())
         {
             openIddictAspNetCoreOptions.DisableTransportSecurityRequirement();
