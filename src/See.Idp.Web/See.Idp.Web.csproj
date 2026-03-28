@@ -6,6 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <UptoDateCheckBuilt Include="wwwroot/css/site.css" />
+  </ItemGroup>
+  <Target Name="TailwindBuild" BeforeTargets="BeforeBuild">
+    <Exec Command="npm install" />
+    <Exec Command="npx tailwindcss -i wwwroot/css/site.css -o wwwroot/css/output.css --minify" />
+    <ItemGroup>
+      <None Remove="wwwroot/css/site.css" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
       <PrivateAssets>all</PrivateAssets>
