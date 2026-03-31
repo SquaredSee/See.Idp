@@ -1,0 +1,24 @@
+info:
+  name: CC Token Test
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:5001/connect/token
+  body:
+    type: form-urlencoded
+    data:
+      - name: grant_type
+        value: client_credentials
+      - name: client_id
+        value: seeid-service-worker-client
+      - name: client_secret
+        value: seeid-service-worker-client-secret
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
