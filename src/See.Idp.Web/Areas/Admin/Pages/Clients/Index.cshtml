@@ -1,0 +1,36 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Clients";
+}
+
+<h1>Clients</h1>
+
+<p>
+    <a asp-page="/Clients/Create" asp-area="Admin">Create client</a>
+</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Client ID</th>
+            <th>Display Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var client in Model.Clients)
+        {
+            <tr>
+                <td>@client.ClientId</td>
+                <td>@client.DisplayName</td>
+                <td>
+                    <form method="post" asp-page-handler="Delete">
+                        <input type="hidden" name="clientId" value="@client.ClientId" />
+                        <button type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

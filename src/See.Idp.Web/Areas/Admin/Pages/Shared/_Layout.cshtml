@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - See.Idp Admin Portal</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/css/admin.out.css" asp-append-version="true" />
+</head>
+
+<body>
+    <header>
+        <a asp-area="" asp-page="/Account/Logout">Logout</a>
+    </header>
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer>
+        <div>&copy; 2026 - See.Idp Admin Portal - <a asp-area="" asp-page="/Privacy">Privacy</a></div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

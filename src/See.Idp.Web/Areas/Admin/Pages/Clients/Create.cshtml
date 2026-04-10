@@ -1,0 +1,23 @@
+@page
+@model See.Idp.Web.Areas.Admin.Pages.Clients.CreateModel
+@{
+    ViewData["Title"] = "Create client";
+}
+
+<h1>Create client</h1>
+
+<form method="post">
+    <div>
+        <label asp-for="Input.ClientId"></label>
+        <input asp-for="Input.ClientId" />
+        <span asp-validation-for="Input.ClientId"></span>
+    </div>
+
+    <div>
+        <label asp-for="Input.DisplayName"></label>
+        <input asp-for="Input.DisplayName" />
+    </div>
+
+    <button type="submit">Create</button>
+    <a asp-page="/Clients/Index" asp-area="Admin">Cancel</a>
+</form>
