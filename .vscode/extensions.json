@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "csharpier.csharpier-vscode",
-        "ms-dotnettools.csdevkit"
+        "ms-dotnettools.csdevkit",
+        "bradlc.vscode-tailwindcss"
     ]
 }

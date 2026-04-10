@@ -6,14 +6,37 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <UptoDateCheckBuilt Include="wwwroot/css/site.css" />
+    <TailwindBuildInputs Include="wwwroot/css/**/*.css" />
+    <TailwindBuildInputs Remove="wwwroot/css/**/*.out.css" />
+    <TailwindBuildInputs Include="Pages/**/*.cshtml" />
+    <TailwindBuildInputs Include="Areas/Admin/Pages/**/*.cshtml" />
+    <TailwindBuildInputs Include="wwwroot/js/**/*.js" />
+
+    <!-- VS Fast Up-To-Date -->
+    <UpToDateCheckInput Include="@(TailwindBuildInputs)" />
   </ItemGroup>
-  <Target Name="TailwindBuild" BeforeTargets="BeforeBuild">
-    <Exec Command="npm install" />
-    <Exec Command="npx tailwindcss -i wwwroot/css/site.css -o wwwroot/css/output.css --minify" />
-    <ItemGroup>
-      <None Remove="wwwroot/css/site.css" />
-    </ItemGroup>
+
+  <Target
+    Name="NpmInstall"
+    BeforeTargets="NpmBuild"
+    Inputs="package.json;package-lock.json"
+    Outputs="$(IntermediateOutputPath)npm-install.stamp"
+  >
+    <Exec Command="npm install --no-audit --no-fund" />
+    <!-- Use dedicated output stamp to prevent unnecessary installs -->
+    <Touch Files="$(IntermediateOutputPath)npm-install.stamp" AlwaysCreate="true" />
+  </Target>
+
+  <Target
+    Name="NpmBuild"
+    BeforeTargets="Build"
+    DependsOnTargets="NpmInstall"
+    Inputs="@(TailwindBuildInputs);$(IntermediateOutputPath)npm-install.stamp"
+    Outputs="$(IntermediateOutputPath)npm-build.stamp"
+  >
+    <Exec Command="npm run build:css" />
+    <!-- Use dedicated output stamp to prevent unnecessary rebuilds -->
+    <Touch Files="$(IntermediateOutputPath)npm-build.stamp" AlwaysCreate="true" />
   </Target>
 
   <ItemGroup>
@@ -22,7 +45,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference
+      Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
+      Version="1.22.1"
+    />
     <PackageReference Include="OpenIddict.Server.AspNetCore" Version="7.4.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.13.18" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,4 @@
+@import "tailwindcss" source(none);
+@source "../../Areas/Admin/Pages/**/*.cshtml";
+@source "../../Areas/Admin/Pages/Shared/**/*.cshtml";
+@source "../../wwwroot/js/**/*.js";

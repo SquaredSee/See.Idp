@@ -1,2 +1,2 @@
 # Ignore the output of Tailwind CSS
-wwwroot/css/output.css
+*.out.css

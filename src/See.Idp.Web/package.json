@@ -1,13 +1,9 @@
 {
   "name": "see.idp.web",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:css:base": "tailwindcss -i ./wwwroot/css/site.css -o ./wwwroot/css/site.out.css --minify",
+    "build:css:admin": "tailwindcss -i ./wwwroot/css/admin.css -o ./wwwroot/css/admin.out.css --minify",
+    "build:css": "npm run build:css:base && npm run build:css:admin"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.2.2",
