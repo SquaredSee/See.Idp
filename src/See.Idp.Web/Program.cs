@@ -91,6 +91,10 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
     app.UseDeveloperExceptionPage();
 }
+else
+{
+    app.UseExceptionHandler("/Error");
+}
 
 // app.UseHttpsRedirection();
 app.UseAuthentication();
