@@ -4,20 +4,24 @@
     ViewData["Title"] = "Create client";
 }
 
-<h1>Create client</h1>
+<div class="panel mx-auto w-full max-w-2xl">
+    <h1>Create client</h1>
 
-<form method="post">
-    <div>
-        <label asp-for="Input.ClientId"></label>
-        <input asp-for="Input.ClientId" />
-        <span asp-validation-for="Input.ClientId"></span>
-    </div>
+    <form method="post" class="mt-6 space-y-4">
+        <div>
+            <label asp-for="Input.ClientId" class="field-label"></label>
+            <input asp-for="Input.ClientId" class="field-input" />
+            <span asp-validation-for="Input.ClientId" class="mt-1 block text-sm text-red-600"></span>
+        </div>
 
-    <div>
-        <label asp-for="Input.DisplayName"></label>
-        <input asp-for="Input.DisplayName" />
-    </div>
+        <div>
+            <label asp-for="Input.DisplayName" class="field-label"></label>
+            <input asp-for="Input.DisplayName" class="field-input" />
+        </div>
 
-    <button type="submit">Create</button>
-    <a asp-page="/Clients/Index" asp-area="Admin">Cancel</a>
-</form>
+        <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="btn-primary">Create</button>
+            <a asp-page="/Clients/Index" asp-area="Admin" class="text-sm">Cancel</a>
+        </div>
+    </form>
+</div>

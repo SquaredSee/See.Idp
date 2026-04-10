@@ -4,33 +4,34 @@
     ViewData["Title"] = "Clients";
 }
 
-<h1>Clients</h1>
+<div class="panel space-y-5">
+    <div class="flex items-center justify-between">
+        <h1>Clients</h1>
+        <a asp-page="/Clients/Create" asp-area="Admin" class="btn-primary text-sm no-underline">Create client</a>
+    </div>
 
-<p>
-    <a asp-page="/Clients/Create" asp-area="Admin">Create client</a>
-</p>
-
-<table>
-    <thead>
-        <tr>
-            <th>Client ID</th>
-            <th>Display Name</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var client in Model.Clients)
-        {
+    <table class="table-admin">
+        <thead>
             <tr>
-                <td>@client.ClientId</td>
-                <td>@client.DisplayName</td>
-                <td>
-                    <form method="post" asp-page-handler="Delete">
-                        <input type="hidden" name="clientId" value="@client.ClientId" />
-                        <button type="submit">Delete</button>
-                    </form>
-                </td>
+                <th>Client ID</th>
+                <th>Display Name</th>
+                <th class="w-1">Actions</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var client in Model.Clients)
+            {
+                <tr>
+                    <td>@client.ClientId</td>
+                    <td>@client.DisplayName</td>
+                    <td>
+                        <form method="post" asp-page-handler="Delete">
+                            <input type="hidden" name="clientId" value="@client.ClientId" />
+                            <button type="submit" class="btn-danger text-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

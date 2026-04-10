@@ -2,3 +2,51 @@
 @source "../../Pages/**/*.cshtml";
 @source "../../Pages/Shared/**/*.cshtml";
 @source "../../wwwroot/js/**/*.js";
+
+@theme {
+  --font-sans: "Manrope", "Segoe UI", sans-serif;
+  --color-brand-500: oklch(0.61 0.18 255);
+  --color-brand-600: oklch(0.54 0.19 255);
+  --color-app-bg: oklch(0.98 0.005 255);
+  --color-app-fg: oklch(0.23 0.02 255);
+  --color-surface: oklch(1 0 0);
+  --color-border-soft: oklch(0.9 0.01 255);
+  --radius-panel: 1rem;
+  --shadow-panel: 0 14px 40px rgb(15 23 42 / 0.08);
+}
+
+@layer base {
+  body {
+    @apply min-h-screen bg-app-bg text-app-fg antialiased;
+  }
+  h1 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  h2 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  a {
+    @apply text-brand-600 hover:text-brand-500 underline-offset-2 hover:underline;
+  }
+}
+
+@layer components {
+  .page-wrap {
+    @apply mx-auto w-full max-w-3xl px-6 py-10;
+  }
+  .panel {
+    @apply rounded-(--radius-panel) border border-border-soft bg-surface p-6 shadow-(--shadow-panel);
+  }
+  .field-label {
+    @apply mb-1 block text-sm font-medium;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-border-soft bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border border-border-soft bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50;
+  }
+}

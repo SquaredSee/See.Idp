@@ -10,17 +10,22 @@
 </head>
 
 <body>
-    <header>
+    <header class="border-b border-border-soft bg-surface/90">
+        <div class="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
+            <a asp-area="" asp-page="/Index"
+               class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp</a>
+        </div>
     </header>
-    <main>
+    <main class="page-wrap">
         @RenderBody()
     </main>
 
-    <footer>
-        <div>&copy; 2026 - See.Idp - <a asp-area="" asp-page="/Privacy">Privacy</a></div>
-    </footer>
+    <footer class="border-t border-border-soft">
+        <div class="mx-auto w-full max-w-3xl px-6 py-4 text-sm text-slate-600">&copy; 2026 - See.Idp - <a asp-area=""
+                                                                                                              asp-page="/Privacy">Privacy</a></div>
+        </footer>
 
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 
 </html>

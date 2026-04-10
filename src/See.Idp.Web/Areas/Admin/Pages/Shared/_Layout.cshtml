@@ -10,20 +10,26 @@
 </head>
 
 <body>
-    <header>
-        <a asp-area="" asp-page="/Account/Logout">Logout</a>
+    <header class="border-b border-border-soft bg-surface/95">
+        <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+            <a asp-area="Admin" asp-page="/Index"
+               class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp Admin</a>
+            <div class="flex items-center gap-4">
+                <a asp-area="Admin" asp-page="/Clients/Index" class="text-sm">Clients</a>
+                <a asp-area="" asp-page="/Account/Logout" class="btn-primary text-sm no-underline">Logout</a>
+            </div>
+        </div>
     </header>
-    <main>
+    <main class="page-wrap">
         @RenderBody()
     </main>
 
-    <footer>
-        <div>&copy; 2026 - See.Idp Admin Portal - <a asp-area="" asp-page="/Privacy">Privacy</a></div>
-    </footer>
+    <footer class="border-t border-border-soft">
+        <div class="mx-auto w-full max-w-6xl px-6 py-4 text-sm text-slate-600">&copy; 2026 - See.Idp Admin Portal - <a
+            asp-area="" asp-page="/Privacy">Privacy</a></div>
+        </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 
 </html>
