@@ -24,18 +24,21 @@ public partial class UiClientSeeder(
 
         var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
 
-        const string clientId = "seeid-razor-client";
+        // Register the Razor Pages client application if it doesn't exist already.
+        // The client represents the user-facing web application, which uses authorization code flow with PKCE.
 
-        if (await manager.FindByClientIdAsync(clientId, cancellationToken) is null)
+        const string razorClientId = "seeid-razor-client";
+
+        if (await manager.FindByClientIdAsync(razorClientId, cancellationToken) is null)
         {
-            LogSeedingClient(logger, clientId);
+            LogSeedingClient(logger, razorClientId);
 
             await manager.CreateAsync(
                 new OpenIddictApplicationDescriptor
                 {
-                    ClientId = clientId,
+                    ClientId = razorClientId,
                     ClientSecret = "seeid-razor-client-secret",
-                    DisplayName = "Razor Pages Client",
+                    DisplayName = "SeeId User Interface",
                     RedirectUris = { new Uri("https://localhost:7001/callback") },
                     Permissions =
                     {
@@ -51,11 +54,42 @@ public partial class UiClientSeeder(
                 cancellationToken
             );
 
-            LogClientSeeded(logger, clientId);
+            LogClientSeeded(logger, razorClientId);
         }
         else
         {
-            LogClientAlreadyExists(logger, clientId);
+            LogClientAlreadyExists(logger, razorClientId);
+        }
+
+        // Register the service worker client application if it doesn't exist already.
+        // The client represents a machine-to-machine application, which uses client credentials flow.
+
+        const string serviceWorkerClientId = "seeid-service-worker-client";
+
+        if (await manager.FindByClientIdAsync(serviceWorkerClientId, cancellationToken) is null)
+        {
+            LogSeedingClient(logger, serviceWorkerClientId);
+
+            await manager.CreateAsync(
+                new OpenIddictApplicationDescriptor
+                {
+                    ClientId = serviceWorkerClientId,
+                    ClientSecret = "seeid-service-worker-client-secret",
+                    DisplayName = "SeeId Service Worker",
+                    Permissions =
+                    {
+                        Permissions.Endpoints.Token,
+                        Permissions.GrantTypes.ClientCredentials,
+                    },
+                },
+                cancellationToken
+            );
+
+            LogClientSeeded(logger, serviceWorkerClientId);
+        }
+        else
+        {
+            LogClientAlreadyExists(logger, serviceWorkerClientId);
         }
     }
 

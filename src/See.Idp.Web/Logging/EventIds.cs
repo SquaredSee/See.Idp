@@ -14,6 +14,7 @@ public static class EventIds
     public const int SeedingUser = 1100;
     public const int UserSeeded = 1101;
     public const int UserAlreadyExists = 1102;
+    public const int UserAddedToRole = 1103;
 
     // Login: 1200 - 1299
     public const int LoginAttempt = 1200;
