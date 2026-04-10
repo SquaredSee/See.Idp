@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Scalar.AspNetCore;
 using See.Idp.Infrastructure;
 using See.Idp.Web.Auth;
 using See.Idp.Web.Services;
@@ -87,6 +88,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
     app.UseDeveloperExceptionPage();
 }
 
