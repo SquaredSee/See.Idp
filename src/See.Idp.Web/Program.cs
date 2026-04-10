@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using See.Idp.Infrastructure;
+using See.Idp.Web.Auth;
 using See.Idp.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,10 +62,24 @@ builder
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddAuthorizationBuilder().AddAdminPortalPolicy();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    // Default paths for login, logout, and access denied.
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
 builder.Services.AddHostedService<UiClientSeeder>();
 builder.Services.AddHostedService<UserSeeder>();
 
-builder.Services.AddRazorPages();
+// builder.Services.AddControllers();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeAreaFolder("Admin", "/", Policies.AdminPortal);
+});
 
 var app = builder.Build();
 
@@ -79,6 +94,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
+// app.MapControllers();
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
 
