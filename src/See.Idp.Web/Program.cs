@@ -9,6 +9,7 @@ using Scalar.AspNetCore;
 using See.Idp.Infrastructure;
 using See.Idp.Web.Auth;
 using See.Idp.Web.Services;
+using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,20 +42,27 @@ builder
     // Register the OpenIddict server components.
     .AddServer(options =>
     {
-        // Enable the token endpoint.
+        options.SetAuthorizationEndpointUris("connect/authorize");
         options.SetTokenEndpointUris("connect/token");
+        options.SetEndSessionEndpointUris("connect/logout");
 
-        // Enable the client credentials flow.
+        options.AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange();
         options.AllowClientCredentialsFlow();
+        options.AllowRefreshTokenFlow();
 
-        // Register the signing and encryption credentials.
-        options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+        options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
 
-        // Register the ASP.NET Core host and configure the ASP.NET Core options.
-        var openIddictAspNetCoreOptions = options.UseAspNetCore().EnableTokenEndpointPassthrough();
+        var openIddictAspNetCoreOptions = options.UseAspNetCore();
+
         if (builder.Environment.IsDevelopment())
         {
+            options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+            options.DisableAccessTokenEncryption();
             openIddictAspNetCoreOptions.DisableTransportSecurityRequirement();
+        }
+        else
+        {
+            // TODO: Verify production certificate configuration.
         }
     });
 
@@ -96,7 +104,6 @@ else
     app.UseExceptionHandler("/Error");
 }
 
-// app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
