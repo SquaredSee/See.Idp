@@ -20,4 +20,7 @@ public static class EventIds
     public const int LoginSuccess = 1201;
     public const int LoginFailed = 1202;
     public const int LoginLockedOut = 1203;
+
+    // Logout: 1300 - 1399
+    public const int Logout = 1300;
 }

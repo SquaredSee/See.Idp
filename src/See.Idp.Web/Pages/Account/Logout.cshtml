@@ -1,0 +1,13 @@
+@page
+@model See.Idp.Web.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Log out";
+}
+
+<h1>Log out</h1>
+<p>Are you sure you want to sign out?</p>
+
+<form method="post">
+    <input type="hidden" asp-for="ReturnUrl" />
+    <button type="submit">Log out</button>
+</form>
