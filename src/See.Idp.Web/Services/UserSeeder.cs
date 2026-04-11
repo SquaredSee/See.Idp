@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
@@ -23,13 +25,18 @@ public partial class UserSeeder(IServiceProvider serviceProvider, ILogger<UserSe
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-        const string email = "test@seeidp.com";
+        await SeedRolesAsync(roleManager, [Roles.Admin]);
+        await SeedUserAsync(userManager, "test@seeidp.com", [], "Test123!");
+        await SeedUserAsync(userManager, "colton.crouch96@gmail.com", [Roles.Admin], "Test123!");
+    }
 
-        if (!await roleManager.RoleExistsAsync(Roles.Admin))
-        {
-            await roleManager.CreateAsync(new IdentityRole(Roles.Admin));
-        }
-
+    private async Task SeedUserAsync(
+        UserManager<IdentityUser> userManager,
+        string email,
+        List<string> roles,
+        string? password = null
+    )
+    {
         var user = await userManager.FindByEmailAsync(email);
 
         if (user is null)
@@ -43,7 +50,16 @@ public partial class UserSeeder(IServiceProvider serviceProvider, ILogger<UserSe
                 EmailConfirmed = true,
             };
 
-            await userManager.CreateAsync(user, "Test1234!");
+            var createResult = string.IsNullOrWhiteSpace(password)
+                ? await userManager.CreateAsync(user)
+                : await userManager.CreateAsync(user, password);
+
+            if (!createResult.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to seed user '{email}': {string.Join("; ", createResult.Errors.Select(e => e.Description))}"
+                );
+            }
             LogUserSeeded(email);
         }
         else
@@ -51,10 +67,30 @@ public partial class UserSeeder(IServiceProvider serviceProvider, ILogger<UserSe
             LogUserAlreadyExists(email);
         }
 
-        if (!await userManager.IsInRoleAsync(user, Roles.Admin))
+        foreach (var role in roles)
         {
-            await userManager.AddToRoleAsync(user, Roles.Admin);
-            LogUserAddedToRole(email, Roles.Admin);
+            if (!await userManager.IsInRoleAsync(user, role))
+            {
+                await userManager.AddToRoleAsync(user, role);
+                LogUserAddedToRole(email, role);
+            }
+        }
+    }
+
+    private async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, List<string> roles)
+    {
+        foreach (var role in roles)
+        {
+            LogSeedingRole(role);
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+                LogRoleSeeded(role);
+            }
+            else
+            {
+                LogRoleAlreadyExists(role);
+            }
         }
     }
 
@@ -87,4 +123,25 @@ public partial class UserSeeder(IServiceProvider serviceProvider, ILogger<UserSe
         Message = "User {Email} added to role {Role}"
     )]
     private partial void LogUserAddedToRole(string email, string role);
+
+    [LoggerMessage(
+        EventId = EventIds.SeedingRole,
+        Level = LogLevel.Information,
+        Message = "Seeding role: {Role}"
+    )]
+    private partial void LogSeedingRole(string role);
+
+    [LoggerMessage(
+        EventId = EventIds.RoleSeeded,
+        Level = LogLevel.Information,
+        Message = "Role seeded successfully: {Role}"
+    )]
+    private partial void LogRoleSeeded(string role);
+
+    [LoggerMessage(
+        EventId = EventIds.RoleAlreadyExists,
+        Level = LogLevel.Information,
+        Message = "Role already exists, skipping: {Role}"
+    )]
+    private partial void LogRoleAlreadyExists(string role);
 }
