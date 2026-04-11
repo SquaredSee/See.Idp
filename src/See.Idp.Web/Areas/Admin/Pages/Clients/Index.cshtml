@@ -26,10 +26,17 @@
                     <td>@client.ClientId</td>
                     <td>@client.DisplayName</td>
                     <td>
-                        <form method="post" asp-page-handler="Delete">
-                            <input type="hidden" name="clientId" value="@client.ClientId" />
-                            <button type="submit" class="btn-danger text-sm">Delete</button>
-                        </form>
+                        <div class="flex items-center gap-2">
+                            <a asp-page="/Clients/Edit" asp-area="Admin" asp-route-clientId="@client.ClientId"
+                                   class="btn-primary text-sm no-underline">
+                                Edit
+                            </a>
+
+                            <form method="post" asp-page-handler="Delete">
+                                <input type="hidden" name="clientId" value="@client.ClientId" />
+                                <button type="submit" class="btn-danger text-sm">Delete</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             }

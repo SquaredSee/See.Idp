@@ -1,0 +1,32 @@
+@page
+@namespace See.Idp.Web.Areas.Admin.Pages.Clients
+@model EditModel
+@{
+    ViewData["Title"] = "Edit client";
+}
+
+<div class="panel mx-auto w-full max-w-2xl">
+    <h1>Edit client</h1>
+
+    <form method="post" class="mt-6 space-y-4">
+        <input asp-for="Input.ClientId" type="hidden" />
+
+        <div>
+            <label class="field-label">Client ID</label>
+            <input value="@Model.Input.ClientId" class="field-input" readonly />
+        </div>
+
+        <div>
+            <label asp-for="Input.DisplayName" class="field-label"></label>
+            <input asp-for="Input.DisplayName" class="field-input" />
+            <span asp-validation-for="Input.DisplayName" class="mt-1 block text-sm text-red-600"></span>
+        </div>
+
+        <div asp-validation-summary="ModelOnly" class="text-sm text-red-600"></div>
+
+        <div class="flex items-center gap-3 pt-2">
+            <button type="submit" class="btn-primary">Save</button>
+            <a asp-page="/Clients/Index" asp-area="Admin" class="text-sm">Cancel</a>
+        </div>
+    </form>
+</div>

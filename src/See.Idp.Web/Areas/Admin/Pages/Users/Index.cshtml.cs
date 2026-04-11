@@ -1,19 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using See.Idp.Web.Auth;
+using See.Idp.Core.Services;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Users;
 
-public sealed class IndexModel(UserManager<IdentityUser> userManager) : PageModel
+public sealed class IndexModel(IUserManagementService userManagementService) : PageModel
 {
-    private static readonly DateTimeOffset LockoutUntil = DateTimeOffset.UtcNow.AddYears(100);
-
     public List<UserRow> Users { get; } = [];
 
     [TempData]
@@ -29,182 +24,63 @@ public sealed class IndexModel(UserManager<IdentityUser> userManager) : PageMode
 
     public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            SetStatusError("User id is required.");
-            return RedirectToPage();
-        }
+        var currentUserId = User.FindFirst("sub")?.Value;
+        var result = await userManagementService.ToggleAdminAsync(userId, currentUserId);
 
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
-        {
-            SetStatusError("User not found.");
-            return RedirectToPage();
-        }
-
-        var currentUserId = userManager.GetUserId(User);
-        var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
-
-        if (isAdmin && string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
-        {
-            SetStatusError("You cannot remove your own admin role.");
-            return RedirectToPage();
-        }
-
-        IdentityResult result;
-        if (isAdmin)
-        {
-            result = await userManager.RemoveFromRoleAsync(user, Roles.Admin);
-            if (result.Succeeded)
-            {
-                SetStatusSuccess($"Removed admin role from {DisplayName(user)}.");
-            }
-        }
+        if (result.Succeeded)
+            SetStatusSuccess(result.Message ?? "Admin role updated.");
         else
-        {
-            result = await userManager.AddToRoleAsync(user, Roles.Admin);
-            if (result.Succeeded)
-            {
-                SetStatusSuccess($"Granted admin role to {DisplayName(user)}.");
-            }
-        }
-
-        if (!result.Succeeded)
-        {
-            SetStatusError(string.Join(" ", result.Errors.Select(e => e.Description)));
-        }
+            SetStatusError(result.Error ?? "Unable to update admin role.");
 
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostToggleLockAsync(string userId)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            SetStatusError("User id is required.");
-            return RedirectToPage();
-        }
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
-        {
-            SetStatusError("User not found.");
-            return RedirectToPage();
-        }
-
-        var currentUserId = userManager.GetUserId(User);
-        if (string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
-        {
-            SetStatusError("You cannot lock your own account.");
-            return RedirectToPage();
-        }
-
-        if (!user.LockoutEnabled)
-        {
-            user.LockoutEnabled = true;
-            var updateResult = await userManager.UpdateAsync(user);
-            if (!updateResult.Succeeded)
-            {
-                SetStatusError(string.Join(" ", updateResult.Errors.Select(e => e.Description)));
-                return RedirectToPage();
-            }
-        }
-
-        var isLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow;
-        var result = await userManager.SetLockoutEndDateAsync(user, isLocked ? null : LockoutUntil);
+        var currentUserId = User.FindFirst("sub")?.Value;
+        var result = await userManagementService.ToggleLockAsync(userId, currentUserId);
 
         if (result.Succeeded)
-        {
-            SetStatusSuccess(
-                isLocked ? $"Unlocked {DisplayName(user)}." : $"Locked {DisplayName(user)}."
-            );
-        }
+            SetStatusSuccess(result.Message ?? "Lock state updated.");
         else
-        {
-            SetStatusError(string.Join(" ", result.Errors.Select(e => e.Description)));
-        }
+            SetStatusError(result.Error ?? "Unable to update lock state.");
 
         return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(string userId)
     {
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            SetStatusError("User id is required.");
-            return RedirectToPage();
-        }
+        var currentUserId = User.FindFirst("sub")?.Value;
+        var result = await userManagementService.DeleteUserAsync(userId, currentUserId);
 
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
-        {
-            SetStatusError("User not found.");
-            return RedirectToPage();
-        }
-
-        var currentUserId = userManager.GetUserId(User);
-        if (string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
-        {
-            SetStatusError("You cannot delete your own account.");
-            return RedirectToPage();
-        }
-
-        var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
-        if (isAdmin)
-        {
-            var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
-            if (admins.Count <= 1)
-            {
-                SetStatusError("Cannot delete the last admin user.");
-                return RedirectToPage();
-            }
-        }
-
-        var result = await userManager.DeleteAsync(user);
         if (result.Succeeded)
-        {
-            SetStatusSuccess($"Deleted {DisplayName(user)}.");
-        }
+            SetStatusSuccess(result.Message ?? "User deleted.");
         else
-        {
-            SetStatusError(string.Join(" ", result.Errors.Select(e => e.Description)));
-        }
+            SetStatusError(result.Error ?? "Unable to delete user.");
 
         return RedirectToPage();
     }
 
     private async Task LoadAsync()
     {
-        var currentUserId = userManager.GetUserId(User);
-
-        var users = await userManager
-            .Users.OrderBy(u => u.Email)
-            .ThenBy(u => u.UserName)
-            .ToListAsync();
+        var currentUserId = User.FindFirst("sub")?.Value;
+        var users = await userManagementService.ListUsersAsync(currentUserId);
 
         foreach (var user in users)
         {
-            var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
-            var isLocked =
-                user.LockoutEnabled
-                && user.LockoutEnd.HasValue
-                && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
-
             Users.Add(
                 new UserRow(
-                    UserId: user.Id,
+                    UserId: user.UserId,
                     UserName: user.UserName,
                     Email: user.Email,
                     EmailConfirmed: user.EmailConfirmed,
-                    IsAdmin: isAdmin,
-                    IsLockedOut: isLocked,
-                    IsCurrentUser: string.Equals(user.Id, currentUserId, StringComparison.Ordinal)
+                    IsAdmin: user.IsAdmin,
+                    IsLockedOut: user.IsLockedOut,
+                    IsCurrentUser: user.IsCurrentUser
                 )
             );
         }
     }
-
-    private static string DisplayName(IdentityUser user) => user.Email ?? user.UserName ?? user.Id;
 
     private void SetStatusSuccess(string message)
     {

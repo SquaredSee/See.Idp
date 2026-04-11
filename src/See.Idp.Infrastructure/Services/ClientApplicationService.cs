@@ -31,19 +31,45 @@ public sealed class ClientApplicationService(IOpenIddictApplicationManager appli
         return clients;
     }
 
-    public async Task<OperationResult> CreateClientAsync(
+    public async Task<ClientApplicationDto?> GetClientAsync(
+        string clientId,
+        CancellationToken ct = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            return null;
+        }
+
+        var app = await applicationManager.FindByClientIdAsync(clientId, ct);
+        if (app is null)
+        {
+            return null;
+        }
+
+        var resolvedClientId = await applicationManager.GetClientIdAsync(app, ct);
+        if (string.IsNullOrWhiteSpace(resolvedClientId))
+        {
+            return null;
+        }
+
+        var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
+        return new ClientApplicationDto(resolvedClientId, displayName);
+    }
+
+    public async Task<ClientApplicationActionResult> CreateClientAsync(
         CreateClientRequest request,
         CancellationToken ct = default
     )
     {
         if (string.IsNullOrWhiteSpace(request.ClientId))
         {
-            return OperationResult.Failure("Client ID is required.");
+            return ClientApplicationActionResult.Failure("Client ID is required.");
         }
 
         if (await applicationManager.FindByClientIdAsync(request.ClientId, ct) is not null)
         {
-            return OperationResult.Failure("Client ID already exists.");
+            return ClientApplicationActionResult.Failure("Client ID already exists.");
         }
 
         await applicationManager.CreateAsync(
@@ -55,26 +81,51 @@ public sealed class ClientApplicationService(IOpenIddictApplicationManager appli
             ct
         );
 
-        return OperationResult.Success();
+        return ClientApplicationActionResult.Success();
     }
 
-    public async Task<OperationResult> DeleteClientAsync(
+    public async Task<ClientApplicationActionResult> UpdateClientAsync(
+        UpdateClientRequest request,
+        CancellationToken ct = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(request.ClientId))
+        {
+            return ClientApplicationActionResult.Failure("Client ID is required.");
+        }
+
+        var app = await applicationManager.FindByClientIdAsync(request.ClientId, ct);
+        if (app is null)
+        {
+            return ClientApplicationActionResult.Failure("Client not found.");
+        }
+
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await applicationManager.PopulateAsync(descriptor, app, ct);
+
+        descriptor.DisplayName = request.DisplayName;
+
+        await applicationManager.UpdateAsync(app, descriptor, ct);
+        return ClientApplicationActionResult.Success();
+    }
+
+    public async Task<ClientApplicationActionResult> DeleteClientAsync(
         string clientId,
         CancellationToken ct = default
     )
     {
         if (string.IsNullOrWhiteSpace(clientId))
         {
-            return OperationResult.Failure("Client ID is required.");
+            return ClientApplicationActionResult.Failure("Client ID is required.");
         }
 
         var app = await applicationManager.FindByClientIdAsync(clientId, ct);
         if (app is null)
         {
-            return OperationResult.Failure("Client not found.");
+            return ClientApplicationActionResult.Failure("Client not found.");
         }
 
         await applicationManager.DeleteAsync(app, ct);
-        return OperationResult.Success();
+        return ClientApplicationActionResult.Success();
     }
 }

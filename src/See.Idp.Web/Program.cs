@@ -88,6 +88,7 @@ builder.Services.AddHostedService<UserSeeder>();
 
 builder.Services.AddScoped<IClientApplicationService, ClientApplicationService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 // builder.Services.AddControllers();
 builder.Services.AddRazorPages(options =>

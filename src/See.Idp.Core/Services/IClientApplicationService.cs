@@ -9,10 +9,20 @@ public interface IClientApplicationService
 {
     Task<IReadOnlyList<ClientApplicationDto>> ListClientsAsync(CancellationToken ct = default);
 
-    Task<OperationResult> CreateClientAsync(
+    Task<ClientApplicationDto?> GetClientAsync(string clientId, CancellationToken ct = default);
+
+    Task<ClientApplicationActionResult> CreateClientAsync(
         CreateClientRequest request,
         CancellationToken ct = default
     );
 
-    Task<OperationResult> DeleteClientAsync(string clientId, CancellationToken ct = default);
+    Task<ClientApplicationActionResult> UpdateClientAsync(
+        UpdateClientRequest request,
+        CancellationToken ct = default
+    );
+
+    Task<ClientApplicationActionResult> DeleteClientAsync(
+        string clientId,
+        CancellationToken ct = default
+    );
 }
