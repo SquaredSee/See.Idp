@@ -6,11 +6,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
+using See.Idp.Core.Configuration;
 using See.Idp.Core.Services;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
-using See.Idp.Web.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,8 +83,12 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
-builder.Services.AddHostedService<UiClientSeeder>();
-builder.Services.AddHostedService<UserSeeder>();
+builder.Services.Configure<InitializationOptions>(
+    builder.Configuration.GetSection("Initialization")
+);
+
+builder.Services.AddScoped<IApplicationInitializer, ConfigurationApplicationInitializer>();
+builder.Services.AddHostedService<ApplicationInitializationHostedService>();
 
 builder.Services.AddScoped<IClientApplicationService, ClientApplicationService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
