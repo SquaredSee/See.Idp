@@ -7,6 +7,7 @@
     <title>@ViewData["Title"] - See.Idp</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/css/site.out.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body>
