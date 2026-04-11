@@ -1,7 +1,7 @@
-namespace See.Idp.Web.Logging;
+namespace See.Idp.Core.Logging;
 
 /// <summary>
-///     Event IDs for structured logging in See.Idp.Web.
+///     Event IDs for structured logging in See.Idp.
 /// </summary>
 public static class EventIds
 {

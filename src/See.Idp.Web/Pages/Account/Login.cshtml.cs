@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using See.Idp.Web.Logging;
+using See.Idp.Core.Logging;
 
 namespace See.Idp.Web.Pages.Account;
 

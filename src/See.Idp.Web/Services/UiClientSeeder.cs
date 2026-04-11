@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
-using See.Idp.Web.Logging;
+using See.Idp.Core.Logging;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace See.Idp.Web.Services;

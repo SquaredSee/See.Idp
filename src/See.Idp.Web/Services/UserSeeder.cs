@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using See.Idp.Core.Logging;
 using See.Idp.Web.Auth;
-using See.Idp.Web.Logging;
 
 namespace See.Idp.Web.Services;
 
