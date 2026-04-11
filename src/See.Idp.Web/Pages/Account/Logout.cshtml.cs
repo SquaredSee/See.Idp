@@ -1,15 +1,15 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Logging;
+using See.Idp.Core.Services;
 
 namespace See.Idp.Web.Pages.Account;
 
 public partial class LogoutModel(
-    SignInManager<IdentityUser> signInManager,
+    IUserAccountService userAccountService,
     ILogger<LogoutModel> logger
 ) : PageModel
 {
@@ -27,7 +27,7 @@ public partial class LogoutModel(
             User.Identity?.Name
             ?? throw new InvalidOperationException("User is not authenticated.");
 
-        await signInManager.SignOutAsync();
+        await userAccountService.SignOutAsync();
         LogUserLoggedOut(email);
 
         if (!string.IsNullOrWhiteSpace(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))

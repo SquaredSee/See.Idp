@@ -1,17 +1,15 @@
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Logging;
+using See.Idp.Core.Services;
 
 namespace See.Idp.Web.Pages.Account;
 
-public partial class LoginModel(
-    SignInManager<IdentityUser> signInManager,
-    ILogger<LoginModel> logger
-) : PageModel
+public partial class LoginModel(IUserAccountService userAccountService, ILogger<LoginModel> logger)
+    : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -43,11 +41,10 @@ public partial class LoginModel(
 
         LogLoginAttempt(Input.Email);
 
-        var result = await signInManager.PasswordSignInAsync(
+        var result = await userAccountService.PasswordSignInAsync(
             Input.Email,
             Input.Password,
-            Input.RememberMe,
-            lockoutOnFailure: true
+            Input.RememberMe
         );
 
         if (result.Succeeded)
@@ -67,10 +64,7 @@ public partial class LoginModel(
         }
 
         LogLoginFailed(Input.Email);
-        ModelState.AddModelError(
-            string.Empty,
-            "Login failed. Please check your credentials and try again."
-        );
+        ModelState.AddModelError(string.Empty, result.Error ?? "Login failed.");
         return Page();
     }
 

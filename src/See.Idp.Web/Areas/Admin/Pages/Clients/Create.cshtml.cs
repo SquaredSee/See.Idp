@@ -2,11 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using OpenIddict.Abstractions;
+using See.Idp.Core.Dtos;
+using See.Idp.Core.Services;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Clients;
 
-public sealed class CreateModel(IOpenIddictApplicationManager applicationManager) : PageModel
+public sealed class CreateModel(IClientApplicationService clientApplicationService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -20,19 +21,19 @@ public sealed class CreateModel(IOpenIddictApplicationManager applicationManager
             return Page();
         }
 
-        if (await applicationManager.FindByClientIdAsync(Input.ClientId) is not null)
+        var result = await clientApplicationService.CreateClientAsync(
+            new CreateClientRequest(Input.ClientId, Input.DisplayName)
+        );
+
+        if (!result.Succeeded)
         {
-            ModelState.AddModelError(nameof(Input.ClientId), "Client ID already exists.");
+            ModelState.AddModelError(
+                nameof(Input.ClientId),
+                result.Error ?? "Client creation failed."
+            );
             return Page();
         }
 
-        var descriptor = new OpenIddictApplicationDescriptor
-        {
-            ClientId = Input.ClientId,
-            DisplayName = Input.DisplayName,
-        };
-
-        await applicationManager.CreateAsync(descriptor);
         return RedirectToPage("./Index");
     }
 

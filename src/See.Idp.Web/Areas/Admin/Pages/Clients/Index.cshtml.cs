@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using OpenIddict.Abstractions;
+using See.Idp.Core.Services;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Clients;
 
-public sealed class IndexModel(IOpenIddictApplicationManager applicationManager) : PageModel
+public sealed class IndexModel(IClientApplicationService clientApplicationService) : PageModel
 {
     public List<ClientRow> Clients { get; } = [];
 
@@ -17,33 +17,19 @@ public sealed class IndexModel(IOpenIddictApplicationManager applicationManager)
 
     public async Task<IActionResult> OnPostDeleteAsync(string clientId)
     {
-        if (string.IsNullOrWhiteSpace(clientId))
-        {
-            return RedirectToPage();
-        }
-
-        var app = await applicationManager.FindByClientIdAsync(clientId);
-        if (app is not null)
-        {
-            await applicationManager.DeleteAsync(app);
-        }
+        await clientApplicationService.DeleteClientAsync(clientId);
 
         return RedirectToPage();
     }
 
     private async Task LoadAsync()
     {
-        await foreach (var app in applicationManager.ListAsync())
-        {
-            Clients.Add(
-                new ClientRow(
-                    await applicationManager.GetClientIdAsync(app) ?? string.Empty,
-                    await applicationManager.GetDisplayNameAsync(app)
-                )
-            );
-        }
+        var clients = await clientApplicationService.ListClientsAsync();
 
-        Clients.Sort((a, b) => string.CompareOrdinal(a.ClientId, b.ClientId));
+        foreach (var client in clients)
+        {
+            Clients.Add(new ClientRow(client.ClientId, client.DisplayName));
+        }
     }
 
     public sealed record ClientRow(string ClientId, string? DisplayName);

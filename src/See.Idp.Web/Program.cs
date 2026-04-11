@@ -6,7 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
+using See.Idp.Core.Services;
 using See.Idp.Infrastructure;
+using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
 using See.Idp.Web.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
@@ -83,6 +85,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddHostedService<UiClientSeeder>();
 builder.Services.AddHostedService<UserSeeder>();
+
+builder.Services.AddScoped<IClientApplicationService, ClientApplicationService>();
+builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 
 // builder.Services.AddControllers();
 builder.Services.AddRazorPages(options =>
