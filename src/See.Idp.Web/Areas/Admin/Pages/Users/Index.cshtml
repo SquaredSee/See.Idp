@@ -1,0 +1,92 @@
+@page
+@namespace See.Idp.Web.Areas.Admin.Pages.Users
+@model IndexModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="panel space-y-5">
+    <div class="flex items-center justify-between">
+        <h1>Users</h1>
+        <p class="text-sm text-slate-600">@Model.Users.Count total</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        var statusClasses = Model.StatusKind == "error"
+            ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+
+        <div class="@statusClasses">@Model.StatusMessage</div>
+    }
+
+    @if (Model.Users.Count == 0)
+    {
+        <p class="text-sm text-slate-600">No users found.</p>
+    }
+    else
+    {
+        <table class="table-admin">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email Confirmed</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th class="w-1">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            <div class="font-medium">@(user.Email ?? user.UserName ?? "(no identifier)")</div>
+                            <div class="text-xs text-slate-500">@user.UserId</div>
+                        </td>
+                        <td>
+                            <span class="@(user.EmailConfirmed ? "text-emerald-700" : "text-amber-700")">
+                                @(user.EmailConfirmed ? "Yes" : "No")
+                            </span>
+                        </td>
+                        <td>@(user.IsAdmin ? "Admin" : "User")</td>
+                        <td>
+                            <span class="@(user.IsLockedOut ? "text-red-700" : "text-emerald-700")">
+                                @(user.IsLockedOut ? "Locked" : "Active")
+                            </span>
+                            @if (user.IsCurrentUser)
+                            {
+                                <span class="ml-2 text-xs text-slate-500">(You)</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="flex flex-wrap gap-2">
+                                @if (!user.IsCurrentUser)
+                                {
+                                    <form method="post" asp-page-handler="ToggleAdmin">
+                                        <input type="hidden" name="userId" value="@user.UserId" />
+                                        <button type="submit" class="btn-primary text-xs">
+                                            @(user.IsAdmin ? "Remove admin" : "Make admin")
+                                        </button>
+                                    </form>
+
+                                    <form method="post" asp-page-handler="ToggleLock">
+                                        <input type="hidden" name="userId" value="@user.UserId" />
+                                        <button type="submit" class="btn-primary text-xs">
+                                            @(user.IsLockedOut ? "Unlock" : "Lock")
+                                        </button>
+                                    </form>
+
+                                    <form method="post" asp-page-handler="Delete">
+                                        <input type="hidden" name="userId" value="@user.UserId" />
+                                        <button type="submit" class="btn-danger text-xs">Delete</button>
+                                    </form>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
