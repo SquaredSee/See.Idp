@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -28,7 +29,7 @@ public sealed class IndexModel(
 
     public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
     {
-        var currentUserId = User.FindFirst("sub")?.Value;
+        var currentUserId = GetCurrentUserId();
         var result = await userCommandService.ToggleAdminAsync(
             new ToggleUserAdminCommand(userId, currentUserId)
         );
@@ -43,7 +44,7 @@ public sealed class IndexModel(
 
     public async Task<IActionResult> OnPostToggleLockAsync(string userId)
     {
-        var currentUserId = User.FindFirst("sub")?.Value;
+        var currentUserId = GetCurrentUserId();
         var result = await userCommandService.ToggleLockAsync(
             new ToggleUserLockCommand(userId, currentUserId)
         );
@@ -58,7 +59,7 @@ public sealed class IndexModel(
 
     public async Task<IActionResult> OnPostDeleteAsync(string userId)
     {
-        var currentUserId = User.FindFirst("sub")?.Value;
+        var currentUserId = GetCurrentUserId();
         var result = await userCommandService.DeleteUserAsync(
             new DeleteUserCommand(userId, currentUserId)
         );
@@ -73,8 +74,8 @@ public sealed class IndexModel(
 
     private async Task LoadAsync()
     {
-        var currentUserId = User.FindFirst("sub")?.Value;
-        var users = await userQueryService.ListUsersAsync(new ListUsersQuery(currentUserId));
+        var currentUserId = GetCurrentUserId();
+        var users = await userQueryService.ListUsersAsync(new ListUsersQuery());
 
         foreach (var user in users)
         {
@@ -86,7 +87,11 @@ public sealed class IndexModel(
                     EmailConfirmed: user.EmailConfirmed,
                     IsAdmin: user.IsAdmin,
                     IsLockedOut: user.IsLockedOut,
-                    IsCurrentUser: user.IsCurrentUser
+                    IsCurrentUser: string.Equals(
+                        user.UserId,
+                        currentUserId,
+                        StringComparison.Ordinal
+                    )
                 )
             );
         }
@@ -102,6 +107,11 @@ public sealed class IndexModel(
     {
         StatusKind = "error";
         StatusMessage = message;
+    }
+
+    private string? GetCurrentUserId()
+    {
+        return User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
     }
 
     public sealed record UserRow(

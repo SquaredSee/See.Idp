@@ -50,12 +50,7 @@ public sealed partial class UserManagementService(
                     Email: user.Email,
                     EmailConfirmed: user.EmailConfirmed,
                     IsAdmin: isAdmin,
-                    IsLockedOut: isLocked,
-                    IsCurrentUser: string.Equals(
-                        user.Id,
-                        query.CurrentUserId,
-                        StringComparison.Ordinal
-                    )
+                    IsLockedOut: isLocked
                 )
             );
         }
