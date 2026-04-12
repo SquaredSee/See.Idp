@@ -93,10 +93,10 @@ builder.Services.Configure<InitializationOptions>(
 builder.Services.AddScoped<IApplicationInitializer, ConfigurationApplicationInitializer>();
 builder.Services.AddHostedService<ApplicationInitializationHostedService>();
 
-builder.Services.AddScoped<IClientQueryService, ClientApplicationService>();
-builder.Services.AddScoped<IClientCommandService, ClientApplicationService>();
-builder.Services.AddScoped<IUserQueryService, UserManagementService>();
-builder.Services.AddScoped<IUserCommandService, UserManagementService>();
+builder.Services.AddScoped<IClientQueryService, ClientQueryService>();
+builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
+builder.Services.AddScoped<IUserQueryService, UserQueryService>();
+builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IUserAuthenticationCommandService, UserAccountService>();
 
 // builder.Services.AddControllers();

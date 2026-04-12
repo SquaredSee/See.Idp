@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -11,66 +10,11 @@ using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
-// TODO: Consider splitting this into separate query and command services if the implementation grows more complex.
-public sealed partial class ClientApplicationService(
+public sealed partial class ClientCommandService(
     IOpenIddictApplicationManager applicationManager,
-    ILogger<ClientApplicationService> logger
-) : IClientQueryService, IClientCommandService
+    ILogger<ClientCommandService> logger
+) : IClientCommandService
 {
-    public async Task<IReadOnlyList<ClientSummaryDto>> ListClientsAsync(
-        ListClientsQuery query,
-        CancellationToken ct = default
-    )
-    {
-        var clients = new List<ClientSummaryDto>();
-
-        await foreach (var app in applicationManager.ListAsync(cancellationToken: ct))
-        {
-            var clientId = await applicationManager.GetClientIdAsync(app, ct);
-            var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
-
-            if (!string.IsNullOrWhiteSpace(clientId))
-            {
-                clients.Add(new ClientSummaryDto(clientId, displayName));
-            }
-        }
-
-        LogClientListRetrieved(clients.Count);
-        return clients;
-    }
-
-    public async Task<ClientDetailsDto?> GetClientByIdAsync(
-        GetClientByIdQuery query,
-        CancellationToken ct = default
-    )
-    {
-        if (string.IsNullOrWhiteSpace(query.ClientId))
-        {
-            LogClientCommandRejected(nameof(GetClientByIdAsync), "Client ID is required.");
-            return null;
-        }
-
-        var app = await applicationManager.FindByClientIdAsync(query.ClientId, ct);
-        if (app is null)
-        {
-            LogClientLookupNotFound(query.ClientId);
-            return null;
-        }
-
-        var clientId = await applicationManager.GetClientIdAsync(app, ct);
-        if (string.IsNullOrWhiteSpace(clientId))
-        {
-            LogClientCommandRejected(
-                nameof(GetClientByIdAsync),
-                $"Client '{query.ClientId}' returned an empty client id."
-            );
-            return null;
-        }
-
-        var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
-        return new ClientDetailsDto(clientId, displayName);
-    }
-
     public async Task<CommandResult> CreateClientAsync(
         CreateClientCommand command,
         CancellationToken ct = default
@@ -211,13 +155,6 @@ public sealed partial class ClientApplicationService(
         LogClientCreated(command.ClientId);
         return CreateIfMissingResult.CreatedNew();
     }
-
-    [LoggerMessage(
-        EventId = EventIds.ClientListRetrieved,
-        Level = LogLevel.Information,
-        Message = "Retrieved {Count} clients"
-    )]
-    private partial void LogClientListRetrieved(int count);
 
     [LoggerMessage(
         EventId = EventIds.ClientLookupNotFound,

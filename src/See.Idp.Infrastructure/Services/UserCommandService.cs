@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Common;
 using See.Idp.Core.Dtos.Users;
@@ -14,50 +12,13 @@ using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
-// TODO: Consider splitting this into separate query and command services if the implementation grows more complex.
-public sealed partial class UserManagementService(
+public sealed partial class UserCommandService(
     UserManager<IdentityUser> userManager,
     RoleManager<IdentityRole> roleManager,
-    ILogger<UserManagementService> logger
-) : IUserQueryService, IUserCommandService
+    ILogger<UserCommandService> logger
+) : IUserCommandService
 {
     private static readonly DateTimeOffset LockoutUntil = DateTimeOffset.UtcNow.AddYears(100);
-
-    public async Task<IReadOnlyList<UserSummaryDto>> ListUsersAsync(
-        ListUsersQuery query,
-        CancellationToken ct = default
-    )
-    {
-        var users = await userManager
-            .Users.OrderBy(u => u.Email)
-            .ThenBy(u => u.UserName)
-            .ToListAsync(ct);
-
-        var result = new List<UserSummaryDto>(users.Count);
-
-        foreach (var user in users)
-        {
-            var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
-            var isLocked =
-                user.LockoutEnabled
-                && user.LockoutEnd.HasValue
-                && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
-
-            result.Add(
-                new UserSummaryDto(
-                    UserId: user.Id,
-                    UserName: user.UserName,
-                    Email: user.Email,
-                    EmailConfirmed: user.EmailConfirmed,
-                    IsAdmin: isAdmin,
-                    IsLockedOut: isLocked
-                )
-            );
-        }
-
-        LogUserListRetrieved(result.Count);
-        return result;
-    }
 
     public async Task<CreateIfMissingResult> CreateRoleIfMissingAsync(
         CreateRoleIfMissingCommand command,
@@ -344,13 +305,6 @@ public sealed partial class UserManagementService(
 
     private static string JoinErrors(IdentityResult result) =>
         string.Join("; ", result.Errors.Select(e => e.Description));
-
-    [LoggerMessage(
-        EventId = EventIds.UserListRetrieved,
-        Level = LogLevel.Information,
-        Message = "Retrieved {Count} users"
-    )]
-    private partial void LogUserListRetrieved(int count);
 
     [LoggerMessage(
         EventId = EventIds.RoleCreated,
