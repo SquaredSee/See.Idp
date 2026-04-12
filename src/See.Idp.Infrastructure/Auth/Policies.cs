@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace See.Idp.Web.Auth;
+namespace See.Idp.Infrastructure.Auth;
 
 public static class Policies
 {

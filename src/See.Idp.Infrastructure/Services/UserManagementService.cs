@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Common;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services.Users;
+using See.Idp.Infrastructure.Auth;
 using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
@@ -20,7 +21,6 @@ public sealed partial class UserManagementService(
     ILogger<UserManagementService> logger
 ) : IUserQueryService, IUserCommandService
 {
-    private const string AdminRole = "admin";
     private static readonly DateTimeOffset LockoutUntil = DateTimeOffset.UtcNow.AddYears(100);
 
     public async Task<IReadOnlyList<UserSummaryDto>> ListUsersAsync(
@@ -37,7 +37,7 @@ public sealed partial class UserManagementService(
 
         foreach (var user in users)
         {
-            var isAdmin = await userManager.IsInRoleAsync(user, AdminRole);
+            var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
             var isLocked =
                 user.LockoutEnabled
                 && user.LockoutEnd.HasValue
@@ -193,7 +193,7 @@ public sealed partial class UserManagementService(
             return CommandResult.Failure("User not found.");
         }
 
-        var isAdmin = await userManager.IsInRoleAsync(user, AdminRole);
+        var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
 
         if (isAdmin && string.Equals(user.Id, command.CurrentUserId, StringComparison.Ordinal))
         {
@@ -204,7 +204,7 @@ public sealed partial class UserManagementService(
         IdentityResult result;
         if (isAdmin)
         {
-            result = await userManager.RemoveFromRoleAsync(user, AdminRole);
+            result = await userManager.RemoveFromRoleAsync(user, Roles.Admin);
             if (result.Succeeded)
             {
                 LogUserAdminRemoved(user.Id);
@@ -216,7 +216,7 @@ public sealed partial class UserManagementService(
         else
         {
             var addRoleResult = await AddUserToRoleIfMissingAsync(
-                new AddUserToRoleIfMissingCommand(user.Id, AdminRole),
+                new AddUserToRoleIfMissingCommand(user.Id, Roles.Admin),
                 ct
             );
 
@@ -235,7 +235,7 @@ public sealed partial class UserManagementService(
                 return CommandResult.Success($"Granted admin role to {DisplayName(user)}.");
             }
 
-            LogUserAlreadyInRole(user.Id, AdminRole);
+            LogUserAlreadyInRole(user.Id, Roles.Admin);
             return CommandResult.Success($"{DisplayName(user)} already has the admin role.");
         }
 
@@ -320,10 +320,10 @@ public sealed partial class UserManagementService(
             return CommandResult.Failure("You cannot delete your own account.");
         }
 
-        var isAdmin = await userManager.IsInRoleAsync(user, AdminRole);
+        var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
         if (isAdmin)
         {
-            var admins = await userManager.GetUsersInRoleAsync(AdminRole);
+            var admins = await userManager.GetUsersInRoleAsync(Roles.Admin);
             if (admins.Count <= 1)
             {
                 LogUserCommandRejected(
