@@ -345,6 +345,11 @@ public sealed partial class UserManagementService(
         return CommandResult.Failure(JoinErrors(result));
     }
 
+    private static string DisplayName(IdentityUser user) => user.Email ?? user.UserName ?? user.Id;
+
+    private static string JoinErrors(IdentityResult result) =>
+        string.Join("; ", result.Errors.Select(e => e.Description));
+
     [LoggerMessage(
         EventId = EventIds.UserListRetrieved,
         Level = LogLevel.Information,
@@ -435,9 +440,4 @@ public sealed partial class UserManagementService(
         Message = "User command {CommandName} rejected: {Reason}"
     )]
     private partial void LogUserCommandRejected(string commandName, string reason);
-
-    private static string DisplayName(IdentityUser user) => user.Email ?? user.UserName ?? user.Id;
-
-    private static string JoinErrors(IdentityResult result) =>
-        string.Join("; ", result.Errors.Select(e => e.Description));
 }
