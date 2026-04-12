@@ -2,15 +2,15 @@
 @namespace See.Idp.Web.Pages.Account
 @model LogoutModel
 @{
-    ViewData["Title"] = "Log out";
+  ViewData["Title"] = "Log out";
 }
 
 <div class="panel mx-auto w-full max-w-lg">
-    <h1>Log out</h1>
-    <p class="mt-2 text-sm text-slate-600">Are you sure you want to sign out?</p>
+  <h1>Log out</h1>
+  <p class="mt-2 text-sm text-slate-600">Are you sure you want to sign out?</p>
 
-    <form method="post" class="mt-6">
-        <input type="hidden" asp-for="ReturnUrl" />
-        <button type="submit" class="btn-primary">Log out</button>
-    </form>
+  <form method="post" class="mt-6">
+    <input type="hidden" asp-for="ReturnUrl" />
+    <button type="submit" class="btn-primary">Log out</button>
+  </form>
 </div>

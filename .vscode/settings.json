@@ -1,11 +1,11 @@
 {
-    "[csharp]": {
-        "editor.defaultFormatter": "csharpier.csharpier-vscode"
-    },
-    "editor.formatOnSave": true,
+  "[csharp]": {
+    "editor.defaultFormatter": "csharpier.csharpier-vscode"
+  },
+  "editor.formatOnSave": true,
 
-    "files.associations": {
-        "**/wwwroot/css/*.css": "tailwindcss",
-        "**/wwwroot/css/*.out.css": "css",
-    },
+  "files.associations": {
+    "**/wwwroot/css/*.css": "tailwindcss",
+    "**/wwwroot/css/*.out.css": "css"
+  }
 }

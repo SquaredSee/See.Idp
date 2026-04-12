@@ -2,37 +2,38 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - See.Idp Admin Portal</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/css/admin.out.css" asp-append-version="true" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] - See.Idp Admin Portal</title>
+  <script type="importmap"></script>
+  <link rel="stylesheet" href="~/css/admin.out.css" asp-append-version="true" />
 </head>
 
 <body>
-    <header class="border-b border-border-soft bg-surface/95">
-        <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-            <div class="flex items-center gap-4">
-                <a asp-area="Admin" asp-page="/Index"
-                   class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp Admin</a>
-                <a asp-area="Admin" asp-page="/Clients/Index" class="text-sm">Clients</a>
-                <a asp-area="Admin" asp-page="/Users/Index" class="text-sm">Users</a>
-            </div>
-            <div class="flex items-center gap-4">
-                <a asp-area="" asp-page="/Account/Logout" class="btn-primary text-sm no-underline">Logout</a>
-            </div>
-        </div>
-    </header>
-    <main class="page-wrap">
-        @RenderBody()
-    </main>
+  <header class="border-b border-border-soft bg-surface/95">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
+      <div class="flex items-center gap-4">
+        <a asp-area="Admin" asp-page="/Index"
+           class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp Admin</a>
+        <a asp-area="Admin" asp-page="/Clients/Index" class="text-sm">Clients</a>
+        <a asp-area="Admin" asp-page="/Users/Index" class="text-sm">Users</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <a asp-area="" asp-page="/Account/Logout" class="btn-primary text-sm no-underline">Logout</a>
+      </div>
+    </div>
+  </header>
+  <main class="page-wrap">
+    @RenderBody()
+  </main>
 
-    <footer class="border-t border-border-soft">
-        <div class="mx-auto w-full max-w-6xl px-6 py-4 text-sm text-slate-600">&copy; 2026 - See.Idp Admin Portal - <a
-            asp-area="" asp-page="/Privacy">Privacy</a></div>
-        </footer>
+  <footer class="border-t border-border-soft">
+    <div class="mx-auto w-full max-w-6xl px-6 py-4 text-sm text-slate-600">
+      &copy; 2026 - See.Idp Admin Portal - <a asp-area="" asp-page="/Privacy">Privacy</a>
+    </div>
+  </footer>
 
-        @await RenderSectionAsync("Scripts", required: false)
-    </body>
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
 
 </html>

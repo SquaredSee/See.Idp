@@ -2,27 +2,27 @@
 @namespace See.Idp.Web.Areas.Admin.Pages.Clients
 @model CreateModel
 @{
-    ViewData["Title"] = "Create client";
+  ViewData["Title"] = "Create client";
 }
 
 <div class="panel mx-auto w-full max-w-2xl">
-    <h1>Create client</h1>
+  <h1>Create client</h1>
 
-    <form method="post" class="mt-6 space-y-4">
-        <div>
-            <label asp-for="Input.ClientId" class="field-label"></label>
-            <input asp-for="Input.ClientId" class="field-input" />
-            <span asp-validation-for="Input.ClientId" class="mt-1 block text-sm text-red-600"></span>
-        </div>
+  <form method="post" class="mt-6 space-y-4">
+    <div>
+      <label asp-for="Input.ClientId" class="field-label"></label>
+      <input asp-for="Input.ClientId" class="field-input" />
+      <span asp-validation-for="Input.ClientId" class="mt-1 block text-sm text-red-600"></span>
+    </div>
 
-        <div>
-            <label asp-for="Input.DisplayName" class="field-label"></label>
-            <input asp-for="Input.DisplayName" class="field-input" />
-        </div>
+    <div>
+      <label asp-for="Input.DisplayName" class="field-label"></label>
+      <input asp-for="Input.DisplayName" class="field-input" />
+    </div>
 
-        <div class="flex items-center gap-3 pt-2">
-            <button type="submit" class="btn-primary">Create</button>
-            <a asp-page="/Clients/Index" asp-area="Admin" class="text-sm">Cancel</a>
-        </div>
-    </form>
+    <div class="flex items-center gap-3 pt-2">
+      <button type="submit" class="btn-primary">Create</button>
+      <a asp-page="/Clients/Index" asp-area="Admin" class="text-sm">Cancel</a>
+    </div>
+  </form>
 </div>

@@ -2,86 +2,86 @@
 @namespace See.Idp.Web.Areas.Admin.Pages.Clients
 @model IndexModel
 @{
-    ViewData["Title"] = "Clients";
+  ViewData["Title"] = "Clients";
 }
 
 <div class="panel space-y-5">
-    <div class="flex items-center justify-between">
-        <h1>Clients</h1>
-        <div class="flex items-center gap-4">
-            <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
-            <a asp-page="/Clients/Create" asp-area="Admin" class="btn-primary text-sm no-underline">Create client</a>
-        </div>
+  <div class="flex items-center justify-between">
+    <h1>Clients</h1>
+    <div class="flex items-center gap-4">
+      <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
+      <a asp-page="/Clients/Create" asp-area="Admin" class="btn-primary text-sm no-underline">Create client</a>
     </div>
+  </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
-    {
-        var statusClasses = Model.StatusKind == "error"
-            ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-            : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+  @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+  {
+    var statusClasses = Model.StatusKind == "error"
+      ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+      : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
 
-        <div class="@statusClasses">@Model.StatusMessage</div>
-    }
+    <div class="@statusClasses">@Model.StatusMessage</div>
+  }
 
-    <table class="table-admin">
-        <thead>
-            <tr>
-                <th>Client ID</th>
-                <th>Display Name</th>
-                <th class="w-1">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var client in Model.Clients)
-            {
-                <tr>
-                    <td>@client.ClientId</td>
-                    <td>@client.DisplayName</td>
-                    <td>
-                        <div class="flex items-center gap-2">
-                            <a asp-page="/Clients/Edit" asp-area="Admin" asp-route-clientId="@client.ClientId"
-                                   class="btn-primary text-sm no-underline">
-                                Edit
-                            </a>
+  <table class="table-admin">
+    <thead>
+      <tr>
+        <th>Client ID</th>
+        <th>Display Name</th>
+        <th class="w-1">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var client in Model.Clients)
+      {
+        <tr>
+          <td>@client.ClientId</td>
+          <td>@client.DisplayName</td>
+          <td>
+            <div class="flex items-center gap-2">
+              <a asp-page="/Clients/Edit" asp-area="Admin" asp-route-clientId="@client.ClientId"
+                 class="btn-primary text-sm no-underline">
+                Edit
+              </a>
 
-                            <form method="post" asp-page-handler="Delete">
-                                <input type="hidden" name="clientId" value="@client.ClientId" />
-                                <input type="hidden" name="pageNumber" value="@Model.CurrentPage" />
-                                <button type="submit" class="btn-danger text-sm">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+              <form method="post" asp-page-handler="Delete">
+                <input type="hidden" name="clientId" value="@client.ClientId" />
+                <input type="hidden" name="pageNumber" value="@Model.CurrentPage" />
+                <button type="submit" class="btn-danger text-sm">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
 
-    <div class="flex items-center justify-between border-t border-slate-200 pt-4">
-        <div class="text-sm text-slate-600">Showing @Model.Clients.Count clients on this page</div>
-        <div class="flex items-center gap-2">
-            @if (Model.HasPreviousPage)
-            {
-                <a asp-route-pageNumber="@(Model.CurrentPage - 1)" class="btn-primary text-xs no-underline">
-                    Previous
-                </a>
-            }
-            else
-            {
-                <span class="btn-primary text-xs opacity-50">Previous</span>
-            }
+  <div class="flex items-center justify-between border-t border-slate-200 pt-4">
+    <div class="text-sm text-slate-600">Showing @Model.Clients.Count clients on this page</div>
+    <div class="flex items-center gap-2">
+      @if (Model.HasPreviousPage)
+      {
+        <a asp-route-pageNumber="@(Model.CurrentPage - 1)" class="btn-primary text-xs no-underline">
+          Previous
+        </a>
+      }
+      else
+      {
+        <span class="btn-primary text-xs opacity-50">Previous</span>
+      }
 
-            <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
+      <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
 
-            @if (Model.HasNextPage)
-            {
-                <a asp-route-pageNumber="@(Model.CurrentPage + 1)" class="btn-primary text-xs no-underline">
-                    Next
-                </a>
-            }
-            else
-            {
-                <span class="btn-primary text-xs opacity-50">Next</span>
-            }
-        </div>
+      @if (Model.HasNextPage)
+      {
+        <a asp-route-pageNumber="@(Model.CurrentPage + 1)" class="btn-primary text-xs no-underline">
+          Next
+        </a>
+      }
+      else
+      {
+        <span class="btn-primary text-xs opacity-50">Next</span>
+      }
     </div>
+  </div>
 </div>
