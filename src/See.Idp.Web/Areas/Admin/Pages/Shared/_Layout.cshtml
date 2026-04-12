@@ -12,11 +12,13 @@
 <body>
     <header class="border-b border-border-soft bg-surface/95">
         <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-            <a asp-area="Admin" asp-page="/Index"
-               class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp Admin</a>
             <div class="flex items-center gap-4">
+                <a asp-area="Admin" asp-page="/Index"
+                   class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp Admin</a>
                 <a asp-area="Admin" asp-page="/Clients/Index" class="text-sm">Clients</a>
                 <a asp-area="Admin" asp-page="/Users/Index" class="text-sm">Users</a>
+            </div>
+            <div class="flex items-center gap-4">
                 <a asp-area="" asp-page="/Account/Logout" class="btn-primary text-sm no-underline">Logout</a>
             </div>
         </div>
