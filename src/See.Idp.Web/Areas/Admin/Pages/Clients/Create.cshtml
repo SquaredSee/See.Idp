@@ -5,6 +5,22 @@
   ViewData["Title"] = "Create client";
 }
 
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+
+  <script>
+    (function () {
+      const checkbox = document.getElementById("Input_AllowClientCredentialsFlow");
+      const hint = document.getElementById("cc-secret-hint");
+      if (!checkbox || !hint) return;
+
+      const sync = () => hint.classList.toggle("hidden", !checkbox.checked);
+      checkbox.addEventListener("change", sync);
+      sync();
+    })();
+  </script>
+}
+
 <div class="panel mx-auto w-full max-w-2xl">
   <h1>Create client</h1>
 
@@ -33,6 +49,9 @@
       <label class="flex items-center gap-2 text-sm">
         <input asp-for="Input.AllowClientCredentialsFlow" class="h-4 w-4" />
         <span>Client credentials</span>
+        <span id="cc-secret-hint" class="text-xs text-amber-700 hidden">
+          Client credentials flow requires that a client secret also be configured
+        </span>
       </label>
 
       <label class="flex items-center gap-2 text-sm">
