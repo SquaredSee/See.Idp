@@ -44,8 +44,9 @@ public sealed class UserQueryServiceTests
 
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager.Users.Returns(AsyncQueryableTestFactory.Create([beta, alpha]));
-        userManager.IsInRoleAsync(alpha, Roles.Admin).Returns(Task.FromResult(true));
-        userManager.IsInRoleAsync(beta, Roles.Admin).Returns(Task.FromResult(false));
+        userManager
+            .GetUsersInRoleAsync(Roles.Admin)
+            .Returns(Task.FromResult(IdentityTestFactory.Users(alpha)));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -66,6 +67,9 @@ public sealed class UserQueryServiceTests
         Assert.IsFalse(result[1].EmailConfirmed);
         Assert.IsFalse(result[1].IsAdmin);
         Assert.IsFalse(result[1].IsLockedOut);
+
+        await userManager.Received(1).GetUsersInRoleAsync(Roles.Admin);
+        await userManager.DidNotReceive().IsInRoleAsync(Arg.Any<IdentityUser>(), Arg.Any<string>());
     }
 
     [TestMethod]
@@ -82,7 +86,9 @@ public sealed class UserQueryServiceTests
 
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager.Users.Returns(AsyncQueryableTestFactory.Create([user]));
-        userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(false));
+        userManager
+            .GetUsersInRoleAsync(Roles.Admin)
+            .Returns(Task.FromResult(IdentityTestFactory.Users()));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -90,6 +96,75 @@ public sealed class UserQueryServiceTests
 
         Assert.HasCount(1, result);
         Assert.IsFalse(result[0].IsLockedOut);
+    }
+
+    [TestMethod]
+    public async Task ListUsersAsync_FiltersBySearchTerm()
+    {
+        var alpha = new IdentityUser
+        {
+            Id = "user-alpha",
+            UserName = "alpha",
+            Email = "alpha@example.com",
+        };
+
+        var beta = new IdentityUser
+        {
+            Id = "user-beta",
+            UserName = "beta",
+            Email = "beta@example.com",
+        };
+
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.Users.Returns(AsyncQueryableTestFactory.Create([alpha, beta]));
+        userManager
+            .GetUsersInRoleAsync(Roles.Admin)
+            .Returns(Task.FromResult(IdentityTestFactory.Users()));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.ListUsersAsync(new ListUsersQuery(SearchTerm: "alpha"), Ct);
+
+        Assert.HasCount(1, result);
+        Assert.AreEqual("user-alpha", result[0].UserId);
+    }
+
+    [TestMethod]
+    public async Task ListUsersAsync_AppliesSkipAndTake()
+    {
+        var userA = new IdentityUser
+        {
+            Id = "user-a",
+            UserName = "a",
+            Email = "a@example.com",
+        };
+
+        var userB = new IdentityUser
+        {
+            Id = "user-b",
+            UserName = "b",
+            Email = "b@example.com",
+        };
+
+        var userC = new IdentityUser
+        {
+            Id = "user-c",
+            UserName = "c",
+            Email = "c@example.com",
+        };
+
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.Users.Returns(AsyncQueryableTestFactory.Create([userC, userA, userB]));
+        userManager
+            .GetUsersInRoleAsync(Roles.Admin)
+            .Returns(Task.FromResult(IdentityTestFactory.Users()));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.ListUsersAsync(new ListUsersQuery(Skip: 1, Take: 1), Ct);
+
+        Assert.HasCount(1, result);
+        Assert.AreEqual("user-b", result[0].UserId);
     }
 
     private static UserQueryService CreateSut(UserManager<IdentityUser>? userManager = null)

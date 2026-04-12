@@ -3,7 +3,10 @@ namespace See.Idp.Core.Dtos.Clients;
 /// <summary>
 ///     Represents a query to list clients.
 /// </summary>
-public sealed record ListClientsQuery;
+/// <param name="SearchTerm">Optional search term applied to client id and display name.</param>
+/// <param name="Skip">Optional number of results to skip.</param>
+/// <param name="Take">Optional maximum number of results to return.</param>
+public sealed record ListClientsQuery(string? SearchTerm = null, int Skip = 0, int? Take = null);
 
 /// <summary>
 ///     Represents a query to retrieve a client by identifier.

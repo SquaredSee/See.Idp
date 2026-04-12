@@ -46,6 +46,70 @@ public sealed class ClientQueryServiceTests
     }
 
     [TestMethod]
+    public async Task ListClientsAsync_FiltersBySearchTerm()
+    {
+        var app1 = new object();
+        var app2 = new object();
+
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .ListAsync(cancellationToken: Ct)
+            .Returns(AsyncEnumerableTestFactory.Create(app1, app2));
+
+        applicationManager.GetClientIdAsync(app1, Ct).Returns(new ValueTask<string?>("client-1"));
+        applicationManager
+            .GetDisplayNameAsync(app1, Ct)
+            .Returns(new ValueTask<string?>("First Client"));
+
+        applicationManager.GetClientIdAsync(app2, Ct).Returns(new ValueTask<string?>("client-2"));
+        applicationManager
+            .GetDisplayNameAsync(app2, Ct)
+            .Returns(new ValueTask<string?>("Second Client"));
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.ListClientsAsync(new ListClientsQuery(SearchTerm: "SECOND"), Ct);
+
+        Assert.HasCount(1, result);
+        Assert.AreEqual("client-2", result[0].ClientId);
+    }
+
+    [TestMethod]
+    public async Task ListClientsAsync_AppliesSkipAndTake()
+    {
+        var appA = new object();
+        var appB = new object();
+        var appC = new object();
+
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .ListAsync(cancellationToken: Ct)
+            .Returns(AsyncEnumerableTestFactory.Create(appC, appA, appB));
+
+        applicationManager.GetClientIdAsync(appA, Ct).Returns(new ValueTask<string?>("client-a"));
+        applicationManager
+            .GetDisplayNameAsync(appA, Ct)
+            .Returns(new ValueTask<string?>("Client A"));
+
+        applicationManager.GetClientIdAsync(appB, Ct).Returns(new ValueTask<string?>("client-b"));
+        applicationManager
+            .GetDisplayNameAsync(appB, Ct)
+            .Returns(new ValueTask<string?>("Client B"));
+
+        applicationManager.GetClientIdAsync(appC, Ct).Returns(new ValueTask<string?>("client-c"));
+        applicationManager
+            .GetDisplayNameAsync(appC, Ct)
+            .Returns(new ValueTask<string?>("Client C"));
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.ListClientsAsync(new ListClientsQuery(Skip: 1, Take: 1), Ct);
+
+        Assert.HasCount(1, result);
+        Assert.AreEqual("client-b", result[0].ClientId);
+    }
+
+    [TestMethod]
     public async Task GetClientByIdAsync_ReturnsNull_WhenClientIdMissing()
     {
         var applicationManager = CreateApplicationManager();

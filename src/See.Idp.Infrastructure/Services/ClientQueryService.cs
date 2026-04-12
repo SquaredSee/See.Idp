@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -32,8 +34,39 @@ public sealed partial class ClientQueryService(
             }
         }
 
-        LogClientListRetrieved(clients.Count);
-        return clients;
+        IEnumerable<ClientSummaryDto> filteredClients = clients;
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+        {
+            var searchTerm = query.SearchTerm.Trim();
+            filteredClients = filteredClients.Where(c =>
+                c.ClientId.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                || (
+                    !string.IsNullOrWhiteSpace(c.DisplayName)
+                    && c.DisplayName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                )
+            );
+        }
+
+        filteredClients = filteredClients.OrderBy(
+            c => c.ClientId,
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        if (query.Skip > 0)
+        {
+            filteredClients = filteredClients.Skip(query.Skip);
+        }
+
+        if (query.Take is > 0)
+        {
+            filteredClients = filteredClients.Take(query.Take.Value);
+        }
+
+        var result = filteredClients.ToList();
+
+        LogClientListRetrieved(result.Count);
+        return result;
     }
 
     public async Task<ClientDetailsDto?> GetClientByIdAsync(

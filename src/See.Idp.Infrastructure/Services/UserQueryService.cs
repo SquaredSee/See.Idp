@@ -23,16 +23,41 @@ public sealed partial class UserQueryService(
         CancellationToken ct = default
     )
     {
-        var users = await userManager
-            .Users.OrderBy(u => u.Email)
-            .ThenBy(u => u.UserName)
-            .ToListAsync(ct);
+        var usersQuery = userManager.Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+        {
+            var searchTerm = query.SearchTerm.Trim();
+            usersQuery = usersQuery.Where(u =>
+                (u.Email != null && u.Email.Contains(searchTerm))
+                || (u.UserName != null && u.UserName.Contains(searchTerm))
+            );
+        }
+
+        usersQuery = usersQuery.OrderBy(u => u.Email).ThenBy(u => u.UserName);
+
+        if (query.Skip > 0)
+        {
+            usersQuery = usersQuery.Skip(query.Skip);
+        }
+
+        if (query.Take is > 0)
+        {
+            usersQuery = usersQuery.Take(query.Take.Value);
+        }
+
+        var users = await usersQuery.ToListAsync(ct);
+        var adminUsers = await userManager.GetUsersInRoleAsync(Roles.Admin);
+        var adminUserIds = new HashSet<string>(
+            adminUsers.Select(u => u.Id),
+            StringComparer.Ordinal
+        );
 
         var result = new List<UserSummaryDto>(users.Count);
 
         foreach (var user in users)
         {
-            var isAdmin = await userManager.IsInRoleAsync(user, Roles.Admin);
+            var isAdmin = adminUserIds.Contains(user.Id);
             var isLocked =
                 user.LockoutEnabled
                 && user.LockoutEnd.HasValue
