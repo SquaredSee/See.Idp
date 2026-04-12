@@ -11,6 +11,15 @@
         <a asp-page="/Clients/Create" asp-area="Admin" class="btn-primary text-sm no-underline">Create client</a>
     </div>
 
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        var statusClasses = Model.StatusKind == "error"
+            ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+
+        <div class="@statusClasses">@Model.StatusMessage</div>
+    }
+
     <table class="table-admin">
         <thead>
             <tr>

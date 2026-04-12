@@ -14,6 +14,12 @@ public sealed class IndexModel(
 {
     public List<ClientRow> Clients { get; } = [];
 
+    [TempData]
+    public string? StatusMessage { get; set; }
+
+    [TempData]
+    public string? StatusKind { get; set; }
+
     public async Task OnGetAsync()
     {
         await LoadAsync();
@@ -21,9 +27,28 @@ public sealed class IndexModel(
 
     public async Task<IActionResult> OnPostDeleteAsync(string clientId)
     {
-        await clientCommandService.DeleteClientAsync(new DeleteClientCommand(clientId));
+        var result = await clientCommandService.DeleteClientAsync(
+            new DeleteClientCommand(clientId)
+        );
+
+        if (result.Succeeded)
+            SetStatusSuccess(result.Message ?? "Client deleted.");
+        else
+            SetStatusError(result.Error ?? "Unable to delete client.");
 
         return RedirectToPage();
+    }
+
+    private void SetStatusSuccess(string message)
+    {
+        StatusKind = "success";
+        StatusMessage = message;
+    }
+
+    private void SetStatusError(string message)
+    {
+        StatusKind = "error";
+        StatusMessage = message;
     }
 
     private async Task LoadAsync()
