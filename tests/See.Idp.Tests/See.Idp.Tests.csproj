@@ -2,11 +2,15 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\See.Idp.Core\See.Idp.Core.csproj" />
+    <ProjectReference Include="..\..\src\See.Idp.Infrastructure\See.Idp.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
