@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,15 @@ public sealed class IndexModel(
     IUserCommandService userCommandService
 ) : PageModel
 {
+    private const int PageSize = 10;
+
     public List<UserRow> Users { get; } = [];
+
+    public int CurrentPage { get; private set; } = 1;
+
+    public bool HasPreviousPage => CurrentPage > 1;
+
+    public bool HasNextPage { get; private set; }
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -22,13 +31,15 @@ public sealed class IndexModel(
     [TempData]
     public string? StatusKind { get; set; }
 
-    public async Task OnGetAsync()
+    public async Task OnGetAsync(int pageNumber = 1)
     {
+        CurrentPage = NormalizePage(pageNumber);
         await LoadAsync();
     }
 
-    public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
+    public async Task<IActionResult> OnPostToggleAdminAsync(string userId, int pageNumber = 1)
     {
+        var targetPage = NormalizePage(pageNumber);
         var currentUserId = GetCurrentUserId();
         var result = await userCommandService.ToggleAdminAsync(
             new ToggleUserAdminCommand(userId, currentUserId)
@@ -39,11 +50,12 @@ public sealed class IndexModel(
         else
             SetStatusError(result.Error ?? "Unable to update admin role.");
 
-        return RedirectToPage();
+        return RedirectToPage(new { pageNumber = targetPage });
     }
 
-    public async Task<IActionResult> OnPostToggleLockAsync(string userId)
+    public async Task<IActionResult> OnPostToggleLockAsync(string userId, int pageNumber = 1)
     {
+        var targetPage = NormalizePage(pageNumber);
         var currentUserId = GetCurrentUserId();
         var result = await userCommandService.ToggleLockAsync(
             new ToggleUserLockCommand(userId, currentUserId)
@@ -54,11 +66,12 @@ public sealed class IndexModel(
         else
             SetStatusError(result.Error ?? "Unable to update lock state.");
 
-        return RedirectToPage();
+        return RedirectToPage(new { pageNumber = targetPage });
     }
 
-    public async Task<IActionResult> OnPostDeleteAsync(string userId)
+    public async Task<IActionResult> OnPostDeleteAsync(string userId, int pageNumber = 1)
     {
+        var targetPage = NormalizePage(pageNumber);
         var currentUserId = GetCurrentUserId();
         var result = await userCommandService.DeleteUserAsync(
             new DeleteUserCommand(userId, currentUserId)
@@ -69,15 +82,19 @@ public sealed class IndexModel(
         else
             SetStatusError(result.Error ?? "Unable to delete user.");
 
-        return RedirectToPage();
+        return RedirectToPage(new { pageNumber = targetPage });
     }
 
     private async Task LoadAsync()
     {
         var currentUserId = GetCurrentUserId();
-        var users = await userQueryService.ListUsersAsync(new ListUsersQuery());
+        var users = await userQueryService.ListUsersAsync(
+            new ListUsersQuery(Skip: (CurrentPage - 1) * PageSize, Take: PageSize + 1)
+        );
 
-        foreach (var user in users)
+        HasNextPage = users.Count > PageSize;
+
+        foreach (var user in users.Take(PageSize))
         {
             Users.Add(
                 new UserRow(
@@ -112,6 +129,11 @@ public sealed class IndexModel(
     private string? GetCurrentUserId()
     {
         return User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+    }
+
+    private static int NormalizePage(int page)
+    {
+        return page < 1 ? 1 : page;
     }
 
     public sealed record UserRow(
