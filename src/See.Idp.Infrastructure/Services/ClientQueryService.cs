@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -21,25 +22,13 @@ public sealed partial class ClientQueryService(
         CancellationToken ct = default
     )
     {
-        var clients = new List<ClientSummaryDto>();
-
-        await foreach (var app in applicationManager.ListAsync(cancellationToken: ct))
-        {
-            var clientId = await applicationManager.GetClientIdAsync(app, ct);
-            var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
-
-            if (!string.IsNullOrWhiteSpace(clientId))
-            {
-                clients.Add(new ClientSummaryDto(clientId, displayName));
-            }
-        }
-
-        IEnumerable<ClientSummaryDto> filteredClients = clients;
+        // TODO: Filtering and Paging is currently done in-memory which is not ideal for large datasets. Consider EF Core replacement.
+        var clients = StreamClientsAsync(ct);
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm))
         {
             var searchTerm = query.SearchTerm.Trim();
-            filteredClients = filteredClients.Where(c =>
+            clients = clients.Where(c =>
                 c.ClientId.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
                 || (
                     !string.IsNullOrWhiteSpace(c.DisplayName)
@@ -48,23 +37,14 @@ public sealed partial class ClientQueryService(
             );
         }
 
-        filteredClients = filteredClients.OrderBy(
-            c => c.ClientId,
-            StringComparer.OrdinalIgnoreCase
-        );
+        clients = clients.OrderBy(c => c.ClientId, StringComparer.OrdinalIgnoreCase);
 
         if (query.Skip > 0)
-        {
-            filteredClients = filteredClients.Skip(query.Skip);
-        }
-
+            clients = clients.Skip(query.Skip);
         if (query.Take is > 0)
-        {
-            filteredClients = filteredClients.Take(query.Take.Value);
-        }
+            clients = clients.Take(query.Take.Value);
 
-        var result = filteredClients.ToList();
-
+        var result = await clients.ToListAsync(ct);
         LogClientListRetrieved(result.Count);
         return result;
     }
@@ -99,6 +79,22 @@ public sealed partial class ClientQueryService(
 
         var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
         return new ClientDetailsDto(clientId, displayName);
+    }
+
+    private async IAsyncEnumerable<ClientSummaryDto> StreamClientsAsync(
+        [EnumeratorCancellation] CancellationToken ct = default
+    )
+    {
+        await foreach (var app in applicationManager.ListAsync(cancellationToken: ct))
+        {
+            var clientId = await applicationManager.GetClientIdAsync(app, ct);
+            var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
+
+            if (!string.IsNullOrWhiteSpace(clientId))
+            {
+                yield return new ClientSummaryDto(clientId, displayName);
+            }
+        }
     }
 
     [LoggerMessage(

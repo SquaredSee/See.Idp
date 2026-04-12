@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
@@ -23,39 +24,49 @@ public sealed partial class UserQueryService(
         CancellationToken ct = default
     )
     {
-        var usersQuery = userManager.Users.AsQueryable();
+        // TODO: Filtering and Paging is currently done in-memory which is not ideal for large datasets. Consider EF Core replacement.
+        var users = StreamUsersAsync(ct);
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm))
         {
             var searchTerm = query.SearchTerm.Trim();
-            usersQuery = usersQuery.Where(u =>
-                (u.Email != null && u.Email.Contains(searchTerm))
-                || (u.UserName != null && u.UserName.Contains(searchTerm))
+            users = users.Where(u =>
+                (
+                    u.Email != null
+                    && u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                )
+                || (
+                    u.UserName != null
+                    && u.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                )
             );
         }
 
-        usersQuery = usersQuery.OrderBy(u => u.Email).ThenBy(u => u.UserName);
+        users = users.OrderBy(u => u.Email).ThenBy(u => u.UserName);
 
         if (query.Skip > 0)
-        {
-            usersQuery = usersQuery.Skip(query.Skip);
-        }
-
+            users = users.Skip(query.Skip);
         if (query.Take is > 0)
-        {
-            usersQuery = usersQuery.Take(query.Take.Value);
-        }
+            users = users.Take(query.Take.Value);
 
-        var users = await usersQuery.ToListAsync(ct);
+        var result = await users.ToListAsync(ct);
+        LogUserListRetrieved(result.Count);
+        return result;
+    }
+
+    private async IAsyncEnumerable<UserSummaryDto> StreamUsersAsync(
+        [EnumeratorCancellation] CancellationToken ct = default
+    )
+    {
         var adminUsers = await userManager.GetUsersInRoleAsync(Roles.Admin);
         var adminUserIds = new HashSet<string>(
             adminUsers.Select(u => u.Id),
             StringComparer.Ordinal
         );
 
-        var result = new List<UserSummaryDto>(users.Count);
-
-        foreach (var user in users)
+        await foreach (
+            var user in userManager.Users.AsNoTracking().AsAsyncEnumerable().WithCancellation(ct)
+        )
         {
             var isAdmin = adminUserIds.Contains(user.Id);
             var isLocked =
@@ -63,20 +74,15 @@ public sealed partial class UserQueryService(
                 && user.LockoutEnd.HasValue
                 && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
 
-            result.Add(
-                new UserSummaryDto(
-                    UserId: user.Id,
-                    UserName: user.UserName,
-                    Email: user.Email,
-                    EmailConfirmed: user.EmailConfirmed,
-                    IsAdmin: isAdmin,
-                    IsLockedOut: isLocked
-                )
+            yield return new UserSummaryDto(
+                UserId: user.Id,
+                UserName: user.UserName,
+                Email: user.Email,
+                EmailConfirmed: user.EmailConfirmed,
+                IsAdmin: isAdmin,
+                IsLockedOut: isLocked
             );
         }
-
-        LogUserListRetrieved(result.Count);
-        return result;
     }
 
     [LoggerMessage(
