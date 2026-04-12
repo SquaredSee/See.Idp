@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,7 +15,10 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
-    public void OnGet() { }
+    public void OnGet()
+    {
+        Input = new InputModel { AllowAuthorizationCodeFlow = true };
+    }
 
     public async Task<IActionResult> OnPostAsync()
     {
@@ -22,25 +28,64 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
         }
 
         var result = await clientCommandService.CreateClientAsync(
-            new CreateClientCommand(Input.ClientId, Input.DisplayName)
+            new CreateClientCommand(
+                Input.ClientId,
+                Input.DisplayName,
+                Input.AllowAuthorizationCodeFlow,
+                Input.AllowClientCredentialsFlow,
+                Input.AllowRefreshTokenFlow,
+                SplitLines(Input.RedirectUrisText),
+                SplitLines(Input.PermissionsText)
+            )
         );
 
         if (!result.Succeeded)
         {
-            ModelState.AddModelError(
-                nameof(Input.ClientId),
-                result.Error ?? "Client creation failed."
-            );
+            ModelState.AddModelError(string.Empty, result.Error ?? "Client creation failed.");
             return Page();
         }
 
         return RedirectToPage("./Index");
     }
 
+    private static List<string> SplitLines(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return [];
+        }
+
+        return
+        [
+            .. value
+                .Split(
+                    ['\r', '\n'],
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                )
+                .Where(line => !string.IsNullOrWhiteSpace(line)),
+        ];
+    }
+
     public sealed class InputModel
     {
         [Required]
         public string ClientId { get; set; } = string.Empty;
+
         public string? DisplayName { get; set; }
+
+        [Display(Name = "Allow authorization code flow")]
+        public bool AllowAuthorizationCodeFlow { get; set; } = true;
+
+        [Display(Name = "Allow client credentials flow")]
+        public bool AllowClientCredentialsFlow { get; set; }
+
+        [Display(Name = "Allow refresh token flow")]
+        public bool AllowRefreshTokenFlow { get; set; }
+
+        [Display(Name = "Redirect URIs (one per line)")]
+        public string? RedirectUrisText { get; set; }
+
+        [Display(Name = "Additional permissions (one per line)")]
+        public string? PermissionsText { get; set; }
     }
 }

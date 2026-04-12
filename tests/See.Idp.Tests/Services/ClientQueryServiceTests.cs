@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -161,8 +163,17 @@ public sealed class ClientQueryServiceTests
         applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
         applicationManager.GetClientIdAsync(app, Ct).Returns(new ValueTask<string?>("client-1"));
         applicationManager
-            .GetDisplayNameAsync(app, Ct)
-            .Returns(new ValueTask<string?>("Client One"));
+            .When(x => x.PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct))
+            .Do(callInfo =>
+            {
+                var descriptor = callInfo.Arg<OpenIddictApplicationDescriptor>();
+                descriptor.DisplayName = "Client One";
+                descriptor.Permissions.Add("gt:authorization_code");
+                descriptor.Permissions.Add("gt:client_credentials");
+                descriptor.Permissions.Add("scp:profile");
+                descriptor.RedirectUris.Add(new Uri("https://localhost/callback"));
+                descriptor.RedirectUris.Add(new Uri("https://localhost/callback"));
+            });
 
         var sut = CreateSut(applicationManager);
 
@@ -171,6 +182,12 @@ public sealed class ClientQueryServiceTests
         Assert.IsNotNull(result);
         Assert.AreEqual("client-1", result.ClientId);
         Assert.AreEqual("Client One", result.DisplayName);
+        Assert.IsTrue(result.AllowAuthorizationCodeFlow);
+        Assert.IsTrue(result.AllowClientCredentialsFlow);
+        Assert.IsFalse(result.AllowRefreshTokenFlow);
+        Assert.HasCount(1, result.RedirectUris);
+        Assert.AreEqual("https://localhost/callback", result.RedirectUris[0]);
+        Assert.IsTrue(result.Permissions.Contains("scp:profile"));
     }
 
     private static IOpenIddictApplicationManager CreateApplicationManager()

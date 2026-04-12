@@ -9,6 +9,8 @@
   <h1>Create client</h1>
 
   <form method="post" class="mt-6 space-y-4">
+    <div asp-validation-summary="ModelOnly" class="text-sm text-red-600"></div>
+
     <div>
       <label asp-for="Input.ClientId" class="field-label"></label>
       <input asp-for="Input.ClientId" class="field-input" />
@@ -18,6 +20,39 @@
     <div>
       <label asp-for="Input.DisplayName" class="field-label"></label>
       <input asp-for="Input.DisplayName" class="field-input" />
+    </div>
+
+    <fieldset class="space-y-2 rounded-md border border-border-soft p-3">
+      <legend class="field-label mb-0">Allowed flows</legend>
+
+      <label class="flex items-center gap-2 text-sm">
+        <input asp-for="Input.AllowAuthorizationCodeFlow" class="h-4 w-4" />
+        <span>Authorization code</span>
+      </label>
+
+      <label class="flex items-center gap-2 text-sm">
+        <input asp-for="Input.AllowClientCredentialsFlow" class="h-4 w-4" />
+        <span>Client credentials</span>
+      </label>
+
+      <label class="flex items-center gap-2 text-sm">
+        <input asp-for="Input.AllowRefreshTokenFlow" class="h-4 w-4" />
+        <span>Refresh token</span>
+      </label>
+    </fieldset>
+
+    <div>
+      <label asp-for="Input.RedirectUrisText" class="field-label"></label>
+      <textarea asp-for="Input.RedirectUrisText" class="field-input" rows="4"></textarea>
+      <p class="mt-1 text-xs text-slate-600">Enter one absolute URI per line.</p>
+      <span asp-validation-for="Input.RedirectUrisText" class="mt-1 block text-sm text-red-600"></span>
+    </div>
+
+    <div>
+      <label asp-for="Input.PermissionsText" class="field-label"></label>
+      <textarea asp-for="Input.PermissionsText" class="field-input" rows="6"></textarea>
+      <p class="mt-1 text-xs text-slate-600">Advanced mode: enter one OpenIddict permission per line.</p>
+      <span asp-validation-for="Input.PermissionsText" class="mt-1 block text-sm text-red-600"></span>
     </div>
 
     <div class="flex items-center gap-3 pt-2">

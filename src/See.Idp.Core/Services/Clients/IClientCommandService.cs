@@ -44,6 +44,17 @@ public interface IClientCommandService
     );
 
     /// <summary>
+    ///     Rotates a client's secret and returns the generated value.
+    /// </summary>
+    /// <param name="command">The command identifying which client secret to rotate.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>The result containing the generated secret when successful.</returns>
+    Task<RotateClientSecretResult> RotateClientSecretAsync(
+        RotateClientSecretCommand command,
+        CancellationToken ct = default
+    );
+
+    /// <summary>
     ///     Creates a client when it does not already exist.
     /// </summary>
     /// <param name="command">The command containing the client details.</param>

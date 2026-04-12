@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,6 +15,9 @@ public sealed class EditModel(
     IClientCommandService clientCommandService
 ) : PageModel
 {
+    [TempData]
+    public string? RotatedClientSecret { get; set; }
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -22,13 +28,10 @@ public sealed class EditModel(
             return NotFound();
         }
 
-        var client = await clientQueryService.GetClientByIdAsync(new GetClientByIdQuery(clientId));
-        if (client is null)
+        if (!await TryLoadInputAsync(clientId))
         {
             return NotFound();
         }
-
-        Input = new InputModel { ClientId = client.ClientId, DisplayName = client.DisplayName };
 
         return Page();
     }
@@ -41,7 +44,15 @@ public sealed class EditModel(
         }
 
         var result = await clientCommandService.UpdateClientAsync(
-            new UpdateClientCommand(Input.ClientId, Input.DisplayName)
+            new UpdateClientCommand(
+                Input.ClientId,
+                Input.DisplayName,
+                Input.AllowAuthorizationCodeFlow,
+                Input.AllowClientCredentialsFlow,
+                Input.AllowRefreshTokenFlow,
+                SplitLines(Input.RedirectUrisText),
+                SplitLines(Input.PermissionsText)
+            )
         );
 
         if (!result.Succeeded)
@@ -53,11 +64,95 @@ public sealed class EditModel(
         return RedirectToPage("./Index");
     }
 
+    public async Task<IActionResult> OnPostRotateSecretAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Input.ClientId))
+        {
+            return NotFound();
+        }
+
+        var result = await clientCommandService.RotateClientSecretAsync(
+            new RotateClientSecretCommand(Input.ClientId)
+        );
+
+        if (!result.Succeeded)
+        {
+            if (!await TryLoadInputAsync(Input.ClientId))
+            {
+                return NotFound();
+            }
+
+            ModelState.AddModelError(
+                string.Empty,
+                result.Error ?? "Unable to rotate client secret."
+            );
+            return Page();
+        }
+
+        RotatedClientSecret = result.ClientSecret;
+        return RedirectToPage(new { clientId = Input.ClientId });
+    }
+
+    private async Task<bool> TryLoadInputAsync(string clientId)
+    {
+        var client = await clientQueryService.GetClientByIdAsync(new GetClientByIdQuery(clientId));
+        if (client is null)
+        {
+            return false;
+        }
+
+        Input = new InputModel
+        {
+            ClientId = client.ClientId,
+            DisplayName = client.DisplayName,
+            AllowAuthorizationCodeFlow = client.AllowAuthorizationCodeFlow,
+            AllowClientCredentialsFlow = client.AllowClientCredentialsFlow,
+            AllowRefreshTokenFlow = client.AllowRefreshTokenFlow,
+            RedirectUrisText = string.Join(Environment.NewLine, client.RedirectUris),
+            PermissionsText = string.Join(Environment.NewLine, client.Permissions),
+        };
+
+        return true;
+    }
+
+    private static List<string> SplitLines(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return [];
+        }
+
+        return
+        [
+            .. value
+                .Split(
+                    ['\r', '\n'],
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+                )
+                .Where(line => !string.IsNullOrWhiteSpace(line)),
+        ];
+    }
+
     public sealed class InputModel
     {
         [Required]
         public string ClientId { get; set; } = string.Empty;
 
         public string? DisplayName { get; set; }
+
+        [Display(Name = "Allow authorization code flow")]
+        public bool AllowAuthorizationCodeFlow { get; set; }
+
+        [Display(Name = "Allow client credentials flow")]
+        public bool AllowClientCredentialsFlow { get; set; }
+
+        [Display(Name = "Allow refresh token flow")]
+        public bool AllowRefreshTokenFlow { get; set; }
+
+        [Display(Name = "Redirect URIs (one per line)")]
+        public string? RedirectUrisText { get; set; }
+
+        [Display(Name = "Additional permissions (one per line)")]
+        public string? PermissionsText { get; set; }
     }
 }

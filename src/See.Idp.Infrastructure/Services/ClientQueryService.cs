@@ -77,8 +77,32 @@ public sealed partial class ClientQueryService(
             return null;
         }
 
-        var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
-        return new ClientDetailsDto(clientId, displayName);
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await applicationManager.PopulateAsync(descriptor, app, ct);
+
+        var permissions = descriptor
+            .Permissions.Where(p => !string.IsNullOrWhiteSpace(p))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(p => p, StringComparer.Ordinal)
+            .ToList();
+
+        var redirectUris = descriptor
+            .RedirectUris.Select(uri => uri.AbsoluteUri)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(uri => uri, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new ClientDetailsDto(
+            clientId,
+            descriptor.DisplayName,
+            ClientPermissionConventions.HasAuthorizationCodeFlow(permissions),
+            ClientPermissionConventions.HasClientCredentialsFlow(permissions),
+            ClientPermissionConventions.HasRefreshTokenFlow(permissions),
+            redirectUris,
+            permissions
+                .Where(p => !ClientPermissionConventions.IsFlowControlledPermission(p))
+                .ToList()
+        );
     }
 
     private async IAsyncEnumerable<ClientSummaryDto> StreamClientsAsync(

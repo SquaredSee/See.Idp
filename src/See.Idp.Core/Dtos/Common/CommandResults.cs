@@ -88,3 +88,31 @@ public sealed record CreateUserIfMissingResult(
     /// <returns>A failed create-user-if-missing result.</returns>
     public static CreateUserIfMissingResult Failure(string error) => new(false, false, null, error);
 }
+
+/// <summary>
+///     Represents the result of rotating a client secret.
+/// </summary>
+/// <param name="Succeeded">Indicates whether the command succeeded.</param>
+/// <param name="ClientSecret">The generated client secret when rotation succeeds.</param>
+/// <param name="Error">An optional error message.</param>
+public sealed record RotateClientSecretResult(
+    bool Succeeded,
+    string? ClientSecret = null,
+    string? Error = null
+)
+{
+    /// <summary>
+    ///     Creates a successful result containing the generated client secret.
+    /// </summary>
+    /// <param name="clientSecret">The generated plain-text client secret.</param>
+    /// <returns>A successful rotate-client-secret result.</returns>
+    public static RotateClientSecretResult Success(string clientSecret) =>
+        new(true, clientSecret, null);
+
+    /// <summary>
+    ///     Creates a failed rotate-client-secret result.
+    /// </summary>
+    /// <param name="error">The error message.</param>
+    /// <returns>A failed rotate-client-secret result.</returns>
+    public static RotateClientSecretResult Failure(string error) => new(false, null, error);
+}

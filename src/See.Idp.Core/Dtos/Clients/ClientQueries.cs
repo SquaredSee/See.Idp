@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace See.Idp.Core.Dtos.Clients;
 
 /// <summary>
@@ -26,4 +28,17 @@ public sealed record ClientSummaryDto(string ClientId, string? DisplayName);
 /// </summary>
 /// <param name="ClientId">The unique client identifier.</param>
 /// <param name="DisplayName">The display name.</param>
-public sealed record ClientDetailsDto(string ClientId, string? DisplayName);
+/// <param name="AllowAuthorizationCodeFlow">Whether authorization code flow is enabled.</param>
+/// <param name="AllowClientCredentialsFlow">Whether client credentials flow is enabled.</param>
+/// <param name="AllowRefreshTokenFlow">Whether refresh token flow is enabled.</param>
+/// <param name="RedirectUris">Configured redirect URIs for this client.</param>
+/// <param name="Permissions">Permissions assigned to this client.</param>
+public sealed record ClientDetailsDto(
+    string ClientId,
+    string? DisplayName,
+    bool AllowAuthorizationCodeFlow,
+    bool AllowClientCredentialsFlow,
+    bool AllowRefreshTokenFlow,
+    IReadOnlyList<string> RedirectUris,
+    IReadOnlyList<string> Permissions
+);

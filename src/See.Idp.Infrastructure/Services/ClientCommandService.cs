@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -32,14 +34,30 @@ public sealed partial class ClientCommandService(
             return CommandResult.Failure("Client ID already exists.");
         }
 
-        await applicationManager.CreateAsync(
-            new OpenIddictApplicationDescriptor
-            {
-                ClientId = command.ClientId,
-                DisplayName = command.DisplayName,
-            },
-            ct
-        );
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = command.ClientId,
+            DisplayName = command.DisplayName,
+        };
+
+        if (
+            !TryConfigureClient(
+                descriptor,
+                command.ClientId,
+                command.AllowAuthorizationCodeFlow,
+                command.AllowClientCredentialsFlow,
+                command.AllowRefreshTokenFlow,
+                command.RedirectUris,
+                command.AdditionalPermissions,
+                out var configurationError
+            )
+        )
+        {
+            LogClientCommandRejected(nameof(CreateClientAsync), configurationError);
+            return CommandResult.Failure(configurationError);
+        }
+
+        await applicationManager.CreateAsync(descriptor, ct);
 
         LogClientCreated(command.ClientId);
         return CommandResult.Success();
@@ -68,9 +86,55 @@ public sealed partial class ClientCommandService(
 
         descriptor.DisplayName = command.DisplayName;
 
+        if (
+            !TryConfigureClient(
+                descriptor,
+                command.ClientId,
+                command.AllowAuthorizationCodeFlow,
+                command.AllowClientCredentialsFlow,
+                command.AllowRefreshTokenFlow,
+                command.RedirectUris,
+                command.AdditionalPermissions,
+                out var configurationError
+            )
+        )
+        {
+            LogClientCommandRejected(nameof(UpdateClientAsync), configurationError);
+            return CommandResult.Failure(configurationError);
+        }
+
         await applicationManager.UpdateAsync(app, descriptor, ct);
         LogClientUpdated(command.ClientId);
         return CommandResult.Success();
+    }
+
+    public async Task<RotateClientSecretResult> RotateClientSecretAsync(
+        RotateClientSecretCommand command,
+        CancellationToken ct = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(command.ClientId))
+        {
+            LogClientCommandRejected(nameof(RotateClientSecretAsync), "Client ID is required.");
+            return RotateClientSecretResult.Failure("Client ID is required.");
+        }
+
+        var app = await applicationManager.FindByClientIdAsync(command.ClientId, ct);
+        if (app is null)
+        {
+            LogClientLookupNotFound(command.ClientId);
+            return RotateClientSecretResult.Failure("Client not found.");
+        }
+
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await applicationManager.PopulateAsync(descriptor, app, ct);
+
+        var generatedSecret = GenerateClientSecret();
+        descriptor.ClientSecret = generatedSecret;
+
+        await applicationManager.UpdateAsync(app, descriptor, ct);
+        LogClientSecretRotated(command.ClientId);
+        return RotateClientSecretResult.Success(generatedSecret);
     }
 
     public async Task<CommandResult> DeleteClientAsync(
@@ -143,7 +207,7 @@ public sealed partial class ClientCommandService(
             descriptor.RedirectUris.Add(uri);
         }
 
-        foreach (var permission in command.Permissions)
+        foreach (var permission in command.AdditionalPermissions)
         {
             if (!string.IsNullOrWhiteSpace(permission))
             {
@@ -154,6 +218,92 @@ public sealed partial class ClientCommandService(
         await applicationManager.CreateAsync(descriptor, ct);
         LogClientCreated(command.ClientId);
         return CreateIfMissingResult.CreatedNew();
+    }
+
+    private static bool TryConfigureClient(
+        OpenIddictApplicationDescriptor descriptor,
+        string clientId,
+        bool allowAuthorizationCodeFlow,
+        bool allowClientCredentialsFlow,
+        bool allowRefreshTokenFlow,
+        IReadOnlyList<string> redirectUris,
+        IReadOnlyList<string> additionalPermissions,
+        out string configurationError
+    )
+    {
+        if (
+            !TryParseRedirectUris(
+                redirectUris,
+                clientId,
+                out var parsedRedirectUris,
+                out configurationError
+            )
+        )
+        {
+            return false;
+        }
+
+        descriptor.RedirectUris.Clear();
+        foreach (var redirectUri in parsedRedirectUris)
+        {
+            descriptor.RedirectUris.Add(redirectUri);
+        }
+
+        descriptor.Permissions.Clear();
+        foreach (
+            var permission in ClientPermissionConventions.BuildPermissions(
+                allowAuthorizationCodeFlow,
+                allowClientCredentialsFlow,
+                allowRefreshTokenFlow,
+                additionalPermissions
+            )
+        )
+        {
+            descriptor.Permissions.Add(permission);
+        }
+
+        configurationError = string.Empty;
+        return true;
+    }
+
+    private static bool TryParseRedirectUris(
+        IReadOnlyList<string> redirectUris,
+        string clientId,
+        out List<Uri> parsedRedirectUris,
+        out string validationError
+    )
+    {
+        parsedRedirectUris = [];
+        var uniqueUris = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var redirectUri in redirectUris)
+        {
+            if (string.IsNullOrWhiteSpace(redirectUri))
+            {
+                continue;
+            }
+
+            if (!Uri.TryCreate(redirectUri.Trim(), UriKind.Absolute, out var uri))
+            {
+                validationError = $"Invalid redirect URI '{redirectUri}' for client '{clientId}'.";
+                return false;
+            }
+
+            if (uniqueUris.Add(uri.AbsoluteUri))
+            {
+                parsedRedirectUris.Add(uri);
+            }
+        }
+
+        validationError = string.Empty;
+        return true;
+    }
+
+    private static string GenerateClientSecret()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(48);
+        var base64Secret = Convert.ToBase64String(randomBytes);
+        return base64Secret.TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
     [LoggerMessage(
@@ -176,6 +326,13 @@ public sealed partial class ClientCommandService(
         Message = "Client updated: {ClientId}"
     )]
     private partial void LogClientUpdated(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientSecretRotated,
+        Level = LogLevel.Information,
+        Message = "Client secret rotated: {ClientId}"
+    )]
+    private partial void LogClientSecretRotated(string clientId);
 
     [LoggerMessage(
         EventId = EventIds.ClientDeleted,
