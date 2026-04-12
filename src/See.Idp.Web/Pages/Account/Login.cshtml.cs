@@ -3,13 +3,16 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using See.Idp.Core.Logging;
-using See.Idp.Core.Services;
+using See.Idp.Core.Dtos.Auth;
+using See.Idp.Core.Services.Auth;
+using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Web.Pages.Account;
 
-public partial class LoginModel(IUserAccountService userAccountService, ILogger<LoginModel> logger)
-    : PageModel
+public partial class LoginModel(
+    IUserAuthenticationCommandService authenticationCommandService,
+    ILogger<LoginModel> logger
+) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -41,10 +44,8 @@ public partial class LoginModel(IUserAccountService userAccountService, ILogger<
 
         LogLoginAttempt(Input.Email);
 
-        var result = await userAccountService.PasswordSignInAsync(
-            Input.Email,
-            Input.Password,
-            Input.RememberMe
+        var result = await authenticationCommandService.PasswordSignInAsync(
+            new PasswordSignInCommand(Input.Email, Input.Password, Input.RememberMe)
         );
 
         if (result.Succeeded)

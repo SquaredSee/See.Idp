@@ -1,20 +1,28 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
-using See.Idp.Core.Dtos;
-using See.Idp.Core.Services;
+using See.Idp.Core.Dtos.Clients;
+using See.Idp.Core.Dtos.Common;
+using See.Idp.Core.Services.Clients;
+using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
-public sealed class ClientApplicationService(IOpenIddictApplicationManager applicationManager)
-    : IClientApplicationService
+// TODO: Consider splitting this into separate query and command services if the implementation grows more complex.
+public sealed partial class ClientApplicationService(
+    IOpenIddictApplicationManager applicationManager,
+    ILogger<ClientApplicationService> logger
+) : IClientQueryService, IClientCommandService
 {
-    public async Task<IReadOnlyList<ClientApplicationDto>> ListClientsAsync(
+    public async Task<IReadOnlyList<ClientSummaryDto>> ListClientsAsync(
+        ListClientsQuery query,
         CancellationToken ct = default
     )
     {
-        var clients = new List<ClientApplicationDto>();
+        var clients = new List<ClientSummaryDto>();
 
         await foreach (var app in applicationManager.ListAsync(cancellationToken: ct))
         {
@@ -23,109 +31,233 @@ public sealed class ClientApplicationService(IOpenIddictApplicationManager appli
 
             if (!string.IsNullOrWhiteSpace(clientId))
             {
-                clients.Add(new ClientApplicationDto(clientId, displayName));
+                clients.Add(new ClientSummaryDto(clientId, displayName));
             }
         }
 
-        clients.Sort((a, b) => string.CompareOrdinal(a.ClientId, b.ClientId));
+        LogClientListRetrieved(clients.Count);
         return clients;
     }
 
-    public async Task<ClientApplicationDto?> GetClientAsync(
-        string clientId,
+    public async Task<ClientDetailsDto?> GetClientByIdAsync(
+        GetClientByIdQuery query,
         CancellationToken ct = default
     )
     {
-        if (string.IsNullOrWhiteSpace(clientId))
+        if (string.IsNullOrWhiteSpace(query.ClientId))
         {
+            LogClientCommandRejected(nameof(GetClientByIdAsync), "Client ID is required.");
             return null;
         }
 
-        var app = await applicationManager.FindByClientIdAsync(clientId, ct);
+        var app = await applicationManager.FindByClientIdAsync(query.ClientId, ct);
         if (app is null)
         {
+            LogClientLookupNotFound(query.ClientId);
             return null;
         }
 
-        var resolvedClientId = await applicationManager.GetClientIdAsync(app, ct);
-        if (string.IsNullOrWhiteSpace(resolvedClientId))
+        var clientId = await applicationManager.GetClientIdAsync(app, ct);
+        if (string.IsNullOrWhiteSpace(clientId))
         {
+            LogClientCommandRejected(
+                nameof(GetClientByIdAsync),
+                $"Client '{query.ClientId}' returned an empty client id."
+            );
             return null;
         }
 
         var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
-        return new ClientApplicationDto(resolvedClientId, displayName);
+        return new ClientDetailsDto(clientId, displayName);
     }
 
-    public async Task<ClientApplicationActionResult> CreateClientAsync(
-        CreateClientRequest request,
+    public async Task<CommandResult> CreateClientAsync(
+        CreateClientCommand command,
         CancellationToken ct = default
     )
     {
-        if (string.IsNullOrWhiteSpace(request.ClientId))
+        if (string.IsNullOrWhiteSpace(command.ClientId))
         {
-            return ClientApplicationActionResult.Failure("Client ID is required.");
+            LogClientCommandRejected(nameof(CreateClientAsync), "Client ID is required.");
+            return CommandResult.Failure("Client ID is required.");
         }
 
-        if (await applicationManager.FindByClientIdAsync(request.ClientId, ct) is not null)
+        if (await applicationManager.FindByClientIdAsync(command.ClientId, ct) is not null)
         {
-            return ClientApplicationActionResult.Failure("Client ID already exists.");
+            LogClientAlreadyExists(command.ClientId);
+            return CommandResult.Failure("Client ID already exists.");
         }
 
         await applicationManager.CreateAsync(
             new OpenIddictApplicationDescriptor
             {
-                ClientId = request.ClientId,
-                DisplayName = request.DisplayName,
+                ClientId = command.ClientId,
+                DisplayName = command.DisplayName,
             },
             ct
         );
 
-        return ClientApplicationActionResult.Success();
+        LogClientCreated(command.ClientId);
+        return CommandResult.Success();
     }
 
-    public async Task<ClientApplicationActionResult> UpdateClientAsync(
-        UpdateClientRequest request,
+    public async Task<CommandResult> UpdateClientAsync(
+        UpdateClientCommand command,
         CancellationToken ct = default
     )
     {
-        if (string.IsNullOrWhiteSpace(request.ClientId))
+        if (string.IsNullOrWhiteSpace(command.ClientId))
         {
-            return ClientApplicationActionResult.Failure("Client ID is required.");
+            LogClientCommandRejected(nameof(UpdateClientAsync), "Client ID is required.");
+            return CommandResult.Failure("Client ID is required.");
         }
 
-        var app = await applicationManager.FindByClientIdAsync(request.ClientId, ct);
+        var app = await applicationManager.FindByClientIdAsync(command.ClientId, ct);
         if (app is null)
         {
-            return ClientApplicationActionResult.Failure("Client not found.");
+            LogClientLookupNotFound(command.ClientId);
+            return CommandResult.Failure("Client not found.");
         }
 
         var descriptor = new OpenIddictApplicationDescriptor();
         await applicationManager.PopulateAsync(descriptor, app, ct);
 
-        descriptor.DisplayName = request.DisplayName;
+        descriptor.DisplayName = command.DisplayName;
 
         await applicationManager.UpdateAsync(app, descriptor, ct);
-        return ClientApplicationActionResult.Success();
+        LogClientUpdated(command.ClientId);
+        return CommandResult.Success();
     }
 
-    public async Task<ClientApplicationActionResult> DeleteClientAsync(
-        string clientId,
+    public async Task<CommandResult> DeleteClientAsync(
+        DeleteClientCommand command,
         CancellationToken ct = default
     )
     {
-        if (string.IsNullOrWhiteSpace(clientId))
+        if (string.IsNullOrWhiteSpace(command.ClientId))
         {
-            return ClientApplicationActionResult.Failure("Client ID is required.");
+            LogClientCommandRejected(nameof(DeleteClientAsync), "Client ID is required.");
+            return CommandResult.Failure("Client ID is required.");
         }
 
-        var app = await applicationManager.FindByClientIdAsync(clientId, ct);
+        var app = await applicationManager.FindByClientIdAsync(command.ClientId, ct);
         if (app is null)
         {
-            return ClientApplicationActionResult.Failure("Client not found.");
+            LogClientLookupNotFound(command.ClientId);
+            return CommandResult.Failure("Client not found.");
         }
 
         await applicationManager.DeleteAsync(app, ct);
-        return ClientApplicationActionResult.Success();
+        LogClientDeleted(command.ClientId);
+        return CommandResult.Success();
     }
+
+    public async Task<CreateIfMissingResult> CreateClientIfMissingAsync(
+        CreateClientIfMissingCommand command,
+        CancellationToken ct = default
+    )
+    {
+        if (string.IsNullOrWhiteSpace(command.ClientId))
+        {
+            LogClientCommandRejected(nameof(CreateClientIfMissingAsync), "Client ID is required.");
+            return CreateIfMissingResult.Failure("Client ID is required.");
+        }
+
+        if (await applicationManager.FindByClientIdAsync(command.ClientId, ct) is not null)
+        {
+            LogClientAlreadyExists(command.ClientId);
+            return CreateIfMissingResult.AlreadyExists();
+        }
+
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = command.ClientId,
+            ClientSecret = string.IsNullOrWhiteSpace(command.ClientSecret)
+                ? null
+                : command.ClientSecret,
+            DisplayName = command.DisplayName,
+        };
+
+        foreach (var redirectUri in command.RedirectUris)
+        {
+            if (string.IsNullOrWhiteSpace(redirectUri))
+            {
+                continue;
+            }
+
+            if (!Uri.TryCreate(redirectUri, UriKind.Absolute, out var uri))
+            {
+                LogClientCommandRejected(
+                    nameof(CreateClientIfMissingAsync),
+                    $"Invalid redirect URI '{redirectUri}' for client '{command.ClientId}'."
+                );
+                return CreateIfMissingResult.Failure(
+                    $"Invalid redirect URI '{redirectUri}' for client '{command.ClientId}'."
+                );
+            }
+
+            descriptor.RedirectUris.Add(uri);
+        }
+
+        foreach (var permission in command.Permissions)
+        {
+            if (!string.IsNullOrWhiteSpace(permission))
+            {
+                descriptor.Permissions.Add(permission);
+            }
+        }
+
+        await applicationManager.CreateAsync(descriptor, ct);
+        LogClientCreated(command.ClientId);
+        return CreateIfMissingResult.CreatedNew();
+    }
+
+    [LoggerMessage(
+        EventId = EventIds.ClientListRetrieved,
+        Level = LogLevel.Information,
+        Message = "Retrieved {Count} clients"
+    )]
+    private partial void LogClientListRetrieved(int count);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientLookupNotFound,
+        Level = LogLevel.Warning,
+        Message = "Client not found: {ClientId}"
+    )]
+    private partial void LogClientLookupNotFound(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientCreated,
+        Level = LogLevel.Information,
+        Message = "Client created: {ClientId}"
+    )]
+    private partial void LogClientCreated(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientUpdated,
+        Level = LogLevel.Information,
+        Message = "Client updated: {ClientId}"
+    )]
+    private partial void LogClientUpdated(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientDeleted,
+        Level = LogLevel.Information,
+        Message = "Client deleted: {ClientId}"
+    )]
+    private partial void LogClientDeleted(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientManagementAlreadyExists,
+        Level = LogLevel.Information,
+        Message = "Client already exists: {ClientId}"
+    )]
+    private partial void LogClientAlreadyExists(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientCommandRejected,
+        Level = LogLevel.Warning,
+        Message = "Client command {CommandName} rejected: {Reason}"
+    )]
+    private partial void LogClientCommandRejected(string commandName, string reason);
 }

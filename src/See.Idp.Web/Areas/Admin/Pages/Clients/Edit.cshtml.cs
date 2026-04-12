@@ -2,12 +2,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Core.Dtos;
-using See.Idp.Core.Services;
+using See.Idp.Core.Dtos.Clients;
+using See.Idp.Core.Services.Clients;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Clients;
 
-public sealed class EditModel(IClientApplicationService clientApplicationService) : PageModel
+public sealed class EditModel(
+    IClientQueryService clientQueryService,
+    IClientCommandService clientCommandService
+) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -19,7 +22,7 @@ public sealed class EditModel(IClientApplicationService clientApplicationService
             return NotFound();
         }
 
-        var client = await clientApplicationService.GetClientAsync(clientId);
+        var client = await clientQueryService.GetClientByIdAsync(new GetClientByIdQuery(clientId));
         if (client is null)
         {
             return NotFound();
@@ -37,8 +40,8 @@ public sealed class EditModel(IClientApplicationService clientApplicationService
             return Page();
         }
 
-        var result = await clientApplicationService.UpdateClientAsync(
-            new UpdateClientRequest(Input.ClientId, Input.DisplayName)
+        var result = await clientCommandService.UpdateClientAsync(
+            new UpdateClientCommand(Input.ClientId, Input.DisplayName)
         );
 
         if (!result.Succeeded)

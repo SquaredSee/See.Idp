@@ -1,46 +1,89 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using See.Idp.Core.Dtos;
-using See.Idp.Core.Services;
+using Microsoft.Extensions.Logging;
+using See.Idp.Core.Dtos.Auth;
+using See.Idp.Core.Services.Auth;
+using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
 // TODO: implement cancellation token support in SignInManager
-public sealed class UserAccountService(SignInManager<IdentityUser> signInManager)
-    : IUserAccountService
+public sealed partial class UserAccountService(
+    SignInManager<IdentityUser> signInManager,
+    ILogger<UserAccountService> logger
+) : IUserAuthenticationCommandService
 {
-    public async Task<AccountSignInResult> PasswordSignInAsync(
-        string email,
-        string password,
-        bool rememberMe,
+    public async Task<PasswordSignInResult> PasswordSignInAsync(
+        PasswordSignInCommand command,
         CancellationToken ct = default
     )
     {
+        LogAuthenticationSignInAttempt(command.Email);
+
         var result = await signInManager.PasswordSignInAsync(
-            email,
-            password,
-            rememberMe,
+            command.Email,
+            command.Password,
+            command.RememberMe,
             lockoutOnFailure: true
         );
 
         if (result.Succeeded)
         {
-            return AccountSignInResult.Success();
+            LogAuthenticationSignInSucceeded(command.Email);
+            return PasswordSignInResult.Success();
         }
 
         if (result.IsLockedOut)
         {
-            return AccountSignInResult.LockedOut();
+            LogAuthenticationSignInLockedOut(command.Email);
+            return PasswordSignInResult.LockedOut();
         }
 
-        return AccountSignInResult.Failure(
+        LogAuthenticationSignInFailed(command.Email);
+        return PasswordSignInResult.Failure(
             "Login failed. Please check your credentials and try again."
         );
     }
 
-    public Task SignOutAsync(CancellationToken ct = default)
+    public async Task SignOutAsync(CancellationToken ct = default)
     {
-        return signInManager.SignOutAsync();
+        await signInManager.SignOutAsync();
+        LogAuthenticationSignOut();
     }
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationSignInAttempt,
+        Level = LogLevel.Information,
+        Message = "Authentication sign-in attempt for {Email}"
+    )]
+    private partial void LogAuthenticationSignInAttempt(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationSignInSucceeded,
+        Level = LogLevel.Information,
+        Message = "Authentication sign-in succeeded for {Email}"
+    )]
+    private partial void LogAuthenticationSignInSucceeded(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationSignInFailed,
+        Level = LogLevel.Warning,
+        Message = "Authentication sign-in failed for {Email}"
+    )]
+    private partial void LogAuthenticationSignInFailed(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationSignInLockedOut,
+        Level = LogLevel.Warning,
+        Message = "Authentication sign-in locked out for {Email}"
+    )]
+    private partial void LogAuthenticationSignInLockedOut(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationSignOut,
+        Level = LogLevel.Information,
+        Message = "Authentication sign-out completed"
+    )]
+    private partial void LogAuthenticationSignOut();
 }

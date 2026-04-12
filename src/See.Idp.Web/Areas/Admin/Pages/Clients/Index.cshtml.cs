@@ -2,11 +2,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Core.Services;
+using See.Idp.Core.Dtos.Clients;
+using See.Idp.Core.Services.Clients;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Clients;
 
-public sealed class IndexModel(IClientApplicationService clientApplicationService) : PageModel
+public sealed class IndexModel(
+    IClientQueryService clientQueryService,
+    IClientCommandService clientCommandService
+) : PageModel
 {
     public List<ClientRow> Clients { get; } = [];
 
@@ -17,14 +21,14 @@ public sealed class IndexModel(IClientApplicationService clientApplicationServic
 
     public async Task<IActionResult> OnPostDeleteAsync(string clientId)
     {
-        await clientApplicationService.DeleteClientAsync(clientId);
+        await clientCommandService.DeleteClientAsync(new DeleteClientCommand(clientId));
 
         return RedirectToPage();
     }
 
     private async Task LoadAsync()
     {
-        var clients = await clientApplicationService.ListClientsAsync();
+        var clients = await clientQueryService.ListClientsAsync(new ListClientsQuery());
 
         foreach (var client in clients)
         {

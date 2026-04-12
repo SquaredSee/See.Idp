@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Core.Dtos;
-using See.Idp.Core.Services;
+using See.Idp.Core.Dtos.Clients;
+using See.Idp.Core.Services.Clients;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Clients;
 
-public sealed class CreateModel(IClientApplicationService clientApplicationService) : PageModel
+public sealed class CreateModel(IClientCommandService clientCommandService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -21,8 +21,8 @@ public sealed class CreateModel(IClientApplicationService clientApplicationServi
             return Page();
         }
 
-        var result = await clientApplicationService.CreateClientAsync(
-            new CreateClientRequest(Input.ClientId, Input.DisplayName)
+        var result = await clientCommandService.CreateClientAsync(
+            new CreateClientCommand(Input.ClientId, Input.DisplayName)
         );
 
         if (!result.Succeeded)

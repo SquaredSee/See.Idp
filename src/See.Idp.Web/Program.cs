@@ -8,6 +8,9 @@ using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
 using See.Idp.Core.Configuration;
 using See.Idp.Core.Services;
+using See.Idp.Core.Services.Auth;
+using See.Idp.Core.Services.Clients;
+using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
@@ -90,9 +93,11 @@ builder.Services.Configure<InitializationOptions>(
 builder.Services.AddScoped<IApplicationInitializer, ConfigurationApplicationInitializer>();
 builder.Services.AddHostedService<ApplicationInitializationHostedService>();
 
-builder.Services.AddScoped<IClientApplicationService, ClientApplicationService>();
-builder.Services.AddScoped<IUserAccountService, UserAccountService>();
-builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IClientQueryService, ClientApplicationService>();
+builder.Services.AddScoped<IClientCommandService, ClientApplicationService>();
+builder.Services.AddScoped<IUserQueryService, UserManagementService>();
+builder.Services.AddScoped<IUserCommandService, UserManagementService>();
+builder.Services.AddScoped<IUserAuthenticationCommandService, UserAccountService>();
 
 // builder.Services.AddControllers();
 builder.Services.AddRazorPages(options =>

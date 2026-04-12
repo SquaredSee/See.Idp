@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Core.Services;
+using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Admin.Pages.Users;
 
-public sealed class IndexModel(IUserManagementService userManagementService) : PageModel
+public sealed class IndexModel(
+    IUserQueryService userQueryService,
+    IUserCommandService userCommandService
+) : PageModel
 {
     public List<UserRow> Users { get; } = [];
 
@@ -25,7 +29,9 @@ public sealed class IndexModel(IUserManagementService userManagementService) : P
     public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
     {
         var currentUserId = User.FindFirst("sub")?.Value;
-        var result = await userManagementService.ToggleAdminAsync(userId, currentUserId);
+        var result = await userCommandService.ToggleAdminAsync(
+            new ToggleUserAdminCommand(userId, currentUserId)
+        );
 
         if (result.Succeeded)
             SetStatusSuccess(result.Message ?? "Admin role updated.");
@@ -38,7 +44,9 @@ public sealed class IndexModel(IUserManagementService userManagementService) : P
     public async Task<IActionResult> OnPostToggleLockAsync(string userId)
     {
         var currentUserId = User.FindFirst("sub")?.Value;
-        var result = await userManagementService.ToggleLockAsync(userId, currentUserId);
+        var result = await userCommandService.ToggleLockAsync(
+            new ToggleUserLockCommand(userId, currentUserId)
+        );
 
         if (result.Succeeded)
             SetStatusSuccess(result.Message ?? "Lock state updated.");
@@ -51,7 +59,9 @@ public sealed class IndexModel(IUserManagementService userManagementService) : P
     public async Task<IActionResult> OnPostDeleteAsync(string userId)
     {
         var currentUserId = User.FindFirst("sub")?.Value;
-        var result = await userManagementService.DeleteUserAsync(userId, currentUserId);
+        var result = await userCommandService.DeleteUserAsync(
+            new DeleteUserCommand(userId, currentUserId)
+        );
 
         if (result.Succeeded)
             SetStatusSuccess(result.Message ?? "User deleted.");
@@ -64,7 +74,7 @@ public sealed class IndexModel(IUserManagementService userManagementService) : P
     private async Task LoadAsync()
     {
         var currentUserId = User.FindFirst("sub")?.Value;
-        var users = await userManagementService.ListUsersAsync(currentUserId);
+        var users = await userQueryService.ListUsersAsync(new ListUsersQuery(currentUserId));
 
         foreach (var user in users)
         {

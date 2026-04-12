@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using OpenIddict.Abstractions;
 using See.Idp.Core.Configuration;
-using See.Idp.Core.Logging;
+using See.Idp.Core.Dtos.Clients;
+using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services;
+using See.Idp.Core.Services.Clients;
+using See.Idp.Core.Services.Users;
+using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
 public partial class ConfigurationApplicationInitializer(
-    UserManager<IdentityUser> userManager,
-    RoleManager<IdentityRole> roleManager,
-    IOpenIddictApplicationManager applicationManager,
+    IUserCommandService userCommandService,
+    IClientCommandService clientCommandService,
     IOptions<InitializationOptions> options,
     ILogger<ConfigurationApplicationInitializer> logger
 ) : IApplicationInitializer
@@ -40,11 +40,11 @@ public partial class ConfigurationApplicationInitializer(
             }
         }
 
-        await SeedRolesAsync([.. allRoles]);
+        await SeedRolesAsync([.. allRoles], ct);
 
         foreach (var user in config.Users)
         {
-            await SeedUserAsync(user);
+            await SeedUserAsync(user, ct);
         }
 
         foreach (var client in config.Clients)
@@ -53,7 +53,7 @@ public partial class ConfigurationApplicationInitializer(
         }
     }
 
-    private async Task SeedRolesAsync(List<string> roles)
+    private async Task SeedRolesAsync(List<string> roles, CancellationToken ct)
     {
         foreach (var role in roles)
         {
@@ -64,61 +64,49 @@ public partial class ConfigurationApplicationInitializer(
 
             LogSeedingRole(role);
 
-            if (await roleManager.RoleExistsAsync(role))
-            {
-                LogRoleAlreadyExists(role);
-                continue;
-            }
-
-            var result = await roleManager.CreateAsync(new IdentityRole(role));
+            var result = await userCommandService.CreateRoleIfMissingAsync(
+                new CreateRoleIfMissingCommand(role),
+                ct
+            );
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException(
-                    $"Failed to seed role '{role}': {JoinErrors(result)}"
+                    $"Failed to seed role '{role}': {result.Error ?? "Unknown error."}"
                 );
             }
 
-            LogRoleSeeded(role);
+            if (result.Created)
+                LogRoleSeeded(role);
+            else
+                LogRoleAlreadyExists(role);
         }
     }
 
-    private async Task SeedUserAsync(SeedUserOptions user)
+    private async Task SeedUserAsync(SeedUserOptions user, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(user.Email))
         {
             throw new InvalidOperationException("Initialization users require a non-empty email.");
         }
 
-        var existingUser = await userManager.FindByEmailAsync(user.Email);
-        if (existingUser is null)
+        LogSeedingUser(user.Email);
+
+        var ensureUserResult = await userCommandService.CreateUserIfMissingAsync(
+            new CreateUserIfMissingCommand(user.Email, user.Password, user.EmailConfirmed),
+            ct
+        );
+
+        if (!ensureUserResult.Succeeded || string.IsNullOrWhiteSpace(ensureUserResult.UserId))
         {
-            LogSeedingUser(user.Email);
+            throw new InvalidOperationException(
+                $"Failed to seed user '{user.Email}': {ensureUserResult.Error ?? "Unknown error."}"
+            );
+        }
 
-            var newUser = new IdentityUser
-            {
-                UserName = user.Email,
-                Email = user.Email,
-                EmailConfirmed = user.EmailConfirmed,
-            };
-
-            var createResult = string.IsNullOrWhiteSpace(user.Password)
-                ? await userManager.CreateAsync(newUser)
-                : await userManager.CreateAsync(newUser, user.Password);
-
-            if (!createResult.Succeeded)
-            {
-                throw new InvalidOperationException(
-                    $"Failed to seed user '{user.Email}': {JoinErrors(createResult)}"
-                );
-            }
-
-            existingUser = newUser;
+        if (ensureUserResult.Created)
             LogUserSeeded(user.Email);
-        }
         else
-        {
             LogUserAlreadyExists(user.Email);
-        }
 
         foreach (var role in user.Roles)
         {
@@ -127,20 +115,20 @@ public partial class ConfigurationApplicationInitializer(
                 continue;
             }
 
-            if (await userManager.IsInRoleAsync(existingUser, role))
-            {
-                continue;
-            }
+            var addRoleResult = await userCommandService.AddUserToRoleIfMissingAsync(
+                new AddUserToRoleIfMissingCommand(ensureUserResult.UserId, role),
+                ct
+            );
 
-            var addRoleResult = await userManager.AddToRoleAsync(existingUser, role);
             if (!addRoleResult.Succeeded)
             {
                 throw new InvalidOperationException(
-                    $"Failed adding role '{role}' to '{user.Email}': {JoinErrors(addRoleResult)}"
+                    $"Failed adding role '{role}' to '{user.Email}': {addRoleResult.Error ?? "Unknown error."}"
                 );
             }
 
-            LogUserAddedToRole(user.Email, role);
+            if (addRoleResult.Created)
+                LogUserAddedToRole(user.Email, role);
         }
     }
 
@@ -153,54 +141,31 @@ public partial class ConfigurationApplicationInitializer(
             );
         }
 
-        if (await applicationManager.FindByClientIdAsync(client.ClientId, ct) is not null)
-        {
-            LogClientAlreadyExists(client.ClientId);
-            return;
-        }
-
         LogSeedingClient(client.ClientId);
 
-        var descriptor = new OpenIddictApplicationDescriptor
+        var ensureClientResult = await clientCommandService.CreateClientIfMissingAsync(
+            new CreateClientIfMissingCommand(
+                client.ClientId,
+                client.ClientSecret,
+                client.DisplayName,
+                client.RedirectUris,
+                client.Permissions
+            ),
+            ct
+        );
+
+        if (!ensureClientResult.Succeeded)
         {
-            ClientId = client.ClientId,
-            ClientSecret = string.IsNullOrWhiteSpace(client.ClientSecret)
-                ? null
-                : client.ClientSecret,
-            DisplayName = client.DisplayName,
-        };
-
-        foreach (var redirectUri in client.RedirectUris)
-        {
-            if (string.IsNullOrWhiteSpace(redirectUri))
-            {
-                continue;
-            }
-
-            if (!Uri.TryCreate(redirectUri, UriKind.Absolute, out var uri))
-            {
-                throw new InvalidOperationException(
-                    $"Invalid redirect URI '{redirectUri}' for client '{client.ClientId}'."
-                );
-            }
-
-            descriptor.RedirectUris.Add(uri);
+            throw new InvalidOperationException(
+                $"Failed to seed client '{client.ClientId}': {ensureClientResult.Error ?? "Unknown error."}"
+            );
         }
 
-        foreach (var permission in client.Permissions)
-        {
-            if (!string.IsNullOrWhiteSpace(permission))
-            {
-                descriptor.Permissions.Add(permission);
-            }
-        }
-
-        await applicationManager.CreateAsync(descriptor, ct);
-        LogClientSeeded(client.ClientId);
+        if (ensureClientResult.Created)
+            LogClientSeeded(client.ClientId);
+        else
+            LogClientAlreadyExists(client.ClientId);
     }
-
-    private static string JoinErrors(IdentityResult result) =>
-        string.Join("; ", result.Errors.Select(e => e.Description));
 
     [LoggerMessage(
         EventId = EventIds.SeedingClient,
