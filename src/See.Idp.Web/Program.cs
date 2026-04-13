@@ -48,23 +48,31 @@ builder
     // Register the OpenIddict server components.
     .AddServer(options =>
     {
-        options.SetAuthorizationEndpointUris("connect/authorize");
-        options.SetTokenEndpointUris("connect/token");
-        options.SetEndSessionEndpointUris("connect/logout");
+        // Set the endpoints for the OpenIddict server.
+        options
+            .SetAuthorizationEndpointUris("connect/authorize")
+            .SetTokenEndpointUris("connect/token")
+            .SetEndSessionEndpointUris("connect/logout");
 
-        options.AllowAuthorizationCodeFlow().RequireProofKeyForCodeExchange();
-        options.AllowClientCredentialsFlow();
-        options.AllowRefreshTokenFlow();
+        // Enable the supported flows.
+        options
+            .AllowAuthorizationCodeFlow()
+            .RequireProofKeyForCodeExchange()
+            .AllowClientCredentialsFlow()
+            .AllowRefreshTokenFlow();
 
+        // Register scopes that can be used in the authorization process.
         options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
 
-        var openIddictAspNetCoreOptions = options.UseAspNetCore();
+        var aspNetCoreBuilder = options.UseAspNetCore();
 
         if (builder.Environment.IsDevelopment())
         {
-            options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
-            options.DisableAccessTokenEncryption();
-            openIddictAspNetCoreOptions.DisableTransportSecurityRequirement();
+            options
+                .AddDevelopmentEncryptionCertificate()
+                .AddDevelopmentSigningCertificate()
+                .DisableAccessTokenEncryption();
+            aspNetCoreBuilder.DisableTransportSecurityRequirement();
         }
         else
         {
@@ -91,13 +99,16 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
+// Options pattern configuration
 builder.Services.Configure<InitializationOptions>(
     builder.Configuration.GetSection("Initialization")
 );
 
+// Application initialization
 builder.Services.AddScoped<IApplicationInitializer, ConfigurationApplicationInitializer>();
 builder.Services.AddHostedService<ApplicationInitializationHostedService>();
 
+// Application services
 builder.Services.AddScoped<IClientQueryService, ClientQueryService>();
 builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
