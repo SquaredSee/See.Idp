@@ -74,6 +74,7 @@ builder
 builder
     .Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultUI()
     .AddDefaultTokenProviders();
 
 builder.Services.AddAuthorizationBuilder().AddAdminPortalPolicy();
