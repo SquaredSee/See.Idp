@@ -6,6 +6,7 @@
 }
 
 @section Scripts {
+  <script src="~/lib/jquery/dist/jquery.min.js"></script>
   <partial name="_ValidationScriptsPartial" />
 
   <script>
@@ -23,6 +24,25 @@
 
 <div class="panel mx-auto w-full max-w-2xl">
   <h1>Create client</h1>
+
+  @if (!string.IsNullOrWhiteSpace(Model.CreatedClientSecret))
+  {
+    <div class="mt-4 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
+      <p class="font-semibold">Client secret generated</p>
+      <p class="mt-1">
+        Copy this secret now. It is only shown once.
+      </p>
+      <input value="@Model.CreatedClientSecret" class="field-input mt-2 font-mono" readonly />
+      @if (!string.IsNullOrWhiteSpace(Model.CreatedClientId))
+      {
+        <p class="mt-2">
+          <a asp-page="/Clients/Edit" asp-area="Admin" asp-route-clientId="@Model.CreatedClientId">
+            Open the client
+          </a>
+        </p>
+      }
+    </div>
+  }
 
   <form method="post" class="mt-6 space-y-4">
     <div asp-validation-summary="ModelOnly" class="text-sm text-red-600"></div>
@@ -50,7 +70,7 @@
         <input asp-for="Input.AllowClientCredentialsFlow" class="h-4 w-4" />
         <span>Client credentials</span>
         <span id="cc-secret-hint" class="text-xs text-amber-700 hidden">
-          Client credentials flow requires that a client secret also be configured
+          Client credentials can be enabled without a secret. Generate one when confidential authentication is needed.
         </span>
       </label>
 
@@ -73,6 +93,17 @@
       <p class="mt-1 text-xs text-slate-600">Advanced mode: enter one OpenIddict permission per line.</p>
       <span asp-validation-for="Input.PermissionsText" class="mt-1 block text-sm text-red-600"></span>
     </div>
+
+    <fieldset class="space-y-2 rounded-md border border-border-soft p-3">
+      <legend class="field-label mb-0">Client secret</legend>
+      <label class="flex items-center gap-2 text-sm">
+        <input asp-for="Input.GenerateClientSecret" class="h-4 w-4" />
+        <span>Generate initial client secret</span>
+      </label>
+      <p class="text-xs text-slate-600">
+        Generating a secret sets this client as confidential.
+      </p>
+    </fieldset>
 
     <div class="flex items-center gap-3 pt-2">
       <button type="submit" class="btn-primary">Create</button>

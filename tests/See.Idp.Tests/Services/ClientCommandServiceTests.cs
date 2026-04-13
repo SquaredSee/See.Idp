@@ -26,7 +26,7 @@ public sealed class ClientCommandServiceTests
         var sut = CreateSut(applicationManager);
 
         var result = await sut.CreateClientAsync(
-            new CreateClientCommand("", "Display", false, false, false, [], []),
+            new CreateClientCommand("", "Display", false, false, false, false, [], []),
             Ct
         );
 
@@ -50,7 +50,7 @@ public sealed class ClientCommandServiceTests
         var sut = CreateSut(applicationManager);
 
         var result = await sut.CreateClientAsync(
-            new CreateClientCommand("client-1", "Display", false, false, false, [], []),
+            new CreateClientCommand("client-1", "Display", false, false, false, false, [], []),
             Ct
         );
 
@@ -78,6 +78,7 @@ public sealed class ClientCommandServiceTests
                 true,
                 false,
                 false,
+                false,
                 ["https://localhost/signin-oidc"],
                 ["scp:profile"]
             ),
@@ -91,6 +92,8 @@ public sealed class ClientCommandServiceTests
                 Arg.Is<OpenIddictApplicationDescriptor>(d =>
                     d.ClientId == "client-new"
                     && d.DisplayName == "New Client"
+                    && d.ClientType == OpenIddictConstants.ClientTypes.Public
+                    && d.ClientSecret == null
                     && d.RedirectUris.Contains(new Uri("https://localhost/signin-oidc"))
                     && d.Permissions.Contains("scp:profile")
                     && d.Permissions.Contains("ept:authorization")
@@ -179,6 +182,7 @@ public sealed class ClientCommandServiceTests
                 true,
                 false,
                 false,
+                false,
                 ["not-a-uri"],
                 []
             ),
@@ -227,13 +231,80 @@ public sealed class ClientCommandServiceTests
         );
 
         Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.PromotedToConfidential);
         Assert.IsFalse(string.IsNullOrWhiteSpace(result.ClientSecret));
         await applicationManager
             .Received(1)
             .UpdateAsync(
                 app,
                 Arg.Is<OpenIddictApplicationDescriptor>(d =>
+                    d.ClientType == OpenIddictConstants.ClientTypes.Confidential
+                    &&
                     !string.IsNullOrWhiteSpace(d.ClientSecret)
+                ),
+                Ct
+            );
+    }
+
+    [TestMethod]
+    public async Task RotateClientSecretAsync_DoesNotPromote_WhenAlreadyConfidential()
+    {
+        var app = new object();
+
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager
+            .When(x => x.PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct))
+            .Do(callInfo =>
+            {
+                var descriptor = callInfo.Arg<OpenIddictApplicationDescriptor>();
+                descriptor.ClientType = OpenIddictConstants.ClientTypes.Confidential;
+            });
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.RotateClientSecretAsync(
+            new RotateClientSecretCommand("client-1"),
+            Ct
+        );
+
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(result.PromotedToConfidential);
+    }
+
+    [TestMethod]
+    public async Task CreateClientAsync_GeneratesSecret_WhenRequested()
+    {
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .FindByClientIdAsync("client-secret", Ct)
+            .Returns(new ValueTask<object?>((object?)null));
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.CreateClientAsync(
+            new CreateClientCommand(
+                "client-secret",
+                "Secret Client",
+                false,
+                true,
+                false,
+                true,
+                [],
+                []
+            ),
+            Ct
+        );
+
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(result.ClientSecret));
+        await applicationManager
+            .Received(1)
+            .CreateAsync(
+                Arg.Is<OpenIddictApplicationDescriptor>(d =>
+                    d.ClientId == "client-secret"
+                    && d.ClientType == OpenIddictConstants.ClientTypes.Confidential
+                    && !string.IsNullOrWhiteSpace(d.ClientSecret)
                 ),
                 Ct
             );

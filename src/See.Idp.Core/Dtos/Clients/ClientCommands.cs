@@ -10,6 +10,7 @@ namespace See.Idp.Core.Dtos.Clients;
 /// <param name="AllowAuthorizationCodeFlow">Whether authorization code flow is enabled.</param>
 /// <param name="AllowClientCredentialsFlow">Whether client credentials flow is enabled.</param>
 /// <param name="AllowRefreshTokenFlow">Whether refresh token flow is enabled.</param>
+/// <param name="GenerateClientSecret">Whether an initial client secret should be generated during creation.</param>
 /// <param name="RedirectUris">The redirect URIs configured for authorization flows.</param>
 /// <param name="Permissions">Additional permissions granted to the client.</param>
 public sealed record CreateClientCommand(
@@ -18,6 +19,7 @@ public sealed record CreateClientCommand(
     bool AllowAuthorizationCodeFlow,
     bool AllowClientCredentialsFlow,
     bool AllowRefreshTokenFlow,
+    bool GenerateClientSecret,
     IReadOnlyList<string> RedirectUris,
     IReadOnlyList<string> AdditionalPermissions
 );

@@ -12,6 +12,12 @@ namespace See.Idp.Web.Areas.Admin.Pages.Clients;
 
 public sealed class CreateModel(IClientCommandService clientCommandService) : PageModel
 {
+    [TempData]
+    public string? CreatedClientSecret { get; set; }
+
+    [TempData]
+    public string? CreatedClientId { get; set; }
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -34,6 +40,7 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
                 Input.AllowAuthorizationCodeFlow,
                 Input.AllowClientCredentialsFlow,
                 Input.AllowRefreshTokenFlow,
+                Input.GenerateClientSecret,
                 SplitLines(Input.RedirectUrisText),
                 SplitLines(Input.PermissionsText)
             )
@@ -43,6 +50,14 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
         {
             ModelState.AddModelError(string.Empty, result.Error ?? "Client creation failed.");
             return Page();
+        }
+
+        CreatedClientId = Input.ClientId;
+        CreatedClientSecret = result.ClientSecret;
+
+        if (!string.IsNullOrWhiteSpace(result.ClientSecret))
+        {
+            return RedirectToPage();
         }
 
         return RedirectToPage("./Index");
@@ -81,6 +96,9 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
 
         [Display(Name = "Allow refresh token flow")]
         public bool AllowRefreshTokenFlow { get; set; }
+
+        [Display(Name = "Generate client secret")]
+        public bool GenerateClientSecret { get; set; }
 
         [Display(Name = "Redirect URIs (one per line)")]
         public string? RedirectUrisText { get; set; }

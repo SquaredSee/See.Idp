@@ -52,6 +52,34 @@ public sealed record CreateIfMissingResult(bool Succeeded, bool Created, string?
 }
 
 /// <summary>
+///     Represents the result of creating a client.
+/// </summary>
+/// <param name="Succeeded">Indicates whether the command succeeded.</param>
+/// <param name="ClientSecret">The generated client secret when creation requested one.</param>
+/// <param name="Error">An optional error message.</param>
+public sealed record CreateClientResult(
+    bool Succeeded,
+    string? ClientSecret = null,
+    string? Error = null
+)
+{
+    /// <summary>
+    ///     Creates a successful create-client result.
+    /// </summary>
+    /// <param name="clientSecret">The generated plain-text client secret, when requested.</param>
+    /// <returns>A successful create-client result.</returns>
+    public static CreateClientResult Success(string? clientSecret = null) =>
+        new(true, clientSecret, null);
+
+    /// <summary>
+    ///     Creates a failed create-client result.
+    /// </summary>
+    /// <param name="error">The error message.</param>
+    /// <returns>A failed create-client result.</returns>
+    public static CreateClientResult Failure(string error) => new(false, null, error);
+}
+
+/// <summary>
 ///     Represents the result of a create-user-if-missing command.
 /// </summary>
 /// <param name="Succeeded">Indicates whether the command succeeded.</param>
@@ -98,7 +126,8 @@ public sealed record CreateUserIfMissingResult(
 public sealed record RotateClientSecretResult(
     bool Succeeded,
     string? ClientSecret = null,
-    string? Error = null
+    string? Error = null,
+    bool PromotedToConfidential = false
 )
 {
     /// <summary>
@@ -106,8 +135,10 @@ public sealed record RotateClientSecretResult(
     /// </summary>
     /// <param name="clientSecret">The generated plain-text client secret.</param>
     /// <returns>A successful rotate-client-secret result.</returns>
-    public static RotateClientSecretResult Success(string clientSecret) =>
-        new(true, clientSecret, null);
+    public static RotateClientSecretResult Success(
+        string clientSecret,
+        bool promotedToConfidential = false
+    ) => new(true, clientSecret, null, promotedToConfidential);
 
     /// <summary>
     ///     Creates a failed rotate-client-secret result.

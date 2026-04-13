@@ -185,9 +185,38 @@ public sealed class ClientQueryServiceTests
         Assert.IsTrue(result.AllowAuthorizationCodeFlow);
         Assert.IsTrue(result.AllowClientCredentialsFlow);
         Assert.IsFalse(result.AllowRefreshTokenFlow);
+        Assert.IsFalse(result.IsConfidential);
+        Assert.IsFalse(result.HasClientSecret);
         Assert.HasCount(1, result.RedirectUris);
         Assert.AreEqual("https://localhost/callback", result.RedirectUris[0]);
         Assert.IsTrue(result.Permissions.Contains("scp:profile"));
+    }
+
+    [TestMethod]
+    public async Task GetClientByIdAsync_SetsConfidentialAndSecretFlags_WhenConfigured()
+    {
+        var app = new object();
+
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-2", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager.GetClientIdAsync(app, Ct).Returns(new ValueTask<string?>("client-2"));
+        applicationManager
+            .When(x => x.PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct))
+            .Do(callInfo =>
+            {
+                var descriptor = callInfo.Arg<OpenIddictApplicationDescriptor>();
+                descriptor.DisplayName = "Client Two";
+                descriptor.ClientType = OpenIddictConstants.ClientTypes.Confidential;
+                descriptor.ClientSecret = "hashed-or-placeholder";
+            });
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-2"), Ct);
+
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.IsConfidential);
+        Assert.IsTrue(result.HasClientSecret);
     }
 
     private static IOpenIddictApplicationManager CreateApplicationManager()

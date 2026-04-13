@@ -17,7 +17,7 @@ public sealed partial class ClientCommandService(
     ILogger<ClientCommandService> logger
 ) : IClientCommandService
 {
-    public async Task<CommandResult> CreateClientAsync(
+    public async Task<CreateClientResult> CreateClientAsync(
         CreateClientCommand command,
         CancellationToken ct = default
     )
@@ -25,13 +25,13 @@ public sealed partial class ClientCommandService(
         if (string.IsNullOrWhiteSpace(command.ClientId))
         {
             LogClientCommandRejected(nameof(CreateClientAsync), "Client ID is required.");
-            return CommandResult.Failure("Client ID is required.");
+            return CreateClientResult.Failure("Client ID is required.");
         }
 
         if (await applicationManager.FindByClientIdAsync(command.ClientId, ct) is not null)
         {
             LogClientAlreadyExists(command.ClientId);
-            return CommandResult.Failure("Client ID already exists.");
+            return CreateClientResult.Failure("Client ID already exists.");
         }
 
         var descriptor = new OpenIddictApplicationDescriptor
@@ -54,13 +54,27 @@ public sealed partial class ClientCommandService(
         )
         {
             LogClientCommandRejected(nameof(CreateClientAsync), configurationError);
-            return CommandResult.Failure(configurationError);
+            return CreateClientResult.Failure(configurationError);
+        }
+
+        string? generatedSecret = null;
+        if (command.GenerateClientSecret)
+        {
+            generatedSecret = GenerateClientSecret();
+            descriptor.ClientSecret = generatedSecret;
+            descriptor.ClientType = OpenIddictConstants.ClientTypes.Confidential;
+            LogClientSecretGeneratedOnCreate(command.ClientId);
+        }
+        else
+        {
+            descriptor.ClientSecret = null;
+            descriptor.ClientType = OpenIddictConstants.ClientTypes.Public;
         }
 
         await applicationManager.CreateAsync(descriptor, ct);
 
         LogClientCreated(command.ClientId);
-        return CommandResult.Success();
+        return CreateClientResult.Success(generatedSecret);
     }
 
     public async Task<CommandResult> UpdateClientAsync(
@@ -129,12 +143,27 @@ public sealed partial class ClientCommandService(
         var descriptor = new OpenIddictApplicationDescriptor();
         await applicationManager.PopulateAsync(descriptor, app, ct);
 
+        var promotedToConfidential = EnsureConfidentialClient(descriptor);
+        if (promotedToConfidential)
+        {
+            LogClientPromotedToConfidential(command.ClientId, nameof(RotateClientSecretAsync));
+        }
+
         var generatedSecret = GenerateClientSecret();
         descriptor.ClientSecret = generatedSecret;
 
-        await applicationManager.UpdateAsync(app, descriptor, ct);
+        try
+        {
+            await applicationManager.UpdateAsync(app, descriptor, ct);
+        }
+        catch (Exception ex)
+        {
+            LogClientCommandRejected(nameof(RotateClientSecretAsync), ex.Message);
+            return RotateClientSecretResult.Failure("Unable to rotate client secret.");
+        }
+
         LogClientSecretRotated(command.ClientId);
-        return RotateClientSecretResult.Success(generatedSecret);
+        return RotateClientSecretResult.Success(generatedSecret, promotedToConfidential);
     }
 
     public async Task<CommandResult> DeleteClientAsync(
@@ -177,12 +206,17 @@ public sealed partial class ClientCommandService(
             return CreateIfMissingResult.AlreadyExists();
         }
 
+        var normalizedClientSecret = string.IsNullOrWhiteSpace(command.ClientSecret)
+            ? null
+            : command.ClientSecret;
+
         var descriptor = new OpenIddictApplicationDescriptor
         {
             ClientId = command.ClientId,
-            ClientSecret = string.IsNullOrWhiteSpace(command.ClientSecret)
-                ? null
-                : command.ClientSecret,
+            ClientSecret = normalizedClientSecret,
+            ClientType = normalizedClientSecret is null
+                ? OpenIddictConstants.ClientTypes.Public
+                : OpenIddictConstants.ClientTypes.Confidential,
             DisplayName = command.DisplayName,
         };
 
@@ -299,6 +333,23 @@ public sealed partial class ClientCommandService(
         return true;
     }
 
+    private static bool EnsureConfidentialClient(OpenIddictApplicationDescriptor descriptor)
+    {
+        if (
+            string.Equals(
+                descriptor.ClientType,
+                OpenIddictConstants.ClientTypes.Confidential,
+                StringComparison.Ordinal
+            )
+        )
+        {
+            return false;
+        }
+
+        descriptor.ClientType = OpenIddictConstants.ClientTypes.Confidential;
+        return true;
+    }
+
     private static string GenerateClientSecret()
     {
         var randomBytes = RandomNumberGenerator.GetBytes(48);
@@ -333,6 +384,20 @@ public sealed partial class ClientCommandService(
         Message = "Client secret rotated: {ClientId}"
     )]
     private partial void LogClientSecretRotated(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientSecretGeneratedOnCreate,
+        Level = LogLevel.Information,
+        Message = "Client secret generated on create: {ClientId}"
+    )]
+    private partial void LogClientSecretGeneratedOnCreate(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientPromotedToConfidential,
+        Level = LogLevel.Information,
+        Message = "Client promoted to confidential: {ClientId} via {Operation}"
+    )]
+    private partial void LogClientPromotedToConfidential(string clientId, string operation);
 
     [LoggerMessage(
         EventId = EventIds.ClientDeleted,

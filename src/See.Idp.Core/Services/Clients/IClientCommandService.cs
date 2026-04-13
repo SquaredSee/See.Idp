@@ -15,8 +15,8 @@ public interface IClientCommandService
     /// </summary>
     /// <param name="command">The command containing the client details.</param>
     /// <param name="ct">The cancellation token.</param>
-    /// <returns>The result of the command.</returns>
-    Task<CommandResult> CreateClientAsync(
+    /// <returns>The result of the command, including an initial secret when generated.</returns>
+    Task<CreateClientResult> CreateClientAsync(
         CreateClientCommand command,
         CancellationToken ct = default
     );

@@ -42,6 +42,8 @@ public static class EventIds
     public const int ClientManagementAlreadyExists = 1505;
     public const int ClientCommandRejected = 1506;
     public const int ClientSecretRotated = 1507;
+    public const int ClientPromotedToConfidential = 1508;
+    public const int ClientSecretGeneratedOnCreate = 1509;
 
     // User query/command service: 1600 - 1699
     public const int UserListRetrieved = 1600;

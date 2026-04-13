@@ -92,6 +92,15 @@ public sealed partial class ClientQueryService(
             .OrderBy(uri => uri, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        var hasClientSecret = !string.IsNullOrWhiteSpace(descriptor.ClientSecret);
+        var isConfidential =
+            hasClientSecret
+            || string.Equals(
+                descriptor.ClientType,
+                OpenIddictConstants.ClientTypes.Confidential,
+                StringComparison.Ordinal
+            );
+
         return new ClientDetailsDto(
             clientId,
             descriptor.DisplayName,
@@ -101,7 +110,9 @@ public sealed partial class ClientQueryService(
             redirectUris,
             permissions
                 .Where(p => !ClientPermissionConventions.IsFlowControlledPermission(p))
-                .ToList()
+                .ToList(),
+            isConfidential,
+            hasClientSecret
         );
     }
 

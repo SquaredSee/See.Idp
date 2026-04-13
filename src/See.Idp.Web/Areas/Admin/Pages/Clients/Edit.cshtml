@@ -5,6 +5,11 @@
   ViewData["Title"] = "Edit client";
 }
 
+@section Scripts {
+  <script src="~/lib/jquery/dist/jquery.min.js"></script>
+  <partial name="_ValidationScriptsPartial" />
+}
+
 <div class="panel mx-auto w-full max-w-2xl">
   <h1>Edit client</h1>
 
@@ -13,6 +18,10 @@
     <div class="mt-4 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
       <p class="font-semibold">Client secret rotated</p>
       <p class="mt-1">Copy this secret now. It is only shown once.</p>
+      @if (Model.SecretRotationPromotedClient)
+      {
+        <p class="mt-1">This client was promoted to confidential to support secret-based authentication.</p>
+      }
       <input value="@Model.RotatedClientSecret" class="field-input mt-2 font-mono" readonly />
     </div>
   }
@@ -72,8 +81,25 @@
     </div>
   </form>
 
-  <form method="post" asp-page-handler="RotateSecret" class="mt-4 border-t border-border-soft pt-4">
-    <input type="hidden" name="Input.ClientId" value="@Model.Input.ClientId" />
-    <button type="submit" class="btn-danger">Rotate Client Secret</button>
-  </form>
+  <section class="mt-4 space-y-2 border-t border-border-soft pt-4">
+    <h2 class="field-label">Client secret</h2>
+    <p class="text-xs text-slate-600">
+      Existing client secrets are never displayed. Generate a new one to rotate credentials.
+    </p>
+    <p class="text-xs text-slate-600">
+      Current client type:
+      <strong>@(Model.Input.IsConfidential ? "Confidential" : "Public")</strong>
+      @if (!Model.Input.HasClientSecret)
+      {
+        <span>(no secret configured)</span>
+      }
+    </p>
+
+    <form method="post" asp-page-handler="RotateSecret" class="pt-2">
+      <input type="hidden" name="Input.ClientId" value="@Model.Input.ClientId" />
+      <button type="submit" class="btn-danger">
+        @(Model.Input.HasClientSecret ? "Rotate client secret" : "Generate client secret")
+      </button>
+    </form>
+  </section>
 </div>

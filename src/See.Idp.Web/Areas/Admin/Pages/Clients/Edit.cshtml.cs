@@ -18,6 +18,9 @@ public sealed class EditModel(
     [TempData]
     public string? RotatedClientSecret { get; set; }
 
+    [TempData]
+    public bool SecretRotationPromotedClient { get; set; }
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -90,6 +93,7 @@ public sealed class EditModel(
         }
 
         RotatedClientSecret = result.ClientSecret;
+        SecretRotationPromotedClient = result.PromotedToConfidential;
         return RedirectToPage(new { clientId = Input.ClientId });
     }
 
@@ -110,6 +114,8 @@ public sealed class EditModel(
             AllowRefreshTokenFlow = client.AllowRefreshTokenFlow,
             RedirectUrisText = string.Join(Environment.NewLine, client.RedirectUris),
             PermissionsText = string.Join(Environment.NewLine, client.Permissions),
+            IsConfidential = client.IsConfidential,
+            HasClientSecret = client.HasClientSecret,
         };
 
         return true;
@@ -154,5 +160,9 @@ public sealed class EditModel(
 
         [Display(Name = "Additional permissions (one per line)")]
         public string? PermissionsText { get; set; }
+
+        public bool IsConfidential { get; set; }
+
+        public bool HasClientSecret { get; set; }
     }
 }
