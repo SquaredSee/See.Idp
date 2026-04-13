@@ -34,6 +34,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     // Note: use the generic overload if you need to replace the default OpenIddict entities.
     options.UseOpenIddict();
 });
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder
     .Services.AddOpenIddict()
@@ -72,7 +73,10 @@ builder
     });
 
 builder
-    .Services.AddIdentity<IdentityUser, IdentityRole>()
+    .Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = true;
+    })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
@@ -100,7 +104,6 @@ builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IUserAuthenticationCommandService, UserAccountService>();
 
-// builder.Services.AddControllers();
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeAreaFolder("Admin", "/", Policies.AdminPortal);
@@ -114,16 +117,18 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
     app.UseDeveloperExceptionPage();
+    app.UseMigrationsEndPoint();
 }
 else
 {
     app.UseExceptionHandler("/Error");
 }
 
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// app.MapControllers();
 app.MapStaticAssets();
 app.MapRazorPages().WithStaticAssets();
 
