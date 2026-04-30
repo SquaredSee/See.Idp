@@ -10,7 +10,7 @@ namespace See.Idp.Infrastructure.Services;
 
 // TODO: implement cancellation token support in SignInManager
 public sealed partial class UserAccountService(
-    SignInManager<IdentityUser> signInManager,
+    SignInManager<ApplicationUser> signInManager,
     ILogger<UserAccountService> logger
 ) : IUserAuthenticationCommandService
 {

@@ -13,8 +13,8 @@ using See.Idp.Infrastructure.Logging;
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class UserCommandService(
-    UserManager<IdentityUser> userManager,
-    RoleManager<IdentityRole> roleManager,
+    UserManager<ApplicationUser> userManager,
+    RoleManager<ApplicationRole> roleManager,
     ILogger<UserCommandService> logger
 ) : IUserCommandService
 {
@@ -37,7 +37,7 @@ public sealed partial class UserCommandService(
             return CreateIfMissingResult.AlreadyExists();
         }
 
-        var result = await roleManager.CreateAsync(new IdentityRole(command.RoleName));
+        var result = await roleManager.CreateAsync(new ApplicationRole { Name = command.RoleName });
         if (result.Succeeded)
         {
             LogRoleCreated(command.RoleName);
@@ -66,7 +66,7 @@ public sealed partial class UserCommandService(
             return CreateUserIfMissingResult.AlreadyExists(existingUser.Id);
         }
 
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             UserName = command.Email,
             Email = command.Email,

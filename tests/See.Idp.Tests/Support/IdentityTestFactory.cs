@@ -5,25 +5,26 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using See.Idp.Infrastructure;
 
 namespace See.Idp.Tests.Support;
 
 internal static class IdentityTestFactory
 {
-    public static UserManager<IdentityUser> CreateUserManager()
+    public static UserManager<ApplicationUser> CreateUserManager()
     {
-        var store = Substitute.For<IUserStore<IdentityUser>>();
+        var store = Substitute.For<IUserStore<ApplicationUser>>();
         var options = Substitute.For<IOptions<IdentityOptions>>();
         options.Value.Returns(new IdentityOptions());
 
-        var passwordHasher = Substitute.For<IPasswordHasher<IdentityUser>>();
-        var userValidators = Array.Empty<IUserValidator<IdentityUser>>();
-        var passwordValidators = Array.Empty<IPasswordValidator<IdentityUser>>();
+        var passwordHasher = Substitute.For<IPasswordHasher<ApplicationUser>>();
+        var userValidators = Array.Empty<IUserValidator<ApplicationUser>>();
+        var passwordValidators = Array.Empty<IPasswordValidator<ApplicationUser>>();
         var keyNormalizer = Substitute.For<ILookupNormalizer>();
         var serviceProvider = Substitute.For<IServiceProvider>();
-        var logger = Substitute.For<ILogger<UserManager<IdentityUser>>>();
+        var logger = Substitute.For<ILogger<UserManager<ApplicationUser>>>();
 
-        return Substitute.For<UserManager<IdentityUser>>(
+        return Substitute.For<UserManager<ApplicationUser>>(
             store,
             options,
             passwordHasher,
@@ -36,14 +37,14 @@ internal static class IdentityTestFactory
         );
     }
 
-    public static RoleManager<IdentityRole> CreateRoleManager()
+    public static RoleManager<ApplicationRole> CreateRoleManager()
     {
-        var store = Substitute.For<IRoleStore<IdentityRole>>();
-        var roleValidators = Array.Empty<IRoleValidator<IdentityRole>>();
+        var store = Substitute.For<IRoleStore<ApplicationRole>>();
+        var roleValidators = Array.Empty<IRoleValidator<ApplicationRole>>();
         var keyNormalizer = Substitute.For<ILookupNormalizer>();
-        var logger = Substitute.For<ILogger<RoleManager<IdentityRole>>>();
+        var logger = Substitute.For<ILogger<RoleManager<ApplicationRole>>>();
 
-        return Substitute.For<RoleManager<IdentityRole>>(
+        return Substitute.For<RoleManager<ApplicationRole>>(
             store,
             roleValidators,
             keyNormalizer,
@@ -64,7 +65,7 @@ internal static class IdentityTestFactory
         return IdentityResult.Failed(errors);
     }
 
-    public static IList<IdentityUser> Users(params IdentityUser[] users)
+    public static IList<ApplicationUser> Users(params ApplicationUser[] users)
     {
         return users.ToList();
     }

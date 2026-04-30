@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using See.Idp.Core.Dtos.Users;
+using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Auth;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Tests.Support;
@@ -36,7 +37,7 @@ public sealed class UserCommandServiceTests
     public async Task ToggleAdminAsync_ReturnsFailure_WhenUserNotFound()
     {
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync("missing").Returns(Task.FromResult<IdentityUser?>(null));
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -52,10 +53,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task ToggleAdminAsync_ReturnsFailure_WhenRemovingOwnAdminRole()
     {
-        var user = new IdentityUser { Id = "admin-1", Email = "admin@example.com" };
+        var user = new ApplicationUser { Id = "admin-1", Email = "admin@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(true));
 
         var sut = CreateSut(userManager: userManager);
@@ -70,10 +71,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task ToggleAdminAsync_RemovesAdminRole_WhenUserIsAdmin()
     {
-        var user = new IdentityUser { Id = "admin-2", Email = "admin2@example.com" };
+        var user = new ApplicationUser { Id = "admin-2", Email = "admin2@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(true));
         userManager
             .RemoveFromRoleAsync(user, Roles.Admin)
@@ -94,10 +95,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task ToggleAdminAsync_ReturnsFailure_WhenGrantAdminFails()
     {
-        var user = new IdentityUser { Id = "user-1", Email = "user@example.com" };
+        var user = new ApplicationUser { Id = "user-1", Email = "user@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(false));
         userManager
             .AddToRoleAsync(user, Roles.Admin)
@@ -117,10 +118,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task ToggleLockAsync_ReturnsFailure_WhenCurrentUserTargetsSelf()
     {
-        var user = new IdentityUser { Id = "self-user", Email = "self@example.com" };
+        var user = new ApplicationUser { Id = "self-user", Email = "self@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -130,13 +131,13 @@ public sealed class UserCommandServiceTests
         Assert.AreEqual("You cannot lock your own account.", result.Error);
         await userManager
             .DidNotReceive()
-            .SetLockoutEndDateAsync(Arg.Any<IdentityUser>(), Arg.Any<DateTimeOffset?>());
+            .SetLockoutEndDateAsync(Arg.Any<ApplicationUser>(), Arg.Any<DateTimeOffset?>());
     }
 
     [TestMethod]
     public async Task ToggleLockAsync_EnablesAndLocksUser_WhenLockoutDisabled()
     {
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             Id = "lock-user",
             Email = "lock@example.com",
@@ -144,7 +145,7 @@ public sealed class UserCommandServiceTests
         };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.UpdateAsync(user).Returns(Task.FromResult(IdentityResult.Success));
         userManager
             .SetLockoutEndDateAsync(user, Arg.Any<DateTimeOffset?>())
@@ -169,7 +170,7 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task ToggleLockAsync_ReturnsFailure_WhenEnablingLockoutFails()
     {
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             Id = "lock-user-fail",
             Email = "lockfail@example.com",
@@ -177,7 +178,7 @@ public sealed class UserCommandServiceTests
         };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager
             .UpdateAsync(user)
             .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Update failed.")));
@@ -193,13 +194,13 @@ public sealed class UserCommandServiceTests
         Assert.AreEqual("Update failed.", result.Error);
         await userManager
             .DidNotReceive()
-            .SetLockoutEndDateAsync(Arg.Any<IdentityUser>(), Arg.Any<DateTimeOffset?>());
+            .SetLockoutEndDateAsync(Arg.Any<ApplicationUser>(), Arg.Any<DateTimeOffset?>());
     }
 
     [TestMethod]
     public async Task ToggleLockAsync_UnlocksUser_WhenAlreadyLocked()
     {
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             Id = "unlock-user",
             Email = "unlock@example.com",
@@ -208,7 +209,7 @@ public sealed class UserCommandServiceTests
         };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager
             .SetLockoutEndDateAsync(user, null)
             .Returns(Task.FromResult(IdentityResult.Success));
@@ -228,10 +229,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task DeleteUserAsync_ReturnsFailure_WhenCurrentUserTargetsSelf()
     {
-        var user = new IdentityUser { Id = "delete-self", Email = "selfdelete@example.com" };
+        var user = new ApplicationUser { Id = "delete-self", Email = "selfdelete@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -239,16 +240,16 @@ public sealed class UserCommandServiceTests
 
         Assert.IsFalse(result.Succeeded);
         Assert.AreEqual("You cannot delete your own account.", result.Error);
-        await userManager.DidNotReceive().DeleteAsync(Arg.Any<IdentityUser>());
+        await userManager.DidNotReceive().DeleteAsync(Arg.Any<ApplicationUser>());
     }
 
     [TestMethod]
     public async Task DeleteUserAsync_ReturnsFailure_WhenDeletingLastAdmin()
     {
-        var user = new IdentityUser { Id = "admin-last", Email = "adminlast@example.com" };
+        var user = new ApplicationUser { Id = "admin-last", Email = "adminlast@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(true));
         userManager
             .GetUsersInRoleAsync(Roles.Admin)
@@ -260,16 +261,16 @@ public sealed class UserCommandServiceTests
 
         Assert.IsFalse(result.Succeeded);
         Assert.AreEqual("Cannot delete the last admin user.", result.Error);
-        await userManager.DidNotReceive().DeleteAsync(Arg.Any<IdentityUser>());
+        await userManager.DidNotReceive().DeleteAsync(Arg.Any<ApplicationUser>());
     }
 
     [TestMethod]
     public async Task DeleteUserAsync_DeletesUser_WhenAllowed()
     {
-        var user = new IdentityUser { Id = "delete-ok", Email = "deleteok@example.com" };
+        var user = new ApplicationUser { Id = "delete-ok", Email = "deleteok@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(false));
         userManager.DeleteAsync(user).Returns(Task.FromResult(IdentityResult.Success));
 
@@ -292,7 +293,7 @@ public sealed class UserCommandServiceTests
 
         Assert.IsFalse(result.Succeeded);
         Assert.AreEqual("Role is required.", result.Error);
-        await roleManager.DidNotReceive().CreateAsync(Arg.Any<IdentityRole>());
+        await roleManager.DidNotReceive().CreateAsync(Arg.Any<ApplicationRole>());
     }
 
     [TestMethod]
@@ -320,7 +321,7 @@ public sealed class UserCommandServiceTests
         var roleManager = IdentityTestFactory.CreateRoleManager();
         roleManager.RoleExistsAsync(roleName).Returns(Task.FromResult(false));
         roleManager
-            .CreateAsync(Arg.Any<IdentityRole>())
+            .CreateAsync(Arg.Any<ApplicationRole>())
             .Returns(Task.FromResult(IdentityResult.Success));
 
         var sut = CreateSut(roleManager: roleManager);
@@ -332,7 +333,7 @@ public sealed class UserCommandServiceTests
 
         Assert.IsTrue(result.Succeeded);
         Assert.IsTrue(result.Created);
-        await roleManager.Received(1).CreateAsync(Arg.Is<IdentityRole>(r => r.Name == roleName));
+        await roleManager.Received(1).CreateAsync(Arg.Is<ApplicationRole>(r => r.Name == roleName));
     }
 
     [TestMethod]
@@ -343,7 +344,7 @@ public sealed class UserCommandServiceTests
         var roleManager = IdentityTestFactory.CreateRoleManager();
         roleManager.RoleExistsAsync(roleName).Returns(Task.FromResult(false));
         roleManager
-            .CreateAsync(Arg.Any<IdentityRole>())
+            .CreateAsync(Arg.Any<ApplicationRole>())
             .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Role create failed.")));
 
         var sut = CreateSut(roleManager: roleManager);
@@ -375,7 +376,7 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task CreateUserIfMissingAsync_ReturnsAlreadyExists_WhenUserExists()
     {
-        var existingUser = new IdentityUser
+        var existingUser = new ApplicationUser
         {
             Id = "existing-user",
             Email = "existing@example.com",
@@ -384,7 +385,7 @@ public sealed class UserCommandServiceTests
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager
             .FindByEmailAsync(existingUser.Email)
-            .Returns(Task.FromResult<IdentityUser?>(existingUser));
+            .Returns(Task.FromResult<ApplicationUser?>(existingUser));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -396,7 +397,9 @@ public sealed class UserCommandServiceTests
         Assert.IsTrue(result.Succeeded);
         Assert.IsFalse(result.Created);
         Assert.AreEqual(existingUser.Id, result.UserId);
-        await userManager.DidNotReceive().CreateAsync(Arg.Any<IdentityUser>(), Arg.Any<string>());
+        await userManager
+            .DidNotReceive()
+            .CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>());
     }
 
     [TestMethod]
@@ -405,9 +408,9 @@ public sealed class UserCommandServiceTests
         const string email = "new@example.com";
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByEmailAsync(email).Returns(Task.FromResult<IdentityUser?>(null));
+        userManager.FindByEmailAsync(email).Returns(Task.FromResult<ApplicationUser?>(null));
         userManager
-            .CreateAsync(Arg.Any<IdentityUser>())
+            .CreateAsync(Arg.Any<ApplicationUser>())
             .Returns(Task.FromResult(IdentityResult.Success));
 
         var sut = CreateSut(userManager: userManager);
@@ -422,8 +425,10 @@ public sealed class UserCommandServiceTests
         Assert.IsFalse(string.IsNullOrWhiteSpace(result.UserId));
         await userManager
             .Received(1)
-            .CreateAsync(Arg.Is<IdentityUser>(u => u.Email == email && u.UserName == email));
-        await userManager.DidNotReceive().CreateAsync(Arg.Any<IdentityUser>(), Arg.Any<string>());
+            .CreateAsync(Arg.Is<ApplicationUser>(u => u.Email == email && u.UserName == email));
+        await userManager
+            .DidNotReceive()
+            .CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>());
     }
 
     [TestMethod]
@@ -433,9 +438,9 @@ public sealed class UserCommandServiceTests
         const string password = "Passw0rd!";
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByEmailAsync(email).Returns(Task.FromResult<IdentityUser?>(null));
+        userManager.FindByEmailAsync(email).Returns(Task.FromResult<ApplicationUser?>(null));
         userManager
-            .CreateAsync(Arg.Any<IdentityUser>(), password)
+            .CreateAsync(Arg.Any<ApplicationUser>(), password)
             .Returns(Task.FromResult(IdentityResult.Success));
 
         var sut = CreateSut(userManager: userManager);
@@ -451,7 +456,7 @@ public sealed class UserCommandServiceTests
         await userManager
             .Received(1)
             .CreateAsync(
-                Arg.Is<IdentityUser>(u => u.Email == email && u.UserName == email),
+                Arg.Is<ApplicationUser>(u => u.Email == email && u.UserName == email),
                 password
             );
     }
@@ -462,9 +467,9 @@ public sealed class UserCommandServiceTests
         const string email = "failed@example.com";
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByEmailAsync(email).Returns(Task.FromResult<IdentityUser?>(null));
+        userManager.FindByEmailAsync(email).Returns(Task.FromResult<ApplicationUser?>(null));
         userManager
-            .CreateAsync(Arg.Any<IdentityUser>(), Arg.Any<string>())
+            .CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
             .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Create user failed.")));
 
         var sut = CreateSut(userManager: userManager);
@@ -510,7 +515,7 @@ public sealed class UserCommandServiceTests
     public async Task AddUserToRoleIfMissingAsync_ReturnsFailure_WhenUserNotFound()
     {
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync("missing").Returns(Task.FromResult<IdentityUser?>(null));
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
 
         var sut = CreateSut(userManager: userManager);
 
@@ -526,10 +531,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task AddUserToRoleIfMissingAsync_ReturnsAlreadyExists_WhenUserAlreadyInRole()
     {
-        var user = new IdentityUser { Id = "in-role", Email = "inrole@example.com" };
+        var user = new ApplicationUser { Id = "in-role", Email = "inrole@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(true));
 
         var sut = CreateSut(userManager: userManager);
@@ -546,10 +551,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task AddUserToRoleIfMissingAsync_CreatesMembership_WhenMissing()
     {
-        var user = new IdentityUser { Id = "new-member", Email = "newmember@example.com" };
+        var user = new ApplicationUser { Id = "new-member", Email = "newmember@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(false));
         userManager
             .AddToRoleAsync(user, Roles.Admin)
@@ -570,10 +575,10 @@ public sealed class UserCommandServiceTests
     [TestMethod]
     public async Task AddUserToRoleIfMissingAsync_ReturnsFailure_WhenAddToRoleFails()
     {
-        var user = new IdentityUser { Id = "member-fail", Email = "memberfail@example.com" };
+        var user = new ApplicationUser { Id = "member-fail", Email = "memberfail@example.com" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<IdentityUser?>(user));
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(false));
         userManager
             .AddToRoleAsync(user, Roles.Admin)
@@ -591,8 +596,8 @@ public sealed class UserCommandServiceTests
     }
 
     private static UserCommandService CreateSut(
-        UserManager<IdentityUser>? userManager = null,
-        RoleManager<IdentityRole>? roleManager = null
+        UserManager<ApplicationUser>? userManager = null,
+        RoleManager<ApplicationRole>? roleManager = null
     )
     {
         var effectiveUserManager = userManager ?? IdentityTestFactory.CreateUserManager();

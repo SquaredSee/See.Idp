@@ -15,7 +15,7 @@ using See.Idp.Infrastructure.Logging;
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class UserQueryService(
-    UserManager<IdentityUser> userManager,
+    UserManager<ApplicationUser> userManager,
     ILogger<UserQueryService> logger
 ) : IUserQueryService
 {

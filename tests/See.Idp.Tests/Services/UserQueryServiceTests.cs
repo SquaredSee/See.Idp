@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using See.Idp.Core.Dtos.Users;
+using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Auth;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Tests.Support;
@@ -22,7 +23,7 @@ public sealed class UserQueryServiceTests
     [TestMethod]
     public async Task ListUsersAsync_MapsUsers_WithOrderingAdminAndLockState()
     {
-        var alpha = new IdentityUser
+        var alpha = new ApplicationUser
         {
             Id = "user-alpha",
             UserName = "alpha",
@@ -32,7 +33,7 @@ public sealed class UserQueryServiceTests
             LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(10),
         };
 
-        var beta = new IdentityUser
+        var beta = new ApplicationUser
         {
             Id = "user-beta",
             UserName = "beta",
@@ -69,13 +70,15 @@ public sealed class UserQueryServiceTests
         Assert.IsFalse(result[1].IsLockedOut);
 
         await userManager.Received(1).GetUsersInRoleAsync(Roles.Admin);
-        await userManager.DidNotReceive().IsInRoleAsync(Arg.Any<IdentityUser>(), Arg.Any<string>());
+        await userManager
+            .DidNotReceive()
+            .IsInRoleAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>());
     }
 
     [TestMethod]
     public async Task ListUsersAsync_SetsIsLockedOutFalse_WhenLockoutDisabled()
     {
-        var user = new IdentityUser
+        var user = new ApplicationUser
         {
             Id = "user-lock-disabled",
             UserName = "nolock",
@@ -101,14 +104,14 @@ public sealed class UserQueryServiceTests
     [TestMethod]
     public async Task ListUsersAsync_FiltersBySearchTerm()
     {
-        var alpha = new IdentityUser
+        var alpha = new ApplicationUser
         {
             Id = "user-alpha",
             UserName = "alpha",
             Email = "alpha@example.com",
         };
 
-        var beta = new IdentityUser
+        var beta = new ApplicationUser
         {
             Id = "user-beta",
             UserName = "beta",
@@ -132,21 +135,21 @@ public sealed class UserQueryServiceTests
     [TestMethod]
     public async Task ListUsersAsync_AppliesSkipAndTake()
     {
-        var userA = new IdentityUser
+        var userA = new ApplicationUser
         {
             Id = "user-a",
             UserName = "a",
             Email = "a@example.com",
         };
 
-        var userB = new IdentityUser
+        var userB = new ApplicationUser
         {
             Id = "user-b",
             UserName = "b",
             Email = "b@example.com",
         };
 
-        var userC = new IdentityUser
+        var userC = new ApplicationUser
         {
             Id = "user-c",
             UserName = "c",
@@ -167,7 +170,7 @@ public sealed class UserQueryServiceTests
         Assert.AreEqual("user-b", result[0].UserId);
     }
 
-    private static UserQueryService CreateSut(UserManager<IdentityUser>? userManager = null)
+    private static UserQueryService CreateSut(UserManager<ApplicationUser>? userManager = null)
     {
         var effectiveUserManager = userManager ?? IdentityTestFactory.CreateUserManager();
         var logger = Substitute.For<ILogger<UserQueryService>>();

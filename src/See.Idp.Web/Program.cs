@@ -1,6 +1,5 @@
 using System;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -81,22 +80,22 @@ builder
     });
 
 builder
-    .Services.AddDefaultIdentity<IdentityUser>(options =>
+    .Services.AddDefaultIdentity<ApplicationUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
     })
-    .AddRoles<IdentityRole>()
+    .AddRoles<ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddAuthorizationBuilder().AddAdminPortalPolicy();
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    // Default paths for login, logout, and access denied.
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-});
+// builder.Services.ConfigureApplicationCookie(options =>
+// {
+//     // Default paths for login, logout, and access denied.
+//     options.LoginPath = "/Account/Login";
+//     options.LogoutPath = "/Account/Logout";
+//     options.AccessDeniedPath = "/Account/AccessDenied";
+// });
 
 // Options pattern configuration
 builder.Services.Configure<InitializationOptions>(
