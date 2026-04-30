@@ -1,9 +1,9 @@
 {
   "name": "see.idp.web",
   "scripts": {
-    "build:css:base": "tailwindcss -i ./wwwroot/css/site.css -o ./wwwroot/css/site.out.css --minify",
+    "build:css:identity": "tailwindcss -i ./wwwroot/css/identity.css -o ./wwwroot/css/identity.out.css --minify",
     "build:css:admin": "tailwindcss -i ./wwwroot/css/admin.css -o ./wwwroot/css/admin.out.css --minify",
-    "build:css": "npm run build:css:base && npm run build:css:admin"
+    "build:css": "npm run build:css:identity && npm run build:css:admin"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.2.2",

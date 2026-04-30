@@ -81,13 +81,12 @@ builder
     });
 
 builder
-    .Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+    .Services.AddDefaultIdentity<IdentityUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = true;
     })
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultUI()
-    .AddDefaultTokenProviders();
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddAuthorizationBuilder().AddAdminPortalPolicy();
 
