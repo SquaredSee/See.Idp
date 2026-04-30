@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
+using See.Idp.Core.Auth;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Infrastructure;
-using See.Idp.Infrastructure.Auth;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Tests.Support;
 

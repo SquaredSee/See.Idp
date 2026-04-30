@@ -4,10 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using See.Idp.Core.Auth;
 using See.Idp.Core.Dtos.Common;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services.Users;
-using See.Idp.Infrastructure.Auth;
 using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
