@@ -1,17 +1,17 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
+using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 public sealed class RegisterModel(
-    UserManager<ApplicationUser> userManager,
+    IUserRegistrationCommandService registrationService,
     IEmailSender<ApplicationUser> emailSender
 ) : PageModel
 {
@@ -48,20 +48,16 @@ public sealed class RegisterModel(
         if (!ModelState.IsValid)
             return Page();
 
-        var user = new ApplicationUser { UserName = Input.Email, Email = Input.Email };
-
-        var result = await userManager.CreateAsync(user, Input.Password);
+        var result = await registrationService.RegisterAsync(
+            new RegisterUserCommand(Input.Email, Input.Password)
+        );
 
         if (!result.Succeeded)
         {
             foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(string.Empty, error);
             return Page();
         }
-
-        var userId = await userManager.GetUserIdAsync(user);
-        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
         var confirmationLink = Url.Page(
             "/Account/ConfirmEmail",
@@ -69,15 +65,15 @@ public sealed class RegisterModel(
             values: new
             {
                 area = "Identity",
-                userId,
-                code,
+                userId = result.UserId,
+                code = result.EmailConfirmationToken,
                 returnUrl,
             },
             protocol: Request.Scheme
         )!;
 
         await emailSender.SendConfirmationLinkAsync(
-            user,
+            new ApplicationUser { Email = Input.Email, UserName = Input.Email },
             Input.Email,
             HtmlEncoder.Default.Encode(confirmationLink)
         );

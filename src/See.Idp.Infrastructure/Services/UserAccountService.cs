@@ -1,15 +1,20 @@
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Auth;
+using See.Idp.Core.Dtos.Common;
+using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services.Auth;
 using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
-// TODO: implement cancellation token support in SignInManager
 public sealed partial class UserAccountService(
+    UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     ILogger<UserAccountService> logger
 ) : IUserAuthenticationCommandService
@@ -52,6 +57,99 @@ public sealed partial class UserAccountService(
         LogAuthenticationSignOut();
     }
 
+    public async Task<string?> GeneratePasswordResetTokenAsync(
+        string email,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null || !await userManager.IsEmailConfirmedAsync(user))
+            return null;
+
+        var code = await userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        LogAuthenticationPasswordResetTokenGenerated(email);
+        return encodedCode;
+    }
+
+    private const string InvalidResetLinkError =
+        "The password reset link is invalid or has expired. Please request a new one.";
+
+    public async Task<CommandResult> ResetPasswordAsync(
+        ResetPasswordCommand command,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByEmailAsync(command.Email);
+        if (user is null)
+        {
+            LogAuthenticationPasswordResetFailed(command.Email);
+            return CommandResult.Failure(InvalidResetLinkError);
+        }
+
+        var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(command.Code));
+        var result = await userManager.ResetPasswordAsync(user, code, command.NewPassword);
+
+        if (result.Succeeded)
+        {
+            LogAuthenticationPasswordResetSucceeded(command.Email);
+            return CommandResult.Success();
+        }
+
+        LogAuthenticationPasswordResetFailed(command.Email);
+
+        if (result.Errors.Any(e => e.Code == "InvalidToken"))
+            return CommandResult.Failure(InvalidResetLinkError);
+
+        return CommandResult.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+    }
+
+    public async Task<CommandResult> ChangePasswordAsync(
+        ChangePasswordCommand command,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByIdAsync(command.UserId);
+        if (user is null)
+            return CommandResult.Failure($"Unable to load user with ID '{command.UserId}'.");
+
+        var result = await userManager.ChangePasswordAsync(
+            user,
+            command.OldPassword,
+            command.NewPassword
+        );
+
+        if (!result.Succeeded)
+        {
+            LogAuthenticationPasswordChangeFailed(command.UserId);
+            return CommandResult.Failure(
+                string.Join(", ", result.Errors.Select(e => e.Description))
+            );
+        }
+
+        await RefreshSignInCoreAsync(user);
+        LogAuthenticationPasswordChanged(command.UserId);
+        return CommandResult.Success();
+    }
+
+    public async Task RefreshSignInAsync(CancellationToken ct = default)
+    {
+        var ctx = signInManager.Context;
+        if (ctx is null)
+            return;
+
+        var user = await userManager.GetUserAsync(ctx.User);
+        if (user is not null)
+            await RefreshSignInCoreAsync(user);
+    }
+
+    private async Task RefreshSignInCoreAsync(ApplicationUser user)
+    {
+        await signInManager.RefreshSignInAsync(user);
+        LogAuthenticationSignInRefreshed();
+    }
+
     [LoggerMessage(
         EventId = EventIds.AuthenticationSignInAttempt,
         Level = LogLevel.Information,
@@ -86,4 +184,46 @@ public sealed partial class UserAccountService(
         Message = "Authentication sign-out completed"
     )]
     private partial void LogAuthenticationSignOut();
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationPasswordResetTokenGenerated,
+        Level = LogLevel.Information,
+        Message = "Password reset token generated for {Email}"
+    )]
+    private partial void LogAuthenticationPasswordResetTokenGenerated(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationPasswordResetSucceeded,
+        Level = LogLevel.Information,
+        Message = "Password reset succeeded for {Email}"
+    )]
+    private partial void LogAuthenticationPasswordResetSucceeded(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationPasswordResetFailed,
+        Level = LogLevel.Warning,
+        Message = "Password reset failed for {Email}"
+    )]
+    private partial void LogAuthenticationPasswordResetFailed(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationPasswordChanged,
+        Level = LogLevel.Information,
+        Message = "Password changed for user {UserId}"
+    )]
+    private partial void LogAuthenticationPasswordChanged(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationPasswordChangeFailed,
+        Level = LogLevel.Warning,
+        Message = "Password change failed for user {UserId}"
+    )]
+    private partial void LogAuthenticationPasswordChangeFailed(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.AuthenticationSignInRefreshed,
+        Level = LogLevel.Information,
+        Message = "Sign-in refreshed for current user"
+    )]
+    private partial void LogAuthenticationSignInRefreshed();
 }

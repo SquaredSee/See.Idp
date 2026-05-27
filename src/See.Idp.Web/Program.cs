@@ -114,6 +114,7 @@ builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IUserAuthenticationCommandService, UserAccountService>();
+builder.Services.AddScoped<IUserRegistrationCommandService, UserRegistrationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
 
 builder.Services.AddRazorPages(options =>

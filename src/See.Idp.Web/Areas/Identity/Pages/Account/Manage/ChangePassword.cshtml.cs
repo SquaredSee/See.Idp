@@ -1,18 +1,16 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Infrastructure;
+using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Auth;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 
 [Authorize]
-public sealed class ChangePasswordModel(
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager
-) : PageModel
+public sealed class ChangePasswordModel(IUserAuthenticationCommandService authService) : PageModel
 {
     [TempData]
     public string? StatusMessage { get; set; }
@@ -46,38 +44,24 @@ public sealed class ChangePasswordModel(
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
-    public async Task<IActionResult> OnGetAsync()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
-
-        return Page();
-    }
+    public IActionResult OnGet() => Page();
 
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
             return Page();
 
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
-
-        var result = await userManager.ChangePasswordAsync(
-            user,
-            Input.OldPassword,
-            Input.NewPassword
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await authService.ChangePasswordAsync(
+            new ChangePasswordCommand(userId, Input.OldPassword, Input.NewPassword)
         );
 
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
+            ModelState.AddModelError(string.Empty, result.Error ?? "Error changing password.");
             return Page();
         }
 
-        await signInManager.RefreshSignInAsync(user);
         StatusMessage = "Your password has been changed.";
         return RedirectToPage();
     }

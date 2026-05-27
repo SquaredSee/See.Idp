@@ -1,21 +1,22 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Hosting;
+using See.Idp.Core.Services.Auth;
 using See.Idp.Infrastructure;
-using See.Idp.Web.Services;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
 public sealed class ForgotPasswordModel(
-    UserManager<ApplicationUser> userManager,
-    IEmailSender<ApplicationUser> emailSender
+    IUserAuthenticationCommandService authService,
+    IEmailSender<ApplicationUser> emailSender,
+    IWebHostEnvironment env
 ) : PageModel
 {
     [BindProperty]
@@ -35,38 +36,28 @@ public sealed class ForgotPasswordModel(
         if (!ModelState.IsValid)
             return Page();
 
-        var user = await userManager.FindByEmailAsync(Input.Email);
+        var encodedCode = await authService.GeneratePasswordResetTokenAsync(Input.Email);
 
         // Always redirect to confirmation page to prevent user enumeration.
-        if (user is null || !await userManager.IsEmailConfirmedAsync(user))
-        {
-            if (emailSender is not NoOpEmailSender)
-                return RedirectToPage("./ForgotPasswordConfirmation");
-
-            // In dev with no-op sender, fall through so the form re-renders with the dev link
-            // missing (no confirmed user) — still safe.
+        if (encodedCode is null)
             return RedirectToPage("./ForgotPasswordConfirmation");
-        }
-
-        var code = await userManager.GeneratePasswordResetTokenAsync(user);
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
         var resetUrl = Url.Page(
             "/Account/ResetPassword",
             pageHandler: null,
-            values: new { area = "Identity", code },
+            values: new { area = "Identity", code = encodedCode },
             protocol: Request.Scheme
         )!;
 
-        // When using the no-op sender in development, display the link on-page instead.
-        if (emailSender is NoOpEmailSender)
+        // In development, display the link on-page instead of sending an email.
+        if (env.IsDevelopment())
         {
             ResetPasswordUrl = resetUrl;
             return Page();
         }
 
         await emailSender.SendPasswordResetLinkAsync(
-            user,
+            new ApplicationUser { Email = Input.Email, UserName = Input.Email },
             Input.Email,
             HtmlEncoder.Default.Encode(resetUrl)
         );

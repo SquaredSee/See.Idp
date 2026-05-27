@@ -20,4 +20,21 @@ public interface IUserQueryService
         ListUsersQuery query,
         CancellationToken ct = default
     );
+
+    /// <summary>
+    ///     Returns the profile of a user by their ID, or <see langword="null"/> if not found.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>The user's profile, or <see langword="null"/> if not found.</returns>
+    Task<UserProfileDto?> GetUserProfileAsync(string userId, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Returns the user ID for the account with the given email, or <see langword="null"/> if
+    ///     no such account exists.
+    /// </summary>
+    /// <param name="email">The email address to look up.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>The user ID, or <see langword="null"/> if not found.</returns>
+    Task<string?> FindUserIdByEmailAsync(string email, CancellationToken ct = default);
 }

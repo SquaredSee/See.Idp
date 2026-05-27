@@ -72,4 +72,15 @@ public interface IUserCommandService
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The result of the command.</returns>
     Task<CommandResult> DeleteUserAsync(DeleteUserCommand command, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Updates the phone number for a user.
+    /// </summary>
+    /// <param name="command">The command containing the user ID and the new phone number.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>The result of the command.</returns>
+    Task<CommandResult> UpdatePhoneNumberAsync(
+        UpdatePhoneNumberCommand command,
+        CancellationToken ct = default
+    );
 }

@@ -91,4 +91,22 @@ public sealed partial class UserQueryService(
         Message = "Retrieved {Count} users"
     )]
     private partial void LogUserListRetrieved(int count);
+
+    public async Task<UserProfileDto?> GetUserProfileAsync(
+        string userId,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return null;
+
+        return new UserProfileDto(user.Email ?? string.Empty, user.PhoneNumber);
+    }
+
+    public async Task<string?> FindUserIdByEmailAsync(string email, CancellationToken ct = default)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        return user is null ? null : await userManager.GetUserIdAsync(user);
+    }
 }

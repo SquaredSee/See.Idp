@@ -1,16 +1,15 @@
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using See.Idp.Infrastructure;
+using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class ConfirmEmailModel(UserManager<ApplicationUser> userManager) : PageModel
+public sealed class ConfirmEmailModel(IUserRegistrationCommandService registrationService)
+    : PageModel
 {
     public string StatusMessage { get; set; } = string.Empty;
 
@@ -21,12 +20,9 @@ public sealed class ConfirmEmailModel(UserManager<ApplicationUser> userManager) 
         if (userId is null || code is null)
             return RedirectToPage("/Index", new { area = "" });
 
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
-            return NotFound($"Unable to load user with ID '{userId}'.");
-
-        var decodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
-        var result = await userManager.ConfirmEmailAsync(user, decodedCode);
+        var result = await registrationService.ConfirmEmailAsync(
+            new ConfirmEmailCommand(userId, code)
+        );
 
         if (result.Succeeded)
         {
@@ -36,7 +32,8 @@ public sealed class ConfirmEmailModel(UserManager<ApplicationUser> userManager) 
         else
         {
             StatusMessage =
-                "Error confirming your email. The link may have expired or already been used.";
+                result.Error
+                ?? "Error confirming your email. The link may have expired or already been used.";
         }
 
         return Page();

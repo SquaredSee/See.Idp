@@ -25,3 +25,10 @@ public sealed record UserSummaryDto(
     bool IsAdmin,
     bool IsLockedOut
 );
+
+/// <summary>
+///     Represents the editable profile of a user account.
+/// </summary>
+/// <param name="Email">The email address (read-only).</param>
+/// <param name="PhoneNumber">The phone number.</param>
+public sealed record UserProfileDto(string Email, string? PhoneNumber);

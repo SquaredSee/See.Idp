@@ -1,17 +1,15 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using See.Idp.Infrastructure;
+using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Auth;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class ResetPasswordModel(UserManager<ApplicationUser> userManager) : PageModel
+public sealed class ResetPasswordModel(IUserAuthenticationCommandService authService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = default!;
@@ -45,11 +43,7 @@ public sealed class ResetPasswordModel(UserManager<ApplicationUser> userManager)
         if (code is null)
             return BadRequest("A code must be supplied for password reset.");
 
-        Input = new InputModel
-        {
-            Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code)),
-        };
-
+        Input = new InputModel { Code = code };
         return Page();
     }
 
@@ -58,20 +52,14 @@ public sealed class ResetPasswordModel(UserManager<ApplicationUser> userManager)
         if (!ModelState.IsValid)
             return Page();
 
-        var user = await userManager.FindByEmailAsync(Input.Email);
-
-        // Do not reveal whether the user exists.
-        if (user is null)
-            return RedirectToPage("./ResetPasswordConfirmation");
-
-        var result = await userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
+        var result = await authService.ResetPasswordAsync(
+            new ResetPasswordCommand(Input.Email, Input.Code, Input.Password)
+        );
 
         if (result.Succeeded)
             return RedirectToPage("./ResetPasswordConfirmation");
 
-        foreach (var error in result.Errors)
-            ModelState.AddModelError(string.Empty, error.Description);
-
+        ModelState.AddModelError(string.Empty, result.Error ?? "Error resetting password.");
         return Page();
     }
 }

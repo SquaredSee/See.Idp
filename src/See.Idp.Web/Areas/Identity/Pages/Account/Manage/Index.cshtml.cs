@@ -1,17 +1,20 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Infrastructure;
+using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Auth;
+using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 
 [Authorize]
 public sealed class IndexModel(
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager
+    IUserQueryService userQueryService,
+    IUserCommandService userCommandService,
+    IUserAuthenticationCommandService authService
 ) : PageModel
 {
     public string Username { get; set; } = string.Empty;
@@ -29,46 +32,45 @@ public sealed class IndexModel(
         public string? PhoneNumber { get; set; }
     }
 
-    private async Task LoadAsync(ApplicationUser user)
-    {
-        Username = await userManager.GetUserNameAsync(user) ?? string.Empty;
-        Input = new InputModel { PhoneNumber = await userManager.GetPhoneNumberAsync(user) };
-    }
-
     public async Task<IActionResult> OnGetAsync()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var profile = await userQueryService.GetUserProfileAsync(userId);
+        if (profile is null)
+            return NotFound($"Unable to load user with ID '{userId}'.");
 
-        await LoadAsync(user);
+        Username = profile.Email;
+        Input = new InputModel { PhoneNumber = profile.PhoneNumber };
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-            return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var profile = await userQueryService.GetUserProfileAsync(userId);
+        if (profile is null)
+            return NotFound($"Unable to load user with ID '{userId}'.");
 
         if (!ModelState.IsValid)
         {
-            await LoadAsync(user);
+            Username = profile.Email;
+            Input = new InputModel { PhoneNumber = profile.PhoneNumber };
             return Page();
         }
 
-        var currentPhone = await userManager.GetPhoneNumberAsync(user);
-        if (Input.PhoneNumber != currentPhone)
+        if (Input.PhoneNumber != profile.PhoneNumber)
         {
-            var result = await userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+            var result = await userCommandService.UpdatePhoneNumberAsync(
+                new UpdatePhoneNumberCommand(userId, Input.PhoneNumber)
+            );
             if (!result.Succeeded)
             {
                 StatusMessage = "Error: Unable to set phone number.";
                 return RedirectToPage();
             }
-        }
 
-        await signInManager.RefreshSignInAsync(user);
+            await authService.RefreshSignInAsync();
+        }
         StatusMessage = "Your profile has been updated.";
         return RedirectToPage();
     }

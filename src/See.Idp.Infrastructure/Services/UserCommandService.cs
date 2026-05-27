@@ -389,4 +389,38 @@ public sealed partial class UserCommandService(
         Message = "User command {CommandName} rejected: {Reason}"
     )]
     private partial void LogUserCommandRejected(string commandName, string reason);
+
+    public async Task<CommandResult> UpdatePhoneNumberAsync(
+        UpdatePhoneNumberCommand command,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByIdAsync(command.UserId);
+        if (user is null)
+        {
+            LogUserCommandRejected(
+                nameof(UpdatePhoneNumberAsync),
+                $"User '{command.UserId}' not found."
+            );
+            return CommandResult.Failure($"Unable to load user with ID '{command.UserId}'.");
+        }
+
+        var result = await userManager.SetPhoneNumberAsync(user, command.PhoneNumber);
+        if (result.Succeeded)
+        {
+            LogUserPhoneNumberUpdated(command.UserId);
+            return CommandResult.Success();
+        }
+
+        var reason = JoinErrors(result);
+        LogUserCommandRejected(nameof(UpdatePhoneNumberAsync), reason);
+        return CommandResult.Failure("Unable to update phone number.");
+    }
+
+    [LoggerMessage(
+        EventId = EventIds.UserPhoneNumberUpdated,
+        Level = LogLevel.Information,
+        Message = "Phone number updated for user {UserId}"
+    )]
+    private partial void LogUserPhoneNumberUpdated(string userId);
 }

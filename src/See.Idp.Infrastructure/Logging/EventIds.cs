@@ -59,6 +59,7 @@ public static class EventIds
     public const int UserUnlocked = 1610;
     public const int UserDeleted = 1611;
     public const int UserCommandRejected = 1612;
+    public const int UserPhoneNumberUpdated = 1613;
 
     // Authentication command service: 1700 - 1799
     public const int AuthenticationSignInAttempt = 1700;
@@ -66,4 +67,17 @@ public static class EventIds
     public const int AuthenticationSignInFailed = 1702;
     public const int AuthenticationSignInLockedOut = 1703;
     public const int AuthenticationSignOut = 1704;
+    public const int AuthenticationPasswordResetTokenGenerated = 1705;
+    public const int AuthenticationPasswordResetSucceeded = 1706;
+    public const int AuthenticationPasswordResetFailed = 1707;
+    public const int AuthenticationPasswordChanged = 1708;
+    public const int AuthenticationPasswordChangeFailed = 1709;
+    public const int AuthenticationSignInRefreshed = 1710;
+
+    // User registration service: 1800 - 1899
+    public const int UserRegistered = 1800;
+    public const int UserRegistrationFailed = 1801;
+    public const int UserEmailConfirmed = 1802;
+    public const int UserEmailConfirmationFailed = 1803;
+    public const int UserEmailConfirmationTokenGenerated = 1804;
 }
