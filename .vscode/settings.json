@@ -3,6 +3,9 @@
     "editor.defaultFormatter": "csharpier.csharpier-vscode"
   },
   "editor.formatOnSave": true,
+  "files.readonlyInclude": {
+    "**/Temp/SymbolCache/**": true
+  },
   "files.associations": {
     "**/wwwroot/css/*.css": "tailwindcss",
     "**/wwwroot/css/*.out.css": "css"
@@ -10,6 +13,7 @@
   "chat.tools.terminal.autoApprove": {
     "dotnet build": true,
     "dotnet tool": true,
-    "dotnet ef": true
+    "dotnet ef": true,
+    "dotnet test": true
   }
 }

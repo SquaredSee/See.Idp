@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using See.Idp.Core.Models;
 using NSubstitute;
 using See.Idp.Infrastructure;
 

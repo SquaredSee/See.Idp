@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using See.Idp.Core.Configuration;
 using See.Idp.Core.Dtos.Clients;
 using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Models;
 using See.Idp.Core.Services;
 using See.Idp.Core.Services.Clients;
 using See.Idp.Core.Services.Users;

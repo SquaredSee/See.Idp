@@ -19,15 +19,6 @@ public static class EventIds
     public const int RoleSeeded = 1105;
     public const int RoleAlreadyExists = 1106;
 
-    // Login: 1200 - 1299
-    public const int LoginAttempt = 1200;
-    public const int LoginSuccess = 1201;
-    public const int LoginFailed = 1202;
-    public const int LoginLockedOut = 1203;
-
-    // Logout: 1300 - 1399
-    public const int Logout = 1300;
-
     // Hosted initialization orchestration: 1400 - 1499
     public const int InitializationHostedServiceStarting = 1400;
     public const int InitializationHostedServiceCompleted = 1401;

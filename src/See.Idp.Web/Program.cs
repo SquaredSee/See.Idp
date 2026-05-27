@@ -11,6 +11,7 @@ using See.Idp.Core.Services;
 using See.Idp.Core.Services.Auth;
 using See.Idp.Core.Services.Clients;
 using See.Idp.Core.Services.Users;
+using See.Idp.Core.Models;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
