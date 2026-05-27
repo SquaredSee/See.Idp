@@ -1,5 +1,6 @@
 using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
+using See.Idp.Web.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -112,6 +114,7 @@ builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IUserAuthenticationCommandService, UserAccountService>();
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
 
 builder.Services.AddRazorPages(options =>
 {

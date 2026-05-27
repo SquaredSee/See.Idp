@@ -1,0 +1,47 @@
+@page
+@model LoginModel
+@{
+  ViewData["Title"] = "Sign in";
+}
+
+<div class="mx-auto max-w-sm">
+  <div class="panel">
+    <h1 class="mb-6">Sign in</h1>
+
+    <form method="post">
+      <div asp-validation-summary="ModelOnly"
+           class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+
+      <div class="mb-4">
+        <label asp-for="Input.Email" class="field-label">Email</label>
+        <input asp-for="Input.Email" class="field-input" autocomplete="username" />
+        <span asp-validation-for="Input.Email" class="mt-1 block text-xs text-red-600"></span>
+      </div>
+
+      <div class="mb-4">
+        <label asp-for="Input.Password" class="field-label">Password</label>
+        <input asp-for="Input.Password" class="field-input" autocomplete="current-password" />
+        <span asp-validation-for="Input.Password" class="mt-1 block text-xs text-red-600"></span>
+      </div>
+
+      <div class="mb-6 flex items-center justify-between">
+        <label class="flex cursor-pointer items-center gap-2 text-sm">
+          <input asp-for="Input.RememberMe" type="checkbox" />
+          @Html.DisplayNameFor(m => m.Input.RememberMe)
+        </label>
+        <a asp-page="./ForgotPassword" class="text-sm">Forgot password?</a>
+      </div>
+
+      <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+      <button type="submit" class="btn-primary w-full">Sign in</button>
+    </form>
+
+    <p class="mt-4 text-center text-sm">
+      Don't have an account? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register</a>
+    </p>
+  </div>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}

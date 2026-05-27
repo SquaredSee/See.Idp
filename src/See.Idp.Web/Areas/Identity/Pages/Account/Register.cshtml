@@ -1,0 +1,44 @@
+@page
+@model RegisterModel
+@{
+  ViewData["Title"] = "Register";
+}
+
+<div class="mx-auto max-w-sm">
+  <div class="panel">
+    <h1 class="mb-6">Create an account</h1>
+
+    <form method="post">
+      <div asp-validation-summary="ModelOnly"
+           class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+
+      <div class="mb-4">
+        <label asp-for="Input.Email" class="field-label">Email</label>
+        <input asp-for="Input.Email" class="field-input" autocomplete="username" />
+        <span asp-validation-for="Input.Email" class="mt-1 block text-xs text-red-600"></span>
+      </div>
+
+      <div class="mb-4">
+        <label asp-for="Input.Password" class="field-label">Password</label>
+        <input asp-for="Input.Password" class="field-input" autocomplete="new-password" />
+        <span asp-validation-for="Input.Password" class="mt-1 block text-xs text-red-600"></span>
+      </div>
+
+      <div class="mb-6">
+        <label asp-for="Input.ConfirmPassword" class="field-label">Confirm password</label>
+        <input asp-for="Input.ConfirmPassword" class="field-input" autocomplete="new-password" />
+        <span asp-validation-for="Input.ConfirmPassword" class="mt-1 block text-xs text-red-600"></span>
+      </div>
+
+      <button type="submit" class="btn-primary w-full">Register</button>
+    </form>
+
+    <p class="mt-4 text-center text-sm">
+      Already have an account? <a asp-page="./Login">Sign in</a>
+    </p>
+  </div>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,18 @@
+@page
+@model ConfirmEmailModel
+@{
+  ViewData["Title"] = "Confirm email";
+}
+
+<div class="mx-auto max-w-sm">
+  <div class="panel text-center">
+    <h1 class="mb-4">Email confirmation</h1>
+    <p class="text-sm">@Model.StatusMessage</p>
+    @if (Model.Succeeded)
+    {
+      <div class="mt-6">
+        <a asp-page="./Login" class="btn-primary no-underline">Sign in</a>
+      </div>
+    }
+  </div>
+</div>

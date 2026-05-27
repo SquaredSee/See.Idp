@@ -10,6 +10,7 @@
     <TailwindBuildInputs Remove="wwwroot/css/**/*.out.css" />
     <TailwindBuildInputs Include="Pages/**/*.cshtml" />
     <TailwindBuildInputs Include="Areas/Admin/Pages/**/*.cshtml" />
+    <TailwindBuildInputs Include="Areas/Identity/Pages/**/*.cshtml" />
     <TailwindBuildInputs Include="wwwroot/js/**/*.js" />
 
     <!-- VS Fast Up-To-Date -->

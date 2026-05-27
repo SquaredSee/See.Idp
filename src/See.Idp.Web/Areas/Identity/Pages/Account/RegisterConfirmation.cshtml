@@ -1,0 +1,28 @@
+@page
+@model RegisterConfirmationModel
+@{
+  ViewData["Title"] = "Registration confirmation";
+}
+
+<div class="mx-auto max-w-sm">
+  <div class="panel text-center">
+    <h1 class="mb-4">Check your email</h1>
+
+    @if (Model.DisplayConfirmAccountLink)
+    {
+      <p class="mb-4 text-sm">
+        This app does not have a real email sender configured.
+        <br />
+        For development, use the link below to confirm your account:
+      </p>
+      <a href="@Model.EmailConfirmationUrl" class="break-all text-xs">@Model.EmailConfirmationUrl</a>
+    }
+    else
+    {
+      <p class="text-sm">
+        A confirmation link has been sent to <strong>@Model.Email</strong>.
+        Please check your inbox and click the link to activate your account.
+      </p>
+    }
+  </div>
+</div>

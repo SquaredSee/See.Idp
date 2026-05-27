@@ -1,0 +1,16 @@
+@{
+  Layout = "/Areas/Identity/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="grid gap-8 md:grid-cols-[14rem_1fr]">
+  <aside class="panel h-fit">
+    <partial name="_ManageNav" />
+  </aside>
+  <div>
+    @RenderBody()
+  </div>
+</div>
+
+@section Scripts {
+  @await RenderSectionAsync("Scripts", required: false)
+}

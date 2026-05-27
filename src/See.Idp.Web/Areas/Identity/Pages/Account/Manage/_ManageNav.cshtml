@@ -1,0 +1,20 @@
+@using Microsoft.AspNetCore.Identity
+@using See.Idp.Infrastructure
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+  var username = (await UserManager.GetUserAsync(User))?.UserName ?? string.Empty;
+  var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? string.Empty;
+}
+
+<nav class="flex flex-col gap-1">
+  <p class="mb-2 truncate text-sm font-semibold">@username</p>
+  <a asp-page="./Index"
+     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage.EndsWith("/Index") ? "bg-border-soft font-medium" : "")">
+    Profile
+  </a>
+  <a asp-page="./ChangePassword"
+     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage.EndsWith("/ChangePassword") ? "bg-border-soft font-medium" : "")">
+    Change password
+  </a>
+</nav>
