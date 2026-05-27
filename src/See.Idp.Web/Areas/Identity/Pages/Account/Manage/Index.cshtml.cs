@@ -39,7 +39,7 @@ public sealed class IndexModel(
         if (profile is null)
             return NotFound($"Unable to load user with ID '{userId}'.");
 
-        Username = profile.Email;
+        Username = profile.Email ?? string.Empty;
         Input = new InputModel { PhoneNumber = profile.PhoneNumber };
         return Page();
     }
@@ -53,7 +53,7 @@ public sealed class IndexModel(
 
         if (!ModelState.IsValid)
         {
-            Username = profile.Email;
+            Username = profile.Email ?? string.Empty;
             Input = new InputModel { PhoneNumber = profile.PhoneNumber };
             return Page();
         }

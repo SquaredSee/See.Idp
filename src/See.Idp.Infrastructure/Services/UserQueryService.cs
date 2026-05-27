@@ -104,7 +104,7 @@ public sealed partial class UserQueryService(
         if (user is null)
             return null;
 
-        return new UserProfileDto(user.Email ?? string.Empty, user.PhoneNumber);
+        return new UserProfileDto(user.Email, user.PhoneNumber);
     }
 
     public async Task<string?> FindUserIdByEmailAsync(string email, CancellationToken ct = default)

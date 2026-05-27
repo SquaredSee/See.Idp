@@ -31,4 +31,4 @@ public sealed record UserSummaryDto(
 /// </summary>
 /// <param name="Email">The email address (read-only).</param>
 /// <param name="PhoneNumber">The phone number.</param>
-public sealed record UserProfileDto(string Email, string? PhoneNumber);
+public sealed record UserProfileDto(string? Email, string? PhoneNumber);
