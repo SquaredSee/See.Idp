@@ -22,6 +22,7 @@ public sealed class ForgotPasswordModel(
     [BindProperty]
     public InputModel Input { get; set; } = default!;
 
+    [TempData]
     public string? ResetPasswordUrl { get; set; }
 
     public sealed class InputModel
@@ -53,7 +54,7 @@ public sealed class ForgotPasswordModel(
         if (env.IsDevelopment())
         {
             ResetPasswordUrl = resetUrl;
-            return Page();
+            return RedirectToPage();
         }
 
         await emailSender.SendPasswordResetLinkAsync(
