@@ -239,8 +239,7 @@ public sealed class ClientCommandServiceTests
                 app,
                 Arg.Is<OpenIddictApplicationDescriptor>(d =>
                     d.ClientType == OpenIddictConstants.ClientTypes.Confidential
-                    &&
-                    !string.IsNullOrWhiteSpace(d.ClientSecret)
+                    && !string.IsNullOrWhiteSpace(d.ClientSecret)
                 ),
                 Ct
             );
