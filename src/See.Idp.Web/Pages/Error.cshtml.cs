@@ -14,6 +14,8 @@ public class ErrorModel : PageModel
 
     public void OnGet()
     {
-        RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        // Use the 32-char hex TraceId rather than the full W3C traceparent string
+        // so it can be pasted directly into Tempo/Loki without parsing.
+        RequestId = Activity.Current?.TraceId.ToHexString() ?? HttpContext.TraceIdentifier;
     }
 }

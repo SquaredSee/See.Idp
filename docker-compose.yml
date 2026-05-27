@@ -17,5 +17,13 @@ services:
     ports:
       - "6379:6379"
 
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: see-idp-otel-lgtm
+    ports:
+      - "3000:3000" # Grafana UI  (admin / admin)
+      - "4317:4317" # OTLP gRPC  (traces, metrics, logs)
+      - "4318:4318" # OTLP HTTP
+
 volumes:
   seeidp_postgres_data:

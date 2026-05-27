@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using See.Idp.Core.Configuration;
 using See.Idp.Core.Models;
@@ -19,6 +23,30 @@ using See.Idp.Web.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Observability
+builder
+    .Services.AddOpenTelemetry()
+    .ConfigureResource(r =>
+        r.AddService(
+            serviceName: "See.Idp",
+            serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString()
+        )
+    )
+    .WithTracing(t =>
+        t.AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter()
+    )
+    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddOtlpExporter())
+    .WithLogging(l => l.AddOtlpExporter());
+
+builder.Services.Configure<OpenTelemetryLoggerOptions>(o =>
+{
+    o.IncludeFormattedMessage = true;
+    o.IncludeScopes = true;
+});
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
