@@ -1,4 +1,5 @@
 @import "tailwindcss" source(none);
+@import "./validation.css";
 @source "../../Areas/Identity/Pages/**/*.cshtml";
 @source "../../Areas/Identity/Pages/Shared/**/*.cshtml";
 @source "../../wwwroot/js/**/*.js";
