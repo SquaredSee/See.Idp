@@ -19,7 +19,7 @@ public sealed partial class UserCommandService(
     ILogger<UserCommandService> logger
 ) : IUserCommandService
 {
-    private static readonly DateTimeOffset LockoutUntil = DateTimeOffset.UtcNow.AddYears(100);
+    private static DateTimeOffset LockoutUntil => DateTimeOffset.UtcNow.AddYears(100);
 
     public async Task<CreateIfMissingResult> CreateRoleIfMissingAsync(
         CreateRoleIfMissingCommand command,
