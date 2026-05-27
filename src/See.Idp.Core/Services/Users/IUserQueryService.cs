@@ -37,4 +37,31 @@ public interface IUserQueryService
     /// <param name="ct">The cancellation token.</param>
     /// <returns>The user ID, or <see langword="null"/> if not found.</returns>
     Task<string?> FindUserIdByEmailAsync(string email, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Generates a password reset token for the user with the given email address.
+    ///     Returns <see langword="null"/> if the user does not exist or their email is not confirmed.
+    /// </summary>
+    /// <param name="email">The email address of the user requesting a password reset.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>
+    ///     A Base64Url-encoded password reset token, or <see langword="null"/> if the user was
+    ///     not found or their email has not been confirmed.
+    /// </returns>
+    Task<string?> GeneratePasswordResetTokenAsync(string email, CancellationToken ct = default);
+
+    /// <summary>
+    ///     Generates a new email confirmation token for the given user.
+    ///     Returns <see langword="null"/> if no user with the given ID was found.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>
+    ///     The Base64Url-encoded confirmation token, or <see langword="null"/> if no user with
+    ///     the given ID was found.
+    /// </returns>
+    Task<string?> GenerateEmailConfirmationTokenAsync(
+        string userId,
+        CancellationToken ct = default
+    );
 }

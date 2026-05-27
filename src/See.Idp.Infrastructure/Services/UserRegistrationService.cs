@@ -64,21 +64,6 @@ public sealed partial class UserRegistrationService(
         );
     }
 
-    public async Task<string?> GenerateEmailConfirmationTokenAsync(
-        string userId,
-        CancellationToken ct = default
-    )
-    {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null)
-            return null;
-
-        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-        LogUserEmailConfirmationTokenGenerated(userId);
-        return encodedCode;
-    }
 
     [LoggerMessage(
         EventId = EventIds.UserRegistered,
@@ -107,11 +92,4 @@ public sealed partial class UserRegistrationService(
         Message = "Email confirmation failed for user {UserId}"
     )]
     private partial void LogUserEmailConfirmationFailed(string userId);
-
-    [LoggerMessage(
-        EventId = EventIds.UserEmailConfirmationTokenGenerated,
-        Level = LogLevel.Information,
-        Message = "Email confirmation token generated for user {UserId}"
-    )]
-    private partial void LogUserEmailConfirmationTokenGenerated(string userId);
 }

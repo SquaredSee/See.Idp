@@ -10,7 +10,7 @@ using See.Idp.Core.Services.Auth;
 namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 
 [Authorize]
-public sealed class ChangePasswordModel(IUserAuthenticationCommandService authService) : PageModel
+public sealed class ChangePasswordModel(IUserPasswordCommandService passwordService) : PageModel
 {
     [TempData]
     public string? StatusMessage { get; set; }
@@ -52,7 +52,7 @@ public sealed class ChangePasswordModel(IUserAuthenticationCommandService authSe
             return Page();
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var result = await authService.ChangePasswordAsync(
+        var result = await passwordService.ChangePasswordAsync(
             new ChangePasswordCommand(userId, Input.OldPassword, Input.NewPassword)
         );
 

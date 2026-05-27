@@ -11,7 +11,6 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account;
 [AllowAnonymous]
 public sealed class RegisterConfirmationModel(
     IUserQueryService userQueryService,
-    IUserRegistrationCommandService registrationService,
     IWebHostEnvironment env
 ) : PageModel
 {
@@ -37,7 +36,7 @@ public sealed class RegisterConfirmationModel(
 
         if (DisplayConfirmAccountLink)
         {
-            var code = await registrationService.GenerateEmailConfirmationTokenAsync(userId);
+            var code = await userQueryService.GenerateEmailConfirmationTokenAsync(userId);
             if (code is not null)
             {
                 EmailConfirmationUrl = Url.Page(

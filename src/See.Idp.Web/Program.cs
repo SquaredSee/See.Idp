@@ -7,11 +7,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
 using See.Idp.Core.Configuration;
+using See.Idp.Core.Models;
 using See.Idp.Core.Services;
 using See.Idp.Core.Services.Auth;
 using See.Idp.Core.Services.Clients;
 using See.Idp.Core.Services.Users;
-using See.Idp.Core.Models;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
@@ -114,7 +114,13 @@ builder.Services.AddScoped<IClientQueryService, ClientQueryService>();
 builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
-builder.Services.AddScoped<IUserAuthenticationCommandService, UserAccountService>();
+builder.Services.AddScoped<UserAccountService>();
+builder.Services.AddScoped<IUserAuthenticationCommandService>(sp =>
+    sp.GetRequiredService<UserAccountService>()
+);
+builder.Services.AddScoped<IUserPasswordCommandService>(sp =>
+    sp.GetRequiredService<UserAccountService>()
+);
 builder.Services.AddScoped<IUserRegistrationCommandService, UserRegistrationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
 

@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Auth;
@@ -110,4 +112,50 @@ public sealed partial class UserQueryService(
         var user = await userManager.FindByEmailAsync(email);
         return user is null ? null : await userManager.GetUserIdAsync(user);
     }
+
+    public async Task<string?> GeneratePasswordResetTokenAsync(
+        string email,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null || !await userManager.IsEmailConfirmedAsync(user))
+            return null;
+
+        var code = await userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        LogUserPasswordResetTokenGenerated(email);
+        return encodedCode;
+    }
+
+    public async Task<string?> GenerateEmailConfirmationTokenAsync(
+        string userId,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return null;
+
+        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        LogUserEmailConfirmationTokenGenerated(userId);
+        return encodedCode;
+    }
+
+    [LoggerMessage(
+        EventId = EventIds.UserPasswordResetTokenGenerated,
+        Level = LogLevel.Information,
+        Message = "Password reset token generated for {Email}"
+    )]
+    private partial void LogUserPasswordResetTokenGenerated(string email);
+
+    [LoggerMessage(
+        EventId = EventIds.UserEmailConfirmationTokenGenerated,
+        Level = LogLevel.Information,
+        Message = "Email confirmation token generated for user {UserId}"
+    )]
+    private partial void LogUserEmailConfirmationTokenGenerated(string userId);
 }

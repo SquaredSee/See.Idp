@@ -8,13 +8,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
 using See.Idp.Core.Models;
-using See.Idp.Core.Services.Auth;
+using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
 public sealed class ForgotPasswordModel(
-    IUserAuthenticationCommandService authService,
+    IUserQueryService userQueryService,
     IEmailSender<ApplicationUser> emailSender,
     IWebHostEnvironment env
 ) : PageModel
@@ -36,7 +36,7 @@ public sealed class ForgotPasswordModel(
         if (!ModelState.IsValid)
             return Page();
 
-        var encodedCode = await authService.GeneratePasswordResetTokenAsync(Input.Email);
+        var encodedCode = await userQueryService.GeneratePasswordResetTokenAsync(Input.Email);
 
         // Always redirect to confirmation page to prevent user enumeration.
         if (encodedCode is null)

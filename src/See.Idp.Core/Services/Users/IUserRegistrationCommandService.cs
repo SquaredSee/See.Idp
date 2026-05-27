@@ -34,18 +34,4 @@ public interface IUserRegistrationCommandService
         ConfirmEmailCommand command,
         CancellationToken ct = default
     );
-
-    /// <summary>
-    ///     Generates a new email confirmation token for the given user.
-    /// </summary>
-    /// <param name="userId">The ID of the user.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>
-    ///     The Base64Url-encoded confirmation token, or <see langword="null" /> if no user with
-    ///     the given ID was found.
-    /// </returns>
-    Task<string?> GenerateEmailConfirmationTokenAsync(
-        string userId,
-        CancellationToken ct = default
-    );
 }

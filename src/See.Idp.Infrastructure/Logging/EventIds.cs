@@ -52,6 +52,7 @@ public static class EventIds
     public const int UserDeleted = 1611;
     public const int UserCommandRejected = 1612;
     public const int UserPhoneNumberUpdated = 1613;
+    public const int UserPasswordResetTokenGenerated = 1614;
 
     // Authentication command service: 1700 - 1799
     public const int AuthenticationSignInAttempt = 1700;

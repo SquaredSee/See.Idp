@@ -9,7 +9,7 @@ using See.Idp.Core.Services.Auth;
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class ResetPasswordModel(IUserAuthenticationCommandService authService) : PageModel
+public sealed class ResetPasswordModel(IUserPasswordCommandService passwordService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = default!;
@@ -52,7 +52,7 @@ public sealed class ResetPasswordModel(IUserAuthenticationCommandService authSer
         if (!ModelState.IsValid)
             return Page();
 
-        var result = await authService.ResetPasswordAsync(
+        var result = await passwordService.ResetPasswordAsync(
             new ResetPasswordCommand(Input.Email, Input.Code, Input.Password)
         );
 

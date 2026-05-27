@@ -18,7 +18,7 @@ public sealed partial class UserAccountService(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     ILogger<UserAccountService> logger
-) : IUserAuthenticationCommandService
+) : IUserAuthenticationCommandService, IUserPasswordCommandService
 {
     public async Task<PasswordSignInResult> PasswordSignInAsync(
         PasswordSignInCommand command,
@@ -56,22 +56,6 @@ public sealed partial class UserAccountService(
     {
         await signInManager.SignOutAsync();
         LogAuthenticationSignOut();
-    }
-
-    public async Task<string?> GeneratePasswordResetTokenAsync(
-        string email,
-        CancellationToken ct = default
-    )
-    {
-        var user = await userManager.FindByEmailAsync(email);
-        if (user is null || !await userManager.IsEmailConfirmedAsync(user))
-            return null;
-
-        var code = await userManager.GeneratePasswordResetTokenAsync(user);
-        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-        LogAuthenticationPasswordResetTokenGenerated(email);
-        return encodedCode;
     }
 
     private const string InvalidResetLinkError =
@@ -185,13 +169,6 @@ public sealed partial class UserAccountService(
         Message = "Authentication sign-out completed"
     )]
     private partial void LogAuthenticationSignOut();
-
-    [LoggerMessage(
-        EventId = EventIds.AuthenticationPasswordResetTokenGenerated,
-        Level = LogLevel.Information,
-        Message = "Password reset token generated for {Email}"
-    )]
-    private partial void LogAuthenticationPasswordResetTokenGenerated(string email);
 
     [LoggerMessage(
         EventId = EventIds.AuthenticationPasswordResetSucceeded,
