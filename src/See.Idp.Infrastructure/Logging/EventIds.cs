@@ -23,6 +23,7 @@ public static class EventIds
     public const int InitializationHostedServiceStarting = 1400;
     public const int InitializationHostedServiceCompleted = 1401;
     public const int InitializationHostedServiceFailed = 1402;
+    public const int InitializationDisabled = 1403;
 
     // Client query/command service: 1500 - 1599
     public const int ClientListRetrieved = 1500;

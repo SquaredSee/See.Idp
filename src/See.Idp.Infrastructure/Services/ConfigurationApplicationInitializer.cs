@@ -15,7 +15,7 @@ using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
-public partial class ConfigurationApplicationInitializer(
+public sealed partial class ConfigurationApplicationInitializer(
     IUserCommandService userCommandService,
     IClientCommandService clientCommandService,
     IOptions<InitializationOptions> options,
@@ -28,7 +28,7 @@ public partial class ConfigurationApplicationInitializer(
 
         if (!config.Enabled)
         {
-            logger.LogInformation("Initialization is disabled. Skipping startup seeding.");
+            LogInitializationDisabled();
             return;
         }
 
@@ -167,6 +167,13 @@ public partial class ConfigurationApplicationInitializer(
         else
             LogClientAlreadyExists(client.ClientId);
     }
+
+    [LoggerMessage(
+        EventId = EventIds.InitializationDisabled,
+        Level = LogLevel.Information,
+        Message = "Initialization is disabled. Skipping startup seeding."
+    )]
+    private partial void LogInitializationDisabled();
 
     [LoggerMessage(
         EventId = EventIds.SeedingClient,
