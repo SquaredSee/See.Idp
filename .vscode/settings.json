@@ -14,6 +14,7 @@
     "dotnet build": true,
     "dotnet tool": true,
     "dotnet ef": true,
-    "dotnet test": true
+    "dotnet test": true,
+    "dotnet add": true
   }
 }
