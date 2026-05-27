@@ -64,7 +64,6 @@ public sealed partial class UserRegistrationService(
         );
     }
 
-
     [LoggerMessage(
         EventId = EventIds.UserRegistered,
         Level = LogLevel.Information,
