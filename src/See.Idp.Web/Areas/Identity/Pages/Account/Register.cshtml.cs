@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using See.Idp.Core.Dtos.Users;
-using See.Idp.Core.Models;
 using See.Idp.Core.Services.Users;
+using See.Idp.Infrastructure;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 

@@ -15,6 +15,9 @@
     "dotnet tool": true,
     "dotnet ef": true,
     "dotnet test": true,
-    "dotnet add": true
+    "dotnet add": true,
+    "dotnet csharpier": true,
+    "git add": true,
+    "git commit": true
   }
 }

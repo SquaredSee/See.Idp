@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Auth;
 using See.Idp.Core.Dtos.Users;
-using See.Idp.Core.Models;
 using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure.Logging;
 

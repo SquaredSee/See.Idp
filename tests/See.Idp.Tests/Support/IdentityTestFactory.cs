@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using See.Idp.Core.Models;
 using See.Idp.Infrastructure;
 
 namespace See.Idp.Tests.Support;

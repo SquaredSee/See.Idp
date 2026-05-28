@@ -11,7 +11,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using See.Idp.Core.Configuration;
-using See.Idp.Core.Models;
 using See.Idp.Core.Services;
 using See.Idp.Core.Services.Auth;
 using See.Idp.Core.Services.Clients;

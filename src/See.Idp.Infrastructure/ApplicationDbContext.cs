@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using See.Idp.Core.Models;
 
 namespace See.Idp.Infrastructure;
 

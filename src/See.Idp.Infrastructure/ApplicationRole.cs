@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace See.Idp.Core.Models;
+namespace See.Idp.Infrastructure;
 
 /// <summary>
 ///     The application role class that represents a role in the identity system.

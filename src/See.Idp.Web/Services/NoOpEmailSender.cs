@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using See.Idp.Core.Models;
 using See.Idp.Infrastructure;
 
 namespace See.Idp.Web.Services;
