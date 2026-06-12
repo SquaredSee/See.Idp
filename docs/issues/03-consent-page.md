@@ -1,41 +1,52 @@
-# 03 — Consent Page
+# 03 — Implicit Consent for All Clients
 
 ## Context
 
-The OAuth 2.0 authorization code flow requires a consent step where the user explicitly
-approves the scopes a client application is requesting. Without a consent page, OpenIddict
-cannot complete the authorization flow for clients whose `consent_type` is not set to
-`implicit`. This blocks any third-party or multi-application scenario.
+This IDP operates on an **admin consent model**: all client applications are registered and
+managed by the administrator (via the admin portal or `Initialization` config). Users never
+need to approve scopes — the admin's decision to register a client with specific scopes
+serves as the approval. This is the same model used by Entra ID in enterprise environments,
+where IT pre-approves apps and users just log in.
+
+The original issue proposed a user-facing consent screen. That model is appropriate for
+public platforms (Google, GitHub OAuth apps) where arbitrary third parties can request
+access to user accounts. It is not appropriate here.
+
+The current code already auto-approves in the `AuthorizationController`, but OpenIddict
+client records have no `ConsentType` set — defaulting to `explicit` internally. This should
+be made explicit and correct.
 
 ## User Story
 
-As a user, when an application requests access to my account, I want to see what permissions
-it is asking for and be able to approve or deny the request, so that I remain in control of
-what data I share.
+As the IDP administrator, I want all registered client applications to be pre-approved so
+that users are never interrupted by a consent screen when logging in.
 
 ## Acceptance Criteria
 
-- A consent page is shown during the authorization code flow when a new authorization is required
-- The page displays the requesting application's display name and the list of requested scopes
-- The user can approve or deny the request
-- Approving records an authorization in the OpenIddict store and redirects back to the client
-  with an authorization code
-- Denying redirects back to the client with an `access_denied` error
-- Previously approved authorizations are remembered — user is not prompted again on repeat
-  visits for the same client + scope combination
-- The consent page is styled consistently with the rest of the Identity UI
+- All clients are created with `ConsentType = ConsentTypes.Implicit`
+- Existing clients in the database are updated to `implicit` consent on next startup
+- The `AuthorizationController` auto-approve path is clean and intentional
+- No consent page exists or is needed
 
 ## Technical Notes
 
-- The authorization controller (issue 01) checks for an existing authorization via
-  `IOpenIddictAuthorizationManager.FindAsync(...)` before redirecting to consent
-- If no existing authorization is found, redirect to a Razor Page at
-  `Areas/Identity/Pages/Connect/Authorize.cshtml` (or similar)
-- The Razor Page posts back to `connect/authorize` with the user's decision
-- Use `OpenIddictConstants.ConsentTypes` and `OpenIddictConstants.AuthorizationTypes`
-- Store the approved authorization with `IOpenIddictAuthorizationManager.CreateAsync(...)`
-- Scope display names should be human-readable (e.g. "email" → "Access your email address")
+- Set `ConsentType = OpenIddictConstants.ConsentTypes.Implicit` on the
+  `OpenIddictApplicationDescriptor` in `TryConfigureClient` inside `ClientCommandService`
+- The `CreateClientIfMissingCommand` path (used by `ConfigurationApplicationInitializer`)
+  also goes through `ClientCommandService` — both paths are covered by fixing `TryConfigureClient`
+- The `UpdateClientAsync` path should also set `ConsentType` so existing clients are corrected
+  on next update
 
 ## Dependencies
 
-- `01-authorization-controller` — the controller orchestrates the consent redirect
+- `01-authorization-controller` — the controller's auto-approve path relies on this being correct
+
+## Implementation
+
+**Completed.** Commit: `feat(clients): set implicit consent type on all clients`
+
+### Files changed
+
+- `src/See.Idp.Infrastructure/Services/ClientCommandService.cs` — added
+  `descriptor.ConsentType = OpenIddictConstants.ConsentTypes.Implicit` in `TryConfigureClient`,
+  covering both create and update paths

@@ -283,6 +283,7 @@ public sealed partial class ClientCommandService(
             descriptor.RedirectUris.Add(redirectUri);
         }
 
+        descriptor.ConsentType = OpenIddictConstants.ConsentTypes.Implicit;
         descriptor.Permissions.Clear();
         foreach (
             var permission in ClientPermissionConventions.BuildPermissions(
