@@ -2,37 +2,83 @@
 
 ## Context
 
-No CORS policy is configured. Any browser-based client application (SPA, Next.js, etc.)
-attempting to make requests to the token endpoint, userinfo endpoint, or any other IDP
-API will be blocked by the browser's same-origin policy. CORS must be configured before
-any frontend application can use this IDP.
+No CORS policy is configured. Any browser-based client application (SPA, etc.) attempting
+to make requests to the token endpoint or userinfo endpoint will be blocked by the browser's
+same-origin policy.
+
+CORS should be driven automatically by the OpenIddict client registry — if an app has been
+properly registered with the IDP, its origin should be allowed without any additional
+configuration. Maintaining a separate static list in `appsettings.json` would mean every
+new client registration requires a config change in two places, which is error-prone and
+unnecessary.
+
+**Note:** CORS is only relevant for browser-based JavaScript clients (SPAs) making direct
+API calls. Server-side clients (ASP.NET Core apps using `AddOpenIdConnect`) make
+server-to-server requests that never send an `Origin` header — CORS does not apply to them.
 
 ## User Story
 
-As a developer building a browser-based application, I want the IDP to return correct CORS
-headers so that my application can call the token and userinfo endpoints from the browser.
+As a developer registering a client application in the IDP, I want CORS to be automatically
+satisfied for my app's origin so that I don't need to update any additional configuration
+beyond registering the client.
 
 ## Acceptance Criteria
 
-- A named CORS policy allows configurable origins to call the IDP
-- Allowed origins are loaded from configuration (not hardcoded)
-- The policy is applied to `connect/token`, `connect/userinfo`, and the authorization endpoint
+- Allowed origins are derived from registered client redirect URIs in the OpenIddict store
+- No static origin list in `appsettings.json` is required
+- Registering a new client with a redirect URI of `https://app.example.com/callback`
+  automatically allows `https://app.example.com` as a CORS origin
 - Preflight (`OPTIONS`) requests are handled correctly
-- Credentials (cookies) are allowed when needed
-- The default configuration allows `localhost` variants in development
-- Invalid or unlisted origins are rejected
+- Origins not matching any registered client are rejected
+- Development workflow is unaffected
 
 ## Technical Notes
 
-- Add `builder.Services.AddCors(...)` in `Program.cs` with a named policy `"IdpCors"`
-- Load allowed origins from `appsettings.json` under `Cors:AllowedOrigins` (string array)
-- Apply with `app.UseCors("IdpCors")` — must be placed between `UseRouting` and
-  `UseAuthentication` in the middleware pipeline
-- Verify CORS headers appear on OpenIddict responses; add explicit `[EnableCors]` to the
-  authorization controller if needed
-- `appsettings.Development.json` should include `http://localhost:3000`, `https://localhost:3000`,
-  and other common local dev ports
+- Implement a custom `ICorsPolicyProvider` that queries `IOpenIddictApplicationManager`
+  to derive allowed origins dynamically:
+  ```csharp
+  public sealed class OpenIddictCorsPolicyProvider(
+      IOpenIddictApplicationManager applicationManager
+  ) : ICorsPolicyProvider
+  {
+      public async Task<CorsPolicy?> GetPolicyAsync(HttpContext context, string? policyName)
+      {
+          var origin = context.Request.Headers.Origin.ToString();
+          if (string.IsNullOrEmpty(origin))
+              return null;
+
+          // Check if any registered client has a redirect URI matching this origin
+          await foreach (var application in applicationManager.ListAsync())
+          {
+              await foreach (var uri in applicationManager.GetRedirectUrisAsync(application))
+              {
+                  if (new Uri(uri).GetLeftPart(UriPartial.Authority)
+                          .Equals(origin, StringComparison.OrdinalIgnoreCase))
+                  {
+                      return new CorsPolicyBuilder()
+                          .WithOrigins(origin)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials()
+                          .Build();
+                  }
+              }
+          }
+
+          return null;
+      }
+  }
+  ```
+- Register in `Program.cs`:
+  ```csharp
+  builder.Services.AddCors();
+  builder.Services.AddSingleton<ICorsPolicyProvider, OpenIddictCorsPolicyProvider>();
+  ```
+- Call `app.UseCors()` between `UseRouting` and `UseAuthentication`
+- The provider lives in `See.Idp.Web` (it's a web concern, not infrastructure)
+- `IOpenIddictApplicationManager.ListAsync()` and `GetRedirectUrisAsync()` are available
+  via the existing OpenIddict core registration
 
 ## Dependencies
 
-- `02-userinfo-endpoint` — need the endpoints to exist before testing CORS against them
+- `02-userinfo-endpoint` — endpoints must exist before CORS is needed
