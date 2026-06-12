@@ -81,7 +81,8 @@ builder
         options
             .SetAuthorizationEndpointUris("connect/authorize")
             .SetTokenEndpointUris("connect/token")
-            .SetEndSessionEndpointUris("connect/logout");
+            .SetEndSessionEndpointUris("connect/logout")
+            .SetUserInfoEndpointUris("connect/userinfo");
 
         // Enable the supported flows.
         options
@@ -97,7 +98,8 @@ builder
             .UseAspNetCore()
             .EnableAuthorizationEndpointPassthrough()
             .EnableTokenEndpointPassthrough()
-            .EnableEndSessionEndpointPassthrough();
+            .EnableEndSessionEndpointPassthrough()
+            .EnableUserInfoEndpointPassthrough();
 
         if (builder.Environment.IsDevelopment())
         {

@@ -36,3 +36,23 @@ having to decode the token myself.
 ## Dependencies
 
 - `01-authorization-controller` — tokens must carry claims before userinfo can return them
+
+## Implementation
+
+**Completed.** Commit: `feat(auth): add userinfo endpoint`
+
+### Files changed
+
+- `src/See.Idp.Web/Controllers/AuthorizationController.cs` — added `UserInfo` action
+- `src/See.Idp.Web/Program.cs` — added `SetUserInfoEndpointUris`, `EnableUserInfoEndpointPassthrough`
+
+### Notes
+
+- No extra NuGet package required — `EnableUserInfoEndpointPassthrough()` on the server's
+  ASP.NET Core builder is sufficient; the `OpenIddict.Validation.AspNetCore` package is not needed
+- Method casing is `SetUserInfoEndpointUris` and `EnableUserInfoEndpointPassthrough`
+  (capital `I` in `Info`) — inconsistent with `SetEndSessionEndpointUris` but matches the XML docs
+- The action uses `[Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]`
+  so OpenIddict validates the bearer token before the action runs; `User` is populated directly
+- Scope-gated: `email` claims only returned when `email` scope granted, `profile` when `profile`
+  scope granted, `roles` when `roles` scope granted

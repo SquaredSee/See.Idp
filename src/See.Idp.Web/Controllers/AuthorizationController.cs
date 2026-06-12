@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -175,6 +176,53 @@ public sealed class AuthorizationController(
         }
 
         throw new InvalidOperationException("The specified grant type is not supported.");
+    }
+
+    [HttpGet("~/connect/userinfo")]
+    [HttpPost("~/connect/userinfo")]
+    [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> UserInfo()
+    {
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+            return Challenge(
+                authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                properties: new AuthenticationProperties(
+                    new Dictionary<string, string?>
+                    {
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] =
+                            OpenIddictConstants.Errors.InvalidToken,
+                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+                            "The access token is bound to an account that no longer exists.",
+                    }
+                )
+            );
+
+        var claims = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            [OpenIddictConstants.Claims.Subject] = await userManager.GetUserIdAsync(user),
+        };
+
+        if (User.HasScope(OpenIddictConstants.Scopes.Email))
+        {
+            claims[OpenIddictConstants.Claims.Email] =
+                await userManager.GetEmailAsync(user) ?? string.Empty;
+            claims[OpenIddictConstants.Claims.EmailVerified] =
+                await userManager.IsEmailConfirmedAsync(user);
+        }
+
+        if (User.HasScope(OpenIddictConstants.Scopes.Profile))
+        {
+            claims[OpenIddictConstants.Claims.Name] =
+                await userManager.GetUserNameAsync(user) ?? string.Empty;
+            claims[OpenIddictConstants.Claims.PreferredUsername] =
+                await userManager.GetUserNameAsync(user) ?? string.Empty;
+        }
+
+        if (User.HasScope(OpenIddictConstants.Scopes.Roles))
+            claims[OpenIddictConstants.Claims.Role] = await userManager.GetRolesAsync(user);
+
+        return Ok(claims);
     }
 
     [HttpGet("~/connect/logout")]
