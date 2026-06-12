@@ -23,7 +23,7 @@ These make the IDP safe to expose and stable to run.
 
 | # | Issue | Status | Notes |
 |---|-------|--------|-------|
-| 04 | [Email Provider Integration](issues/04-email-provider.md) | ⬜ | No deps — do first; unblocks 10 |
+| 04 | [Email Provider Integration](issues/04-email-provider.md) | ✅ done | No deps — do first; unblocks 10 |
 | 07 | [CORS Configuration](issues/07-cors.md) | ⬜ | Unblocks 11 (client app) |
 | 08 | [Rate Limiting](issues/08-rate-limiting.md) | ⬜ | Auth controller must exist (done) |
 | 05 | [Persistent Signing & Encryption Keys](issues/05-persistent-keys.md) | ⬜ | Unblocks 06 |

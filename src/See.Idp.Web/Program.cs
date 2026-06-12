@@ -9,6 +9,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Resend;
 using Scalar.AspNetCore;
 using See.Idp.Core.Configuration;
 using See.Idp.Core.Services;
@@ -155,7 +156,18 @@ builder.Services.AddScoped<IUserPasswordCommandService>(sp =>
     sp.GetRequiredService<UserAccountService>()
 );
 builder.Services.AddScoped<IUserRegistrationCommandService, UserRegistrationService>();
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
+}
+else
+{
+    var emailApiKey =
+        builder.Configuration["Email:ApiKey"]
+        ?? throw new InvalidOperationException("Email:ApiKey configuration is required.");
+    builder.Services.AddResend(options => options.ApiToken = emailApiKey);
+    builder.Services.AddScoped<IEmailSender<ApplicationUser>, ResendEmailSender>();
+}
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(options =>

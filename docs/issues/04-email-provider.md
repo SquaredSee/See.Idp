@@ -37,3 +37,13 @@ link when I request one, so that I can verify my account and recover access.
 ## Dependencies
 
 None — can be implemented independently of the auth controller work.
+
+## Implementation Notes
+
+- Added `EmailOptions` configuration model in `See.Idp.Core/Configuration/EmailOptions.cs`
+- Added `Resend` v0.5.1 NuGet package to `See.Idp.Infrastructure`
+- Implemented `ResendEmailSender` in `See.Idp.Infrastructure/Services/ResendEmailSender.cs` using `IResend` from the Resend SDK
+- Conditionally registered in `Program.cs`: `NoOpEmailSender` in Development, `ResendEmailSender` + `AddResend` in all other environments
+- Added `Email` section placeholder (`ApiKey`, `FromAddress`) to `appsettings.json`
+- All three send methods catch exceptions, log them, and do not rethrow
+- Tests in `tests/See.Idp.Tests/Services/ResendEmailSenderTests.cs` cover happy path for all three send methods and exception swallowing

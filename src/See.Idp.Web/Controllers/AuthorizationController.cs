@@ -190,8 +190,9 @@ public sealed class AuthorizationController(
                 properties: new AuthenticationProperties(
                     new Dictionary<string, string?>
                     {
-                        [OpenIddictServerAspNetCoreConstants.Properties.Error] =
-                            OpenIddictConstants.Errors.InvalidToken,
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants
+                            .Errors
+                            .InvalidToken,
                         [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
                             "The access token is bound to an account that no longer exists.",
                     }
@@ -250,22 +251,13 @@ public sealed class AuthorizationController(
         );
 
         identity
-            .SetClaim(
-                OpenIddictConstants.Claims.Subject,
-                await userManager.GetUserIdAsync(user)
-            )
-            .SetClaim(
-                OpenIddictConstants.Claims.Email,
-                await userManager.GetEmailAsync(user)
-            )
+            .SetClaim(OpenIddictConstants.Claims.Subject, await userManager.GetUserIdAsync(user))
+            .SetClaim(OpenIddictConstants.Claims.Email, await userManager.GetEmailAsync(user))
             .SetClaim(
                 OpenIddictConstants.Claims.EmailVerified,
                 await userManager.IsEmailConfirmedAsync(user)
             )
-            .SetClaim(
-                OpenIddictConstants.Claims.Name,
-                await userManager.GetUserNameAsync(user)
-            )
+            .SetClaim(OpenIddictConstants.Claims.Name, await userManager.GetUserNameAsync(user))
             .SetClaims(
                 OpenIddictConstants.Claims.Role,
                 (await userManager.GetRolesAsync(user)).ToImmutableArray()
