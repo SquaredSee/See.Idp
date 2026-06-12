@@ -35,7 +35,7 @@ public sealed class IndexModel(
     public async Task<IActionResult> OnGetAsync()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var profile = await userQueryService.GetUserProfileAsync(userId);
+        var profile = await userQueryService.GetUserProfileAsync(new GetUserProfileQuery(userId));
         if (profile is null)
             return NotFound($"Unable to load user with ID '{userId}'.");
 
@@ -47,7 +47,7 @@ public sealed class IndexModel(
     public async Task<IActionResult> OnPostAsync()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var profile = await userQueryService.GetUserProfileAsync(userId);
+        var profile = await userQueryService.GetUserProfileAsync(new GetUserProfileQuery(userId));
         if (profile is null)
             return NotFound($"Unable to load user with ID '{userId}'.");
 

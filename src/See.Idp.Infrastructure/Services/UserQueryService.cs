@@ -95,61 +95,41 @@ public sealed partial class UserQueryService(
     private partial void LogUserListRetrieved(int count);
 
     public async Task<UserProfileDto?> GetUserProfileAsync(
-        string userId,
+        GetUserProfileQuery query,
         CancellationToken ct = default
     )
     {
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(query.UserId);
         if (user is null)
             return null;
 
         return new UserProfileDto(user.Email, user.PhoneNumber);
     }
 
-    public async Task<string?> FindUserIdByEmailAsync(string email, CancellationToken ct = default)
+    public async Task<string?> FindUserIdByEmailAsync(
+        FindUserByEmailQuery query,
+        CancellationToken ct = default
+    )
     {
-        var user = await userManager.FindByEmailAsync(email);
+        var user = await userManager.FindByEmailAsync(query.Email);
         return user is null ? null : await userManager.GetUserIdAsync(user);
     }
 
-    public async Task<string?> GeneratePasswordResetTokenAsync(
-        string email,
-        CancellationToken ct = default
-    )
-    {
-        var user = await userManager.FindByEmailAsync(email);
-        if (user is null || !await userManager.IsEmailConfirmedAsync(user))
-            return null;
-
-        var code = await userManager.GeneratePasswordResetTokenAsync(user);
-        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-        LogUserPasswordResetTokenGenerated(email);
-        return encodedCode;
-    }
-
     public async Task<string?> GenerateEmailConfirmationTokenAsync(
-        string userId,
+        GenerateEmailConfirmationTokenQuery query,
         CancellationToken ct = default
     )
     {
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(query.UserId);
         if (user is null)
             return null;
 
         var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
-        LogUserEmailConfirmationTokenGenerated(userId);
+        LogUserEmailConfirmationTokenGenerated(query.UserId);
         return encodedCode;
     }
-
-    [LoggerMessage(
-        EventId = EventIds.UserPasswordResetTokenGenerated,
-        Level = LogLevel.Information,
-        Message = "Password reset token generated for {Email}"
-    )]
-    private partial void LogUserPasswordResetTokenGenerated(string email);
 
     [LoggerMessage(
         EventId = EventIds.UserEmailConfirmationTokenGenerated,

@@ -63,6 +63,22 @@ public sealed partial class UserRegistrationService(
         );
     }
 
+    public async Task<string?> GeneratePasswordResetTokenAsync(
+        GeneratePasswordResetTokenCommand command,
+        CancellationToken ct = default
+    )
+    {
+        var user = await userManager.FindByEmailAsync(command.Email);
+        if (user is null || !await userManager.IsEmailConfirmedAsync(user))
+            return null;
+
+        var code = await userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        LogUserPasswordResetTokenGenerated(command.Email);
+        return encodedCode;
+    }
+
     [LoggerMessage(
         EventId = EventIds.UserRegistered,
         Level = LogLevel.Information,
@@ -90,4 +106,11 @@ public sealed partial class UserRegistrationService(
         Message = "Email confirmation failed for user {UserId}"
     )]
     private partial void LogUserEmailConfirmationFailed(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.UserPasswordResetTokenGenerated,
+        Level = LogLevel.Information,
+        Message = "Password reset token generated for {Email}"
+    )]
+    private partial void LogUserPasswordResetTokenGenerated(string email);
 }

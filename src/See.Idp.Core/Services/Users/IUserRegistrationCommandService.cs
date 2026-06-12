@@ -34,4 +34,19 @@ public interface IUserRegistrationCommandService
         ConfirmEmailCommand command,
         CancellationToken ct = default
     );
+
+    /// <summary>
+    ///     Generates a password reset token for the user with the given email address.
+    ///     Returns <see langword="null"/> if the user does not exist or their email is not confirmed.
+    /// </summary>
+    /// <param name="command">The command containing the email address of the user requesting a password reset.</param>
+    /// <param name="ct">The cancellation token.</param>
+    /// <returns>
+    ///     A Base64Url-encoded password reset token, or <see langword="null"/> if the user was
+    ///     not found or their email has not been confirmed.
+    /// </returns>
+    Task<string?> GeneratePasswordResetTokenAsync(
+        GeneratePasswordResetTokenCommand command,
+        CancellationToken ct = default
+    );
 }

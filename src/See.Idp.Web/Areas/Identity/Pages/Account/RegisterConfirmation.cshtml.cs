@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
+using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
@@ -25,7 +26,7 @@ public sealed class RegisterConfirmationModel(
         if (email is null)
             return RedirectToPage("/Index", new { area = "" });
 
-        var userId = await userQueryService.FindUserIdByEmailAsync(email);
+        var userId = await userQueryService.FindUserIdByEmailAsync(new FindUserByEmailQuery(email));
         if (userId is null)
             return NotFound($"Unable to load user with email '{email}'.");
 
@@ -36,7 +37,9 @@ public sealed class RegisterConfirmationModel(
 
         if (DisplayConfirmAccountLink)
         {
-            var code = await userQueryService.GenerateEmailConfirmationTokenAsync(userId);
+            var code = await userQueryService.GenerateEmailConfirmationTokenAsync(
+                new GenerateEmailConfirmationTokenQuery(userId)
+            );
             if (code is not null)
             {
                 EmailConfirmationUrl = Url.Page(

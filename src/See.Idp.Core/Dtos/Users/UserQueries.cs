@@ -9,6 +9,24 @@ namespace See.Idp.Core.Dtos.Users;
 public sealed record ListUsersQuery(string? SearchTerm = null, int Skip = 0, int? Take = null);
 
 /// <summary>
+///     Represents a query to retrieve a user ID by email address.
+/// </summary>
+/// <param name="Email">The email address to look up.</param>
+public sealed record FindUserByEmailQuery(string Email);
+
+/// <summary>
+///     Represents a query to retrieve a user's profile by their ID.
+/// </summary>
+/// <param name="UserId">The ID of the user.</param>
+public sealed record GetUserProfileQuery(string UserId);
+
+/// <summary>
+///     Represents a query to generate an email confirmation token for a user.
+/// </summary>
+/// <param name="UserId">The ID of the user.</param>
+public sealed record GenerateEmailConfirmationTokenQuery(string UserId);
+
+/// <summary>
 ///     Represents a summarized view of a user account.
 /// </summary>
 /// <param name="UserId">The identifier of the user.</param>

@@ -177,4 +177,118 @@ public sealed class UserQueryServiceTests
 
         return new UserQueryService(effectiveUserManager, logger);
     }
+
+    [TestMethod]
+    public async Task GetUserProfileAsync_ReturnsProfile_WhenUserExists()
+    {
+        var user = new ApplicationUser
+        {
+            Id = "user-1",
+            Email = "user@example.com",
+            PhoneNumber = "555-1234",
+        };
+
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("user-1").Returns(Task.FromResult<ApplicationUser?>(user));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.GetUserProfileAsync(new GetUserProfileQuery("user-1"), Ct);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual("user@example.com", result.Email);
+        Assert.AreEqual("555-1234", result.PhoneNumber);
+    }
+
+    [TestMethod]
+    public async Task GetUserProfileAsync_ReturnsNull_WhenUserNotFound()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.GetUserProfileAsync(new GetUserProfileQuery("missing"), Ct);
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public async Task FindUserIdByEmailAsync_ReturnsUserId_WhenUserExists()
+    {
+        var user = new ApplicationUser { Id = "user-1", Email = "user@example.com" };
+
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager
+            .FindByEmailAsync("user@example.com")
+            .Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager.GetUserIdAsync(user).Returns(Task.FromResult("user-1"));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.FindUserIdByEmailAsync(
+            new FindUserByEmailQuery("user@example.com"),
+            Ct
+        );
+
+        Assert.AreEqual("user-1", result);
+    }
+
+    [TestMethod]
+    public async Task FindUserIdByEmailAsync_ReturnsNull_WhenUserNotFound()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager
+            .FindByEmailAsync("missing@example.com")
+            .Returns(Task.FromResult<ApplicationUser?>(null));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.FindUserIdByEmailAsync(
+            new FindUserByEmailQuery("missing@example.com"),
+            Ct
+        );
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public async Task GenerateEmailConfirmationTokenAsync_ReturnsEncodedToken_WhenUserExists()
+    {
+        var user = new ApplicationUser { Id = "user-1" };
+        const string rawToken = "raw-confirmation-token";
+
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("user-1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager.GenerateEmailConfirmationTokenAsync(user).Returns(Task.FromResult(rawToken));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.GenerateEmailConfirmationTokenAsync(
+            new GenerateEmailConfirmationTokenQuery("user-1"),
+            Ct
+        );
+
+        Assert.IsNotNull(result);
+        var decoded = System.Text.Encoding.UTF8.GetString(
+            Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(result)
+        );
+        Assert.AreEqual(rawToken, decoded);
+    }
+
+    [TestMethod]
+    public async Task GenerateEmailConfirmationTokenAsync_ReturnsNull_WhenUserNotFound()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.GenerateEmailConfirmationTokenAsync(
+            new GenerateEmailConfirmationTokenQuery("missing"),
+            Ct
+        );
+
+        Assert.IsNull(result);
+    }
 }

@@ -38,3 +38,9 @@ public sealed record RegisterUserResult(
 /// <param name="UserId">The ID of the user whose email is being confirmed.</param>
 /// <param name="EncodedToken">The Base64Url-encoded confirmation token.</param>
 public sealed record ConfirmEmailCommand(string UserId, string EncodedToken);
+
+/// <summary>
+///     Represents a command to generate a password reset token for a user.
+/// </summary>
+/// <param name="Email">The email address of the user requesting a password reset.</param>
+public sealed record GeneratePasswordResetTokenCommand(string Email);
