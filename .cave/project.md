@@ -77,6 +77,43 @@ docker compose up -d
 dotnet run --project src/See.Idp.Web
 ```
 
+## CQRS Conventions
+
+The project uses **direct-injection CQRS** — no MediatR. Razor Pages inject specific command/query service interfaces; there is no dispatcher.
+
+### Interface segregation
+- Every service interface is either a command service (`IXxxCommandService`) or a query service (`IXxxQueryService`) — never mixed
+- Query interfaces: read-only, no side effects, no state mutation
+- Command interfaces: mutating operations only; must never be called from `OnGet` handlers
+- If an operation has side effects it belongs on a command interface, even if it returns data
+
+### Command and query objects
+- Every service method takes a **typed record** as its sole meaningful parameter — never bare primitives (`string`, `Guid`, etc.)
+- Commands: `sealed record XxxCommand(...)` in `See.Idp.Core/Dtos/`
+- Queries: `sealed record XxxQuery(...)` in `See.Idp.Core/Dtos/`
+- Results: strongly-typed result records (e.g. `CommandResult`, `CreateClientResult`) — not `bool` or raw strings
+
+### File layout for new domains
+```
+See.Idp.Core/
+  Services/<Domain>/
+    IXxxCommandService.cs
+    IXxxQueryService.cs
+  Dtos/<Domain>/
+    XxxCommand.cs        # one file per command record
+    XxxQuery.cs          # one file per query record
+    XxxResult.cs         # result records
+
+See.Idp.Infrastructure/Services/
+    XxxCommandService.cs
+    XxxQueryService.cs
+```
+
+### Razor Pages
+- `OnGet` / `OnGetAsync` → inject and call **query services only**
+- `OnPost` / `OnPostAsync` → construct a typed command record inline and call a **command service**
+- A page may inject both interfaces; a handler may not use the wrong kind
+
 ## Code Conventions
 
 - **No implicit usings** — every `using` must be explicit at the top of the file
@@ -86,6 +123,15 @@ dotnet run --project src/See.Idp.Web
 - **Prettier** formats everything else (JS, TS, CSS, HTML, JSON, YAML, cshtml, etc.) — run `npx prettier --write .` before committing
 - Services follow interface → implementation pattern; interfaces live in Core, implementations in Infrastructure
 - Use `IQueryable`-based async patterns in data services (see existing service tests for patterns)
+
+## TDD
+
+Test-driven development is the **primary mode of development**. Write tests before (or alongside) production code — never after the fact.
+
+- Before adding a new method or behaviour: write a failing test first, then make it pass
+- Before fixing a bug: write a test that reproduces it, then fix it
+- New service methods without tests are considered incomplete
+- PRs that add untested logic should be rejected
 
 ## Test Conventions
 

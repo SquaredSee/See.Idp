@@ -3,6 +3,7 @@
     "csharpier.csharpier-vscode",
     "ms-dotnettools.csdevkit",
     "bradlc.vscode-tailwindcss",
-    "editorconfig.editorconfig"
+    "editorconfig.editorconfig",
+    "esbenp.prettier-vscode"
   ]
 }
