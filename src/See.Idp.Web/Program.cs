@@ -93,7 +93,11 @@ builder
         // Register scopes that can be used in the authorization process.
         options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
 
-        var aspNetCoreBuilder = options.UseAspNetCore();
+        var aspNetCoreBuilder = options
+            .UseAspNetCore()
+            .EnableAuthorizationEndpointPassthrough()
+            .EnableTokenEndpointPassthrough()
+            .EnableEndSessionEndpointPassthrough();
 
         if (builder.Environment.IsDevelopment())
         {
@@ -151,6 +155,7 @@ builder.Services.AddScoped<IUserPasswordCommandService>(sp =>
 builder.Services.AddScoped<IUserRegistrationCommandService, UserRegistrationService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
 
+builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeAreaFolder("Admin", "/", Policies.AdminPortal);
@@ -177,6 +182,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorPages().WithStaticAssets();
 
 app.Run();

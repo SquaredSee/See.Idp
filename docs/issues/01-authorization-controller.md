@@ -33,3 +33,20 @@ As a developer building an application against this IDP, I want tokens to contai
 ## Dependencies
 
 None — this is the first issue.
+
+## Implementation
+
+**Completed.** Commit: `feat(auth): add authorization controller and claims`
+
+### Files changed
+
+- `src/See.Idp.Web/Controllers/AuthorizationController.cs` — new controller
+- `src/See.Idp.Web/Program.cs` — `AddControllersWithViews`, endpoint passthrough, `MapControllers`
+
+### Notes
+
+- `OpenIddictServerAspNetCoreHelpers` (`GetOpenIddictServerRequest`) lives in the
+  `Microsoft.AspNetCore` namespace, not `OpenIddict.Server.AspNetCore` — non-obvious, requires
+  an explicit `using Microsoft.AspNetCore;`
+- Consent is currently auto-approved (ad-hoc authorization created on every request).
+  Issue 03 replaces this with the explicit consent page.

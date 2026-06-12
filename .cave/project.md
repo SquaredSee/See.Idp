@@ -124,6 +124,31 @@ See.Idp.Infrastructure/Services/
 - Services follow interface → implementation pattern; interfaces live in Core, implementations in Infrastructure
 - Use `IQueryable`-based async patterns in data services (see existing service tests for patterns)
 
+## Commit Conventions
+
+All commits must use [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>[optional scope]: <description>
+```
+
+Common types:
+- `feat` — new feature or behaviour
+- `fix` — bug fix
+- `chore` — maintenance, config, tooling, dependencies
+- `docs` — documentation only
+- `refactor` — code change that neither fixes a bug nor adds a feature
+- `test` — adding or updating tests
+- `style` — formatting changes only
+
+Examples:
+```
+feat(auth): add authorization controller and claims
+docs: add issues backlog
+test(users): add UserQueryService and UserRegistrationService tests
+fix(cqrs): wrap bare string params in typed query records
+```
+
 ## TDD
 
 Test-driven development is the **primary mode of development**. Write tests before (or alongside) production code — never after the fact.
