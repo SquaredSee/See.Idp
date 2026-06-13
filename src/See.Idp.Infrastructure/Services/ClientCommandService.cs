@@ -217,6 +217,7 @@ public sealed partial class ClientCommandService(
             ClientType = normalizedClientSecret is null
                 ? OpenIddictConstants.ClientTypes.Public
                 : OpenIddictConstants.ClientTypes.Confidential,
+            ConsentType = OpenIddictConstants.ConsentTypes.Implicit,
             DisplayName = command.DisplayName,
         };
 
