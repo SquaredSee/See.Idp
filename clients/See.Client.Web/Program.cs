@@ -24,6 +24,7 @@ builder
         options.Authority = builder.Configuration["Oidc:Authority"];
         options.ClientId = builder.Configuration["Oidc:ClientId"];
         options.ClientSecret = builder.Configuration["Oidc:ClientSecret"];
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.Scope.Clear();
         options.Scope.Add("openid");
