@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -15,7 +16,7 @@ public sealed class GenerateRecoveryCodesModel(
 ) : PageModel
 {
     [TempData]
-    public System.Collections.Generic.IEnumerable<string> RecoveryCodes { get; set; } = [];
+    public string[] RecoveryCodes { get; set; } = [];
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -44,7 +45,7 @@ public sealed class GenerateRecoveryCodesModel(
         }
 
         StatusMessage = "New recovery codes generated.";
-        RecoveryCodes = result.Codes;
+        RecoveryCodes = result.Codes.ToArray();
         return RedirectToPage("./ShowRecoveryCodes");
     }
 }

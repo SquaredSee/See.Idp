@@ -11,7 +11,7 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 public sealed class ShowRecoveryCodesModel : PageModel
 {
     [TempData]
-    public IEnumerable<string> RecoveryCodes { get; set; } = [];
+    public string[] RecoveryCodes { get; set; } = [];
 
     [TempData]
     public string? StatusMessage { get; set; }

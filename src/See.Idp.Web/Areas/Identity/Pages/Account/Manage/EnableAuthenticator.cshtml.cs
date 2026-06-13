@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,7 @@ public sealed class EnableAuthenticatorModel(
     public string AuthenticatorUri { get; set; } = string.Empty;
 
     [TempData]
-    public IEnumerable<string> RecoveryCodes { get; set; } = [];
+    public string[] RecoveryCodes { get; set; } = [];
 
     [TempData]
     public string? StatusMessage { get; set; }
@@ -76,7 +77,7 @@ public sealed class EnableAuthenticatorModel(
         }
 
         StatusMessage = "Your authenticator app has been verified.";
-        RecoveryCodes = result.Codes;
+        RecoveryCodes = result.Codes.ToArray();
         return RedirectToPage("./ShowRecoveryCodes");
     }
 }
