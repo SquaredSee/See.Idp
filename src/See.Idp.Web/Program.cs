@@ -1,11 +1,15 @@
 using System;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -18,6 +22,7 @@ using See.Idp.Core.Services.Auth;
 using See.Idp.Core.Services.Clients;
 using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure;
+using See.Idp.Infrastructure.Logging;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
 using See.Idp.Web.Cors;
@@ -174,6 +179,64 @@ else
 builder.Services.AddCors();
 builder.Services.AddSingleton<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 
+builder.Services.AddRateLimiter(options =>
+{
+    var loginPermitLimit = builder.Configuration.GetValue("RateLimiting:Login:PermitLimit", 10);
+    var loginWindowSeconds = builder.Configuration.GetValue("RateLimiting:Login:WindowSeconds", 60);
+    var tokenPermitLimit = builder.Configuration.GetValue("RateLimiting:Token:PermitLimit", 30);
+    var tokenWindowSeconds = builder.Configuration.GetValue("RateLimiting:Token:WindowSeconds", 60);
+
+    options.AddPolicy(
+        "login",
+        context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = loginPermitLimit,
+                    Window = TimeSpan.FromSeconds(loginWindowSeconds),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0,
+                }
+            )
+    );
+
+    options.AddPolicy(
+        "token",
+        context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = tokenPermitLimit,
+                    Window = TimeSpan.FromSeconds(tokenWindowSeconds),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0,
+                }
+            )
+    );
+
+    options.OnRejected = async (context, ct) =>
+    {
+        var logger = context
+            .HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("RateLimiting");
+
+        logger.LogWarning(
+            new EventId(EventIds.RateLimitExceeded, nameof(EventIds.RateLimitExceeded)),
+            "Rate limit exceeded for {Path} from {IP}",
+            context.HttpContext.Request.Path,
+            context.HttpContext.Connection.RemoteIpAddress
+        );
+
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsync(
+            "Too many requests. Please try again later.",
+            ct
+        );
+    };
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(options =>
 {
@@ -196,6 +259,8 @@ else
 }
 
 app.UseRouting();
+
+app.UseRateLimiter();
 
 app.UseCors();
 

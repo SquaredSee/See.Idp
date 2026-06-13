@@ -5,12 +5,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.RateLimiting;
 using See.Idp.Core.Dtos.Auth;
 using See.Idp.Core.Services.Auth;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
+[EnableRateLimiting("login")]
 public sealed class LoginModel(IUserAuthenticationCommandService authService) : PageModel
 {
     [BindProperty]

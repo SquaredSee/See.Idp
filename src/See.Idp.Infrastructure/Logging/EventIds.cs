@@ -73,4 +73,7 @@ public static class EventIds
     public const int UserEmailConfirmed = 1802;
     public const int UserEmailConfirmationFailed = 1803;
     public const int UserEmailConfirmationTokenGenerated = 1804;
+
+    // Rate limiting: 1900 - 1999
+    public const int RateLimitExceeded = 1900;
 }

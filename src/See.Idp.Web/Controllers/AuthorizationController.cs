@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using See.Idp.Infrastructure;
@@ -106,6 +107,7 @@ public sealed class AuthorizationController(
     [HttpPost("~/connect/token")]
     [IgnoreAntiforgeryToken]
     [Produces("application/json")]
+    [EnableRateLimiting("token")]
     public async Task<IActionResult> Exchange()
     {
         var request =
