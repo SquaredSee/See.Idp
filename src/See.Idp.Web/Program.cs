@@ -31,7 +31,6 @@ using See.Idp.Web.Auth;
 using See.Idp.Web.Cors;
 using See.Idp.Web.Services;
 using StackExchange.Redis;
-using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,7 +103,12 @@ builder
             .AllowRefreshTokenFlow();
 
         // Register scopes that can be used in the authorization process.
-        options.RegisterScopes(Scopes.Email, Scopes.Profile, Scopes.Roles);
+        options.RegisterScopes(
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.Email,
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.OpenId,
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.Profile,
+            OpenIddict.Abstractions.OpenIddictConstants.Scopes.Roles
+        );
 
         var aspNetCoreBuilder = options
             .UseAspNetCore()
