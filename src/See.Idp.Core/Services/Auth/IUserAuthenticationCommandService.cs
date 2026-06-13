@@ -20,6 +20,18 @@ public interface IUserAuthenticationCommandService
         CancellationToken ct = default
     );
 
+    /// <summary>Completes a 2FA sign-in with a TOTP authenticator code.</summary>
+    Task<TwoFactorSignInResult> TwoFactorSignInAsync(
+        TwoFactorSignInCommand command,
+        CancellationToken ct = default
+    );
+
+    /// <summary>Completes a 2FA sign-in with a recovery code.</summary>
+    Task<TwoFactorSignInResult> RecoveryCodeSignInAsync(
+        RecoveryCodeSignInCommand command,
+        CancellationToken ct = default
+    );
+
     /// <summary>
     ///     Signs out the current user.
     /// </summary>

@@ -1,0 +1,20 @@
+@page
+@model ResetAuthenticatorModel
+@{
+  ViewData["Title"] = "Reset authenticator";
+  Layout = "./_Layout";
+}
+
+<div class="panel">
+  <h1 class="mb-4">Reset authenticator app</h1>
+
+  <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+    <strong>Warning:</strong> Resetting your authenticator key will disable 2FA until you
+    re-enrol with your app. Your existing recovery codes will also be invalidated.
+  </div>
+
+  <form method="post">
+    <button type="submit" class="btn-primary bg-red-600 hover:bg-red-700">Reset authenticator</button>
+    <a asp-page="./TwoFactorAuthentication" class="btn-secondary ml-2">Cancel</a>
+  </form>
+</div>

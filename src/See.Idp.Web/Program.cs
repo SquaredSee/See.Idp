@@ -191,6 +191,11 @@ builder.Services.AddScoped<IUserPasswordCommandService>(sp =>
     sp.GetRequiredService<UserAccountService>()
 );
 builder.Services.AddScoped<IUserRegistrationCommandService, UserRegistrationService>();
+builder.Services.AddScoped<TwoFactorService>();
+builder.Services.AddScoped<ITwoFactorCommandService>(sp =>
+    sp.GetRequiredService<TwoFactorService>()
+);
+builder.Services.AddScoped<ITwoFactorQueryService>(sp => sp.GetRequiredService<TwoFactorService>());
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();

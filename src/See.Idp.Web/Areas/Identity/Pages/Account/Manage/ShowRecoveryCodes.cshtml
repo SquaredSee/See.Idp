@@ -1,0 +1,31 @@
+@page
+@model ShowRecoveryCodesModel
+@{
+  ViewData["Title"] = "Recovery codes";
+  Layout = "./_Layout";
+}
+
+<div class="panel">
+  <h1 class="mb-4">Recovery codes</h1>
+
+  @if (Model.StatusMessage is not null)
+  {
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+      @Model.StatusMessage
+    </div>
+  }
+
+  <div class="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+    <strong>Save these codes now.</strong> They will not be shown again. Store them somewhere safe.
+    Each code can only be used once.
+  </div>
+
+  <ul class="mb-6 grid grid-cols-2 gap-1 font-mono text-sm">
+    @foreach (var code in Model.RecoveryCodes)
+    {
+      <li>@code</li>
+    }
+  </ul>
+
+  <a asp-page="./TwoFactorAuthentication" class="btn-secondary">Done</a>
+</div>

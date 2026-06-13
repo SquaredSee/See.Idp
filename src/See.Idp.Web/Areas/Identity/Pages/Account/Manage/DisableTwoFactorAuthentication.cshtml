@@ -1,0 +1,20 @@
+@page
+@model DisableTwoFactorAuthenticationModel
+@{
+  ViewData["Title"] = "Disable two-factor authentication";
+  Layout = "./_Layout";
+}
+
+<div class="panel">
+  <h1 class="mb-4">Disable two-factor authentication</h1>
+
+  <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+    <strong>Warning:</strong> Disabling 2FA makes your account less secure. Only proceed if you
+    intend to re-enrol with a new authenticator app.
+  </div>
+
+  <form method="post">
+    <button type="submit" class="btn-primary bg-red-600 hover:bg-red-700">Disable 2FA</button>
+    <a asp-page="./TwoFactorAuthentication" class="btn-secondary ml-2">Cancel</a>
+  </form>
+</div>

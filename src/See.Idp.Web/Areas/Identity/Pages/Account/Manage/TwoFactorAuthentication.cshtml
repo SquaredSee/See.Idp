@@ -1,0 +1,42 @@
+@page
+@model TwoFactorAuthenticationModel
+@{
+  ViewData["Title"] = "Two-factor authentication";
+  Layout = "./_Layout";
+}
+
+<div class="panel">
+  <h1 class="mb-6">Two-factor authentication</h1>
+
+  @if (Model.StatusMessage is not null)
+  {
+    <div
+      class="mb-4 rounded-lg border @(Model.StatusMessage.StartsWith("Error") ? "border-red-200 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-700") p-3 text-sm">
+      @Model.StatusMessage
+    </div>
+  }
+
+  @if (Model.Is2faEnabled)
+  {
+    <p class="mb-4 text-sm">Two-factor authentication is <strong>enabled</strong>.</p>
+
+    <div class="mb-4 text-sm">
+      Recovery codes remaining: <strong>@Model.RecoveryCodesLeft</strong>
+      @if (Model.RecoveryCodesLeft == 0)
+      {
+        <span class="ml-2 text-red-600">— generate new codes immediately.</span>
+      }
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a asp-page="./DisableTwoFactorAuthentication" class="btn-secondary">Disable 2FA</a>
+      <a asp-page="./GenerateRecoveryCodes" class="btn-secondary">Generate recovery codes</a>
+      <a asp-page="./EnableAuthenticator" class="btn-secondary">Reset authenticator app</a>
+    </div>
+  }
+  else
+  {
+    <p class="mb-4 text-sm">Two-factor authentication is <strong>not enabled</strong>.</p>
+    <a asp-page="./EnableAuthenticator" class="btn-primary">Enable authenticator app</a>
+  }
+</div>

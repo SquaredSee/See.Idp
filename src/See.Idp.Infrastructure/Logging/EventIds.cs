@@ -66,6 +66,15 @@ public static class EventIds
     public const int AuthenticationPasswordChanged = 1708;
     public const int AuthenticationPasswordChangeFailed = 1709;
     public const int AuthenticationSignInRefreshed = 1710;
+    public const int TwoFactorSignInSucceeded = 1711;
+    public const int TwoFactorSignInFailed = 1712;
+    public const int TwoFactorSignInLockedOut = 1713;
+    public const int RecoveryCodeSignInSucceeded = 1714;
+    public const int RecoveryCodeSignInFailed = 1715;
+    public const int TwoFactorEnabled = 1716;
+    public const int TwoFactorDisabled = 1717;
+    public const int AuthenticatorKeyReset = 1718;
+    public const int RecoveryCodesGenerated = 1719;
 
     // User registration service: 1800 - 1899
     public const int UserRegistered = 1800;

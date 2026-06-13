@@ -42,3 +42,50 @@ cannot be accessed with a password alone.
 
 - `04-email-provider` — account recovery emails need to work before 2FA enrolment
   is safe (users could otherwise lock themselves out)
+
+## Implementation
+
+**Status:** ✅ Done
+
+**New Core files:**
+- `Dtos/Auth/TwoFactorCommands.cs` — `TwoFactorSignInCommand`, `RecoveryCodeSignInCommand`,
+  `TwoFactorSignInResult`, `EnableTwoFactorCommand`, `DisableTwoFactorCommand`,
+  `ResetAuthenticatorKeyCommand`, `GenerateRecoveryCodesCommand`, `GenerateRecoveryCodesResult`.
+- `Dtos/Auth/TwoFactorQueries.cs` — `GetTwoFactorInfoQuery`, `TwoFactorInfo`,
+  `GetAuthenticatorSetupQuery`, `AuthenticatorSetupInfo`.
+- `Services/Auth/ITwoFactorCommandService.cs` — Enable, Disable, ResetKey, GenerateCodes.
+- `Services/Auth/ITwoFactorQueryService.cs` — GetTwoFactorInfo, GetAuthenticatorSetup.
+
+**Updated Core files:**
+- `Dtos/Auth/AuthenticationCommands.cs` — added `RequiresTwoFactor` to `PasswordSignInResult`.
+- `Services/Auth/IUserAuthenticationCommandService.cs` — added `TwoFactorSignInAsync` and
+  `RecoveryCodeSignInAsync`.
+
+**New Infrastructure files:**
+- `Services/TwoFactorService.cs` — implements both interfaces; uses `UserManager` for all key/code
+  operations; `FormatKey` groups base32 key in 4-char chunks; `GenerateQrCodeUri` produces
+  standard `otpauth://totp/` URI; QR code rendered client-side via `qrcodejs` CDN.
+
+**Updated Infrastructure files:**
+- `Services/UserAccountService.cs` — `PasswordSignInAsync` now returns `TwoFactorRequired()` when
+  `SignInResult.RequiresTwoFactor`; added `TwoFactorSignInAsync` and `RecoveryCodeSignInAsync`.
+- `Logging/EventIds.cs` — event IDs 1711–1719 for 2FA sign-in and management events.
+
+**New Web files:**
+- `Account/LoginWith2fa.cshtml[.cs]` — TOTP code entry; passes `RememberMe` + `RememberClient`.
+- `Account/LoginWithRecoveryCode.cshtml[.cs]` — recovery code sign-in.
+- `Account/Manage/TwoFactorAuthentication.cshtml[.cs]` — 2FA status dashboard.
+- `Account/Manage/EnableAuthenticator.cshtml[.cs]` — QR code setup + code verification.
+- `Account/Manage/DisableTwoFactorAuthentication.cshtml[.cs]` — disable confirmation.
+- `Account/Manage/GenerateRecoveryCodes.cshtml[.cs]` — generate confirmation.
+- `Account/Manage/ShowRecoveryCodes.cshtml[.cs]` — one-time display of new codes.
+- `Account/Manage/ResetAuthenticator.cshtml[.cs]` — reset key confirmation.
+- `Account/Manage/_ManageNav.cshtml` — added Two-factor authentication link.
+
+**Updated Web files:**
+- `Account/Login.cshtml.cs` — redirects to `LoginWith2fa` when `RequiresTwoFactor`.
+- `Program.cs` — registers `TwoFactorService` as both `ITwoFactorCommandService` and
+  `ITwoFactorQueryService`.
+
+**New tests:** `TwoFactorServiceTests.cs` (10 tests), `UserAccountServiceTests.cs` (5 tests);
+`IdentityTestFactory` extended with `CreateSignInManager`.

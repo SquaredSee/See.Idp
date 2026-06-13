@@ -1,0 +1,53 @@
+@page
+@model EnableAuthenticatorModel
+@{
+  ViewData["Title"] = "Configure authenticator app";
+  Layout = "./_Layout";
+}
+
+<div class="panel">
+  <h1 class="mb-6">Configure authenticator app</h1>
+
+  <ol class="mb-6 list-decimal space-y-4 pl-5 text-sm">
+    <li>
+      Download a TOTP authenticator app such as
+      <a href="https://support.google.com/accounts/answer/1066447" target="_blank">Google Authenticator</a> or
+      <a href="https://www.microsoft.com/authenticator" target="_blank">Microsoft Authenticator</a>.
+    </li>
+    <li>
+      Scan the QR code below, or enter the key manually.
+      <div id="qrcode" class="my-3"></div>
+      <p class="text-text-muted">
+        Manual key: <kbd class="rounded bg-border-soft px-1 py-0.5 font-mono text-xs">@Model.SharedKey</kbd>
+      </p>
+    </li>
+    <li>Enter the 6-digit code shown in your app to verify setup.</li>
+  </ol>
+
+  <form method="post">
+    <div asp-validation-summary="ModelOnly"
+         class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+
+    <div class="mb-6">
+      <label asp-for="Input.Code" class="field-label">Verification code</label>
+      <input asp-for="Input.Code" class="field-input" autocomplete="one-time-code"
+             inputmode="numeric" />
+      <span asp-validation-for="Input.Code" class="mt-1 block text-xs text-red-600"></span>
+    </div>
+
+    <button type="submit" class="btn-primary">Verify and enable</button>
+  </form>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"
+          integrity="sha256-G9EvFdSMhqMKNbwqiNMnrkrBuGvUflKNL8MFzMnS/Yg=" crossorigin="anonymous"></script>
+  <script>
+    new QRCode(document.getElementById("qrcode"), {
+      text: "@Html.Raw(Model.AuthenticatorUri)",
+      width: 160,
+      height: 160
+    });
+  </script>
+}

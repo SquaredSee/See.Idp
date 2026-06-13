@@ -14,24 +14,18 @@ public sealed record PasswordSignInCommand(string Email, string Password, bool R
 /// <param name="Succeeded">Indicates whether the sign-in attempt was successful.</param>
 /// <param name="IsLockedOut">Indicates whether the user is locked out.</param>
 /// <param name="Error">The error message, if any.</param>
-public sealed record PasswordSignInResult(bool Succeeded, bool IsLockedOut, string? Error = null)
+public sealed record PasswordSignInResult(
+    bool Succeeded,
+    bool IsLockedOut,
+    bool RequiresTwoFactor = false,
+    string? Error = null
+)
 {
-    /// <summary>
-    ///     Creates a successful sign-in result.
-    /// </summary>
-    /// <returns>A successful sign-in result.</returns>
-    public static PasswordSignInResult Success() => new(true, false, null);
+    public static PasswordSignInResult Success() => new(true, false, false, null);
 
-    /// <summary>
-    ///     Creates a result indicating the account is locked out.
-    /// </summary>
-    /// <returns>A locked-out sign-in result.</returns>
-    public static PasswordSignInResult LockedOut() => new(false, true, null);
+    public static PasswordSignInResult LockedOut() => new(false, true, false, null);
 
-    /// <summary>
-    ///     Creates a failed sign-in result.
-    /// </summary>
-    /// <param name="error">The sign-in error message.</param>
-    /// <returns>A failed sign-in result.</returns>
-    public static PasswordSignInResult Failure(string error) => new(false, false, error);
+    public static PasswordSignInResult TwoFactorRequired() => new(false, false, true, null);
+
+    public static PasswordSignInResult Failure(string error) => new(false, false, false, error);
 }

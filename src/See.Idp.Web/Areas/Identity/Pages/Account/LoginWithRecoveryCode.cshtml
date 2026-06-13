@@ -1,0 +1,30 @@
+@page
+@model LoginWithRecoveryCodeModel
+@{
+  ViewData["Title"] = "Recovery code sign-in";
+}
+
+<div class="mx-auto max-w-sm">
+  <div class="panel">
+    <h1 class="mb-2">Recovery code sign-in</h1>
+    <p class="mb-6 text-sm text-text-muted">Enter one of your recovery codes.</p>
+
+    <form method="post">
+      <div asp-validation-summary="ModelOnly"
+           class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"></div>
+
+      <div class="mb-6">
+        <label asp-for="Input.RecoveryCode" class="field-label">Recovery code</label>
+        <input asp-for="Input.RecoveryCode" class="field-input" autocomplete="off" />
+        <span asp-validation-for="Input.RecoveryCode" class="mt-1 block text-xs text-red-600"></span>
+      </div>
+
+      <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+      <button type="submit" class="btn-primary w-full">Sign in</button>
+    </form>
+  </div>
+</div>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -34,6 +36,29 @@ internal static class IdentityTestFactory
             new IdentityErrorDescriber(),
             serviceProvider,
             logger
+        );
+    }
+
+    public static SignInManager<ApplicationUser> CreateSignInManager(
+        UserManager<ApplicationUser>? userManager = null
+    )
+    {
+        var contextAccessor = Substitute.For<IHttpContextAccessor>();
+        var claimsFactory = Substitute.For<IUserClaimsPrincipalFactory<ApplicationUser>>();
+        var options = Substitute.For<IOptions<IdentityOptions>>();
+        options.Value.Returns(new IdentityOptions());
+        var logger = Substitute.For<ILogger<SignInManager<ApplicationUser>>>();
+        var schemes = Substitute.For<IAuthenticationSchemeProvider>();
+        var confirmation = Substitute.For<IUserConfirmation<ApplicationUser>>();
+
+        return Substitute.For<SignInManager<ApplicationUser>>(
+            userManager ?? CreateUserManager(),
+            contextAccessor,
+            claimsFactory,
+            options,
+            logger,
+            schemes,
+            confirmation
         );
     }
 

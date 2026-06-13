@@ -45,10 +45,63 @@ public sealed partial class UserAccountService(
             return PasswordSignInResult.LockedOut();
         }
 
+        if (result.RequiresTwoFactor)
+            return PasswordSignInResult.TwoFactorRequired();
+
         LogAuthenticationSignInFailed(command.Email);
         return PasswordSignInResult.Failure(
             "Login failed. Please check your credentials and try again."
         );
+    }
+
+    public async Task<TwoFactorSignInResult> TwoFactorSignInAsync(
+        TwoFactorSignInCommand command,
+        CancellationToken ct = default
+    )
+    {
+        var result = await signInManager.TwoFactorAuthenticatorSignInAsync(
+            command.Code,
+            command.RememberMe,
+            command.RememberClient
+        );
+
+        if (result.Succeeded)
+        {
+            LogTwoFactorSignInSucceeded();
+            return TwoFactorSignInResult.Success();
+        }
+
+        if (result.IsLockedOut)
+        {
+            LogTwoFactorSignInLockedOut();
+            return TwoFactorSignInResult.LockedOut();
+        }
+
+        if (result.IsNotAllowed)
+            return TwoFactorSignInResult.NotAllowed();
+
+        LogTwoFactorSignInFailed();
+        return TwoFactorSignInResult.Failure("Invalid authenticator code.");
+    }
+
+    public async Task<TwoFactorSignInResult> RecoveryCodeSignInAsync(
+        RecoveryCodeSignInCommand command,
+        CancellationToken ct = default
+    )
+    {
+        var result = await signInManager.TwoFactorRecoveryCodeSignInAsync(command.Code);
+
+        if (result.Succeeded)
+        {
+            LogRecoveryCodeSignInSucceeded();
+            return TwoFactorSignInResult.Success();
+        }
+
+        if (result.IsLockedOut)
+            return TwoFactorSignInResult.LockedOut();
+
+        LogRecoveryCodeSignInFailed();
+        return TwoFactorSignInResult.Failure("Invalid recovery code.");
     }
 
     public async Task SignOutAsync(CancellationToken ct = default)
@@ -196,6 +249,41 @@ public sealed partial class UserAccountService(
         Message = "Password change failed for user {UserId}"
     )]
     private partial void LogAuthenticationPasswordChangeFailed(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorSignInSucceeded,
+        Level = LogLevel.Information,
+        Message = "Two-factor sign-in succeeded"
+    )]
+    private partial void LogTwoFactorSignInSucceeded();
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorSignInFailed,
+        Level = LogLevel.Warning,
+        Message = "Two-factor sign-in failed"
+    )]
+    private partial void LogTwoFactorSignInFailed();
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorSignInLockedOut,
+        Level = LogLevel.Warning,
+        Message = "Two-factor sign-in locked out"
+    )]
+    private partial void LogTwoFactorSignInLockedOut();
+
+    [LoggerMessage(
+        EventId = EventIds.RecoveryCodeSignInSucceeded,
+        Level = LogLevel.Information,
+        Message = "Recovery code sign-in succeeded"
+    )]
+    private partial void LogRecoveryCodeSignInSucceeded();
+
+    [LoggerMessage(
+        EventId = EventIds.RecoveryCodeSignInFailed,
+        Level = LogLevel.Warning,
+        Message = "Recovery code sign-in failed"
+    )]
+    private partial void LogRecoveryCodeSignInFailed();
 
     [LoggerMessage(
         EventId = EventIds.AuthenticationSignInRefreshed,

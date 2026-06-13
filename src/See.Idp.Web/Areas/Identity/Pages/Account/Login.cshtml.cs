@@ -56,6 +56,12 @@ public sealed class LoginModel(IUserAuthenticationCommandService authService) : 
         if (result.Succeeded)
             return LocalRedirect(ReturnUrl);
 
+        if (result.RequiresTwoFactor)
+            return RedirectToPage(
+                "./LoginWith2fa",
+                new { ReturnUrl, RememberMe = Input.RememberMe }
+            );
+
         if (result.IsLockedOut)
             return RedirectToPage("./Lockout");
 

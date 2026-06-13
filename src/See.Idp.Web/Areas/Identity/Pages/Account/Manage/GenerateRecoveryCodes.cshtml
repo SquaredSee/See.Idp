@@ -1,0 +1,20 @@
+@page
+@model GenerateRecoveryCodesModel
+@{
+  ViewData["Title"] = "Generate recovery codes";
+  Layout = "./_Layout";
+}
+
+<div class="panel">
+  <h1 class="mb-4">Generate recovery codes</h1>
+
+  <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+    <strong>Warning:</strong> Generating new codes will <strong>invalidate</strong> your existing
+    recovery codes. Save the new codes in a safe place.
+  </div>
+
+  <form method="post">
+    <button type="submit" class="btn-primary">Generate new codes</button>
+    <a asp-page="./TwoFactorAuthentication" class="btn-secondary ml-2">Cancel</a>
+  </form>
+</div>
