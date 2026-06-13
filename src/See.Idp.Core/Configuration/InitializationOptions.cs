@@ -34,5 +34,7 @@ public sealed class SeedClientOptions
 
     public List<string> RedirectUris { get; set; } = [];
 
+    public List<string> PostLogoutRedirectUris { get; set; } = [];
+
     public List<string> Permissions { get; set; } = [];
 }

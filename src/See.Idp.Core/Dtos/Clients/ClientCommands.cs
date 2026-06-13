@@ -69,5 +69,6 @@ public sealed record CreateClientIfMissingCommand(
     string? ClientSecret,
     string? DisplayName,
     IReadOnlyList<string> RedirectUris,
+    IReadOnlyList<string> PostLogoutRedirectUris,
     IReadOnlyList<string> AdditionalPermissions
 );

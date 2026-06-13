@@ -242,6 +242,15 @@ public sealed partial class ClientCommandService(
             descriptor.RedirectUris.Add(uri);
         }
 
+        foreach (var uri in command.PostLogoutRedirectUris)
+        {
+            if (
+                !string.IsNullOrWhiteSpace(uri)
+                && Uri.TryCreate(uri, UriKind.Absolute, out var parsed)
+            )
+                descriptor.PostLogoutRedirectUris.Add(parsed);
+        }
+
         foreach (var permission in command.AdditionalPermissions)
         {
             if (!string.IsNullOrWhiteSpace(permission))

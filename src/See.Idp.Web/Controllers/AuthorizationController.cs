@@ -185,7 +185,8 @@ public sealed class AuthorizationController(
     [Authorize(AuthenticationSchemes = OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)]
     public async Task<IActionResult> UserInfo()
     {
-        var user = await userManager.GetUserAsync(User);
+        var userId = User.GetClaim(OpenIddictConstants.Claims.Subject);
+        var user = userId is not null ? await userManager.FindByIdAsync(userId) : null;
         if (user is null)
             return Challenge(
                 authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
@@ -237,7 +238,7 @@ public sealed class AuthorizationController(
 
         return SignOut(
             authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-            properties: new AuthenticationProperties { RedirectUri = "/" }
+            properties: new AuthenticationProperties { RedirectUri = "/Identity/Account/Login" }
         );
     }
 

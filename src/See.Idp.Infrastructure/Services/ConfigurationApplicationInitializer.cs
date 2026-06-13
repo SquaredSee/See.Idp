@@ -149,6 +149,7 @@ public sealed partial class ConfigurationApplicationInitializer(
                 client.ClientSecret,
                 client.DisplayName,
                 client.RedirectUris,
+                client.PostLogoutRedirectUris,
                 client.Permissions
             ),
             ct

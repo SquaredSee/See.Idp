@@ -357,6 +357,7 @@ public sealed class ClientCommandServiceTests
                 "secret",
                 "Display",
                 new[] { "not-a-valid-uri" },
+                Array.Empty<string>(),
                 new[] { "perm-1" }
             ),
             Ct
@@ -386,6 +387,7 @@ public sealed class ClientCommandServiceTests
                 " ",
                 "Display",
                 new[] { "https://localhost/signin-oidc", "" },
+                Array.Empty<string>(),
                 new[] { "perm-1", " " }
             ),
             Ct

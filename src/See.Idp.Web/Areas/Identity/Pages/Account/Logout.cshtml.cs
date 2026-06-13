@@ -11,7 +11,7 @@ public sealed class LogoutModel(IUserAuthenticationCommandService authService) :
 {
     public IActionResult OnGet()
     {
-        return RedirectToPage("/Index", new { area = "" });
+        return RedirectToPage("/Account/Login", new { area = "Identity" });
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
