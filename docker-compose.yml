@@ -25,5 +25,18 @@ services:
       - "4317:4317" # OTLP gRPC  (traces, metrics, logs)
       - "4318:4318" # OTLP HTTP
 
+  client-web:
+    build:
+      context: ./clients/See.Client.Web
+      dockerfile: Dockerfile
+    container_name: see-client-web
+    ports:
+      - "7002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Oidc__Authority=http://see-idp-web:8080
+      - Oidc__ClientId=see-client-web
+      - Oidc__ClientSecret=see-client-web-secret
+
 volumes:
   seeidp_postgres_data:

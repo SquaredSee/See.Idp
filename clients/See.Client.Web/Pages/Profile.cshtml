@@ -1,0 +1,16 @@
+@page
+@model ProfileModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<h1>Profile</h1>
+
+<table>
+    <tr><th>sub</th><td>@Model.Sub</td></tr>
+    <tr><th>email</th><td>@Model.Email</td></tr>
+    <tr><th>roles</th><td>@string.Join(", ", Model.Roles)</td></tr>
+</table>
+
+<br />
+<a href="/logout">Sign out</a>

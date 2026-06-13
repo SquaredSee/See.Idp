@@ -54,3 +54,21 @@ that I can demonstrate the full OIDC flow and have confidence the IDP works corr
 - `02-userinfo-endpoint`
 - `03-consent-page`
 - `07-cors`
+
+## Implementation
+
+**Status:** ✅ Done
+
+**Scope:** Minimal auth-test client only — no UI polish, just a working OIDC round-trip.
+
+**Files:**
+- `clients/See.Client.Web/` — new ASP.NET Core Razor Pages app (net10.0).
+- `Program.cs` — `AddAuthentication` with cookie + OIDC (`code` flow, `email`/`profile`/`roles`
+  scopes, `GetClaimsFromUserInfoEndpoint = true`, `MapInboundClaims = false`); `GET /logout`
+  signs out of both cookie and OIDC (end-session flow).
+- `appsettings.json` — `Oidc:Authority`, `Oidc:ClientId`, `Oidc:ClientSecret` keys.
+- `Pages/Profile.cshtml[.cs]` — `[Authorize]` page displaying `sub`, `email`, and `roles`.
+- `Dockerfile` — multi-stage build for docker-compose use.
+- `src/See.Idp.Web/appsettings.Development.json` — added `see-client-web` client registration
+  with redirect URI `https://localhost:7002/signin-oidc`.
+- `docker-compose.yml` — added `client-web` service on port 7002.
