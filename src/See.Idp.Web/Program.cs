@@ -1,5 +1,6 @@
 using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,7 @@ using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
+using See.Idp.Web.Cors;
 using See.Idp.Web.Services;
 using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
@@ -169,6 +171,9 @@ else
     builder.Services.AddScoped<IEmailSender<ApplicationUser>, ResendEmailSender>();
 }
 
+builder.Services.AddCors();
+builder.Services.AddSingleton<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(options =>
 {
@@ -191,6 +196,8 @@ else
 }
 
 app.UseRouting();
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

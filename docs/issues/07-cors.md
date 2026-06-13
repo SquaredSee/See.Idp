@@ -82,3 +82,24 @@ beyond registering the client.
 ## Dependencies
 
 - `02-userinfo-endpoint` — endpoints must exist before CORS is needed
+
+## Implementation
+
+**Status:** ✅ Done
+
+**Files changed:**
+- `src/See.Idp.Web/Cors/DynamicCorsPolicyProvider.cs` — new; iterates all OpenIddict applications
+  via `IOpenIddictApplicationManager.ListAsync()`, extracts origins from redirect URIs, builds a
+  `CorsPolicy` allowing all discovered origins with any header/method + credentials.
+- `src/See.Idp.Web/Program.cs` — `builder.Services.AddCors()` + singleton registration of
+  `DynamicCorsPolicyProvider` as `ICorsPolicyProvider`; `app.UseCors()` inserted between
+  `app.UseRouting()` and `app.UseAuthentication()`.
+
+**Design decisions:**
+- Provider is `AddSingleton` — it resolves `IOpenIddictApplicationManager` per-request via
+  `context.RequestServices` (scoped services resolved at request time, not at construction time).
+- Returns `null` when no redirect URIs are registered, which causes the CORS middleware to allow
+  the request without origin restriction (same as no CORS middleware). This is safe because the
+  IDP has no registered clients at that point anyway.
+- All registered client origins are allowed unconditionally (any header, any method, credentials).
+  Access control is enforced by OpenIddict token validation, not CORS policy.
