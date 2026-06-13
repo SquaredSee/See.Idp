@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -29,6 +30,7 @@ using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
 using See.Idp.Web.Cors;
 using See.Idp.Web.Services;
+using StackExchange.Redis;
 using static OpenIddict.Abstractions.OpenIddictConstants.Permissions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -205,6 +207,30 @@ else
 builder.Services.AddCors();
 builder.Services.AddSingleton<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 
+// Data Protection — persist keys to Redis when available; fall back to in-memory.
+var redisCs = builder.Configuration.GetConnectionString("Redis");
+var redisDataProtectionReady = false;
+if (!string.IsNullOrEmpty(redisCs))
+{
+    try
+    {
+        var redis = ConnectionMultiplexer.Connect(redisCs);
+        builder
+            .Services.AddDataProtection()
+            .PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys")
+            .SetApplicationName("See.Idp");
+        redisDataProtectionReady = true;
+    }
+    catch (RedisConnectionException)
+    {
+        builder.Services.AddDataProtection().SetApplicationName("See.Idp");
+    }
+}
+else
+{
+    builder.Services.AddDataProtection().SetApplicationName("See.Idp");
+}
+
 builder.Services.AddRateLimiter(options =>
 {
     var loginPermitLimit = builder.Configuration.GetValue("RateLimiting:Login:PermitLimit", 10);
@@ -270,6 +296,17 @@ builder.Services.AddRazorPages(options =>
 });
 
 var app = builder.Build();
+
+if (!string.IsNullOrEmpty(redisCs) && !redisDataProtectionReady)
+{
+    app.Logger.LogWarning(
+        new EventId(
+            EventIds.DataProtectionRedisUnavailable,
+            nameof(EventIds.DataProtectionRedisUnavailable)
+        ),
+        "Redis unavailable at startup; Data Protection keys are in-memory and will not survive restarts."
+    );
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

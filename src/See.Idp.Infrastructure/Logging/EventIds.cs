@@ -76,4 +76,7 @@ public static class EventIds
 
     // Rate limiting: 1900 - 1999
     public const int RateLimitExceeded = 1900;
+
+    // Data protection: 2000 - 2099
+    public const int DataProtectionRedisUnavailable = 2000;
 }

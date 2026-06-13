@@ -38,3 +38,20 @@ when multiple instances of the IDP are running, so that I am not randomly logged
 ## Dependencies
 
 - `05-persistent-keys` — do keys/certs together to avoid partial persistence state
+
+## Implementation
+
+**Status:** ✅ Done
+
+**Files changed:**
+- `src/See.Idp.Web/See.Idp.Web.csproj` — added `Microsoft.AspNetCore.DataProtection.StackExchangeRedis`
+  10.0.5 and `StackExchange.Redis` 2.8.41.
+- `src/See.Idp.Infrastructure/Logging/EventIds.cs` — added `DataProtectionRedisUnavailable = 2000`.
+- `src/See.Idp.Web/appsettings.json` — added `ConnectionStrings:Redis` (empty default).
+- `src/See.Idp.Web/appsettings.Development.json` — set `ConnectionStrings:Redis` to `localhost:6379`.
+- `src/See.Idp.Web/appsettings.Production.json` — added `ConnectionStrings:Redis` placeholder.
+- `src/See.Idp.Web/Program.cs` — if `ConnectionStrings:Redis` is set, attempts
+  `ConnectionMultiplexer.Connect` synchronously at startup; on success calls
+  `PersistKeysToStackExchangeRedis` + `SetApplicationName("See.Idp")`; on
+  `RedisConnectionException` falls back to in-memory Data Protection and logs event 2000
+  after `builder.Build()` (the first point where an `ILogger` is available).
