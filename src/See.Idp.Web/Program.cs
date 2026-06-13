@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -119,7 +121,31 @@ builder
         }
         else
         {
-            // TODO: Verify production certificate configuration.
+            var signingKeyXml =
+                builder.Configuration["OpenIddict:SigningKey"]
+                ?? throw new InvalidOperationException(
+                    "OpenIddict:SigningKey is required in production. "
+                        + "Set it via the OPENIDDICT__SIGNINGKEY environment variable."
+                );
+
+            var encryptionKeyXml =
+                builder.Configuration["OpenIddict:EncryptionKey"]
+                ?? throw new InvalidOperationException(
+                    "OpenIddict:EncryptionKey is required in production. "
+                        + "Set it via the OPENIDDICT__ENCRYPTIONKEY environment variable."
+                );
+
+            using var signingRsa = RSA.Create();
+            signingRsa.FromXmlString(signingKeyXml);
+            options.AddSigningKey(
+                new RsaSecurityKey(signingRsa.ExportParameters(includePrivateParameters: true))
+            );
+
+            using var encryptionRsa = RSA.Create();
+            encryptionRsa.FromXmlString(encryptionKeyXml);
+            options.AddEncryptionKey(
+                new RsaSecurityKey(encryptionRsa.ExportParameters(includePrivateParameters: true))
+            );
         }
     });
 

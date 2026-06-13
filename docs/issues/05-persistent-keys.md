@@ -35,3 +35,26 @@ logged out of applications.
 ## Dependencies
 
 - `01-authorization-controller` — validate tokens work correctly before locking in key strategy
+
+## Implementation
+
+**Status:** ✅ Done
+
+**Files changed:**
+- `src/See.Idp.Web/Program.cs` — replaced the `// TODO` production block with RSA key loading
+  from config. Two 2048-bit RSA keys are expected: `OpenIddict:SigningKey` (for JWT signing)
+  and `OpenIddict:EncryptionKey` (for access-token encryption). Each is an XML-serialised RSA
+  key string (output of `RSA.ToXmlString(includePrivateParameters: true)`). Both throw
+  `InvalidOperationException` at startup if missing in production, with instructions to set
+  the corresponding `OPENIDDICT__SIGNINGKEY` / `OPENIDDICT__ENCRYPTIONKEY` environment
+  variables.
+- `src/See.Idp.Web/appsettings.Production.json` — new; documents the required production
+  keys with placeholder values pointing to the env-var override pattern.
+
+**Key generation (one-time setup):**
+```csharp
+using var rsa = RSA.Create(2048);
+Console.WriteLine(rsa.ToXmlString(includePrivateParameters: true));
+```
+Run this once per key type, store the output in a Kubernetes Secret or secrets manager,
+and expose via environment variables (`OPENIDDICT__SIGNINGKEY`, `OPENIDDICT__ENCRYPTIONKEY`).
