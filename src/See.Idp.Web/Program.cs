@@ -75,9 +75,11 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     // Configure Entity Framework Core to use PostgreSQL.
-    var connectionString =
-        builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+        throw new InvalidOperationException(
+            "Connection string 'DefaultConnection' not found."
+        );
     options.UseNpgsql(connectionString);
 
     // Register the entity sets needed by OpenIddict.
@@ -137,16 +139,16 @@ builder
         }
         else
         {
-            var signingKeyXml =
-                builder.Configuration["OpenIddict:SigningKey"]
-                ?? throw new InvalidOperationException(
+            var signingKeyXml = builder.Configuration["OpenIddict:SigningKey"];
+            if (string.IsNullOrEmpty(signingKeyXml))
+                throw new InvalidOperationException(
                     "OpenIddict:SigningKey is required in production. "
                         + "Set it via the OPENIDDICT__SIGNINGKEY environment variable."
                 );
 
-            var encryptionKeyXml =
-                builder.Configuration["OpenIddict:EncryptionKey"]
-                ?? throw new InvalidOperationException(
+            var encryptionKeyXml = builder.Configuration["OpenIddict:EncryptionKey"];
+            if (string.IsNullOrEmpty(encryptionKeyXml))
+                throw new InvalidOperationException(
                     "OpenIddict:EncryptionKey is required in production. "
                         + "Set it via the OPENIDDICT__ENCRYPTIONKEY environment variable."
                 );
@@ -216,9 +218,9 @@ if (builder.Environment.IsDevelopment())
 }
 else
 {
-    var emailApiKey =
-        builder.Configuration["Email:ApiKey"]
-        ?? throw new InvalidOperationException("Email:ApiKey configuration is required.");
+    var emailApiKey = builder.Configuration["Email:ApiKey"];
+    if (string.IsNullOrEmpty(emailApiKey))
+        throw new InvalidOperationException("Email:ApiKey configuration is required.");
     builder.Services.AddResend(options => options.ApiToken = emailApiKey);
     builder.Services.AddScoped<IEmailSender<ApplicationUser>, ResendEmailSender>();
 }
