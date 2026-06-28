@@ -49,8 +49,8 @@ deployment but both should be done before the admin area is considered complete.
 
 | #   | Issue                                                                      | Status | Notes                          |
 | --- | -------------------------------------------------------------------------- | ------ | ------------------------------ |
-| 14  | [Admin: Client PostLogoutRedirectUris](issues/14-admin-client-post-logout-uris.md) | ⬜ | No deps; DTOs + 2 Razor pages |
-| 15  | [Admin: User Detail & Edit Page](issues/15-admin-user-edit-page.md)        | ⬜     | No deps; 3 service methods already exist |
+| 14  | [Admin: Client PostLogoutRedirectUris](issues/14-admin-client-post-logout-uris.md) | ✅ done | No deps; DTOs + 2 Razor pages |
+| 15  | [Admin: User Detail & Edit Page](issues/15-admin-user-edit-page.md)        | ✅ done     | No deps; 3 service methods already exist |
 
 ---
 
