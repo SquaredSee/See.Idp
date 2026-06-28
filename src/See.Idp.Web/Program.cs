@@ -186,6 +186,7 @@ builder.Services.AddAuthorizationBuilder().AddAdminPortalPolicy();
 builder.Services.Configure<InitializationOptions>(
     builder.Configuration.GetSection("Initialization")
 );
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 
 // Application initialization
 builder.Services.AddScoped<IApplicationInitializer, ConfigurationApplicationInitializer>();
