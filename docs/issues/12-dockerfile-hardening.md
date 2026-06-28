@@ -19,6 +19,9 @@ can route traffic only to ready instances and restart unhealthy ones automatical
 - Secrets (connection string, cert paths, API keys) are injected via environment variables
   and not baked into the image
 - Required environment variables are documented
+- `docker-compose.yml` includes a `see-idp-web` service so `docker-compose up` starts the
+  full local stack (IDP + client + postgres + redis + otel); resolves the broken
+  `Oidc__Authority=http://see-idp-web:8080` reference in the `client-web` service
 
 ## Technical Notes
 
@@ -32,6 +35,10 @@ can route traffic only to ready instances and restart unhealthy ones automatical
   ```
 - Verify `COPY` paths are correct relative to the expected `docker build` context
 - Document required environment variables in `docs/configuration.md`
+- Add `see-idp-web` service to `docker-compose.yml` wired to the IDP Dockerfile with the
+  required environment variables (`ConnectionStrings__DefaultConnection`,
+  `ConnectionStrings__Redis`, `OpenIddict__SigningKey`, `OpenIddict__EncryptionKey`,
+  `Email__ApiKey`, `Email__FromAddress`); set `ASPNETCORE_ENVIRONMENT=Production`
 
 ## Dependencies
 
