@@ -10,10 +10,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - idp.example.com  # Replace with your domain
+        - idp.example.com # Replace with your domain
       secretName: seeidp-tls
   rules:
-    - host: idp.example.com  # Replace with your domain
+    - host: idp.example.com # Replace with your domain
       http:
         paths:
           - path: /
