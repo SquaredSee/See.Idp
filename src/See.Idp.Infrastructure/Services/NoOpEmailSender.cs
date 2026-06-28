@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using See.Idp.Infrastructure;
 
-namespace See.Idp.Web.Services;
+namespace See.Idp.Infrastructure.Services;
 
 /// <summary>
 ///     A no-op email sender that silently discards all outgoing identity emails.

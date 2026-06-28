@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +28,6 @@ using See.Idp.Infrastructure.Logging;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Web.Auth;
 using See.Idp.Web.Cors;
-using See.Idp.Web.Services;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
