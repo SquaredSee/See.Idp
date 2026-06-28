@@ -124,6 +124,23 @@ See.Idp.Infrastructure/Services/
 - Services follow interface → implementation pattern; interfaces live in Core, implementations in Infrastructure
 - Use `IQueryable`-based async patterns in data services (see existing service tests for patterns)
 
+## Formatting
+
+Run both formatters after all code changes are complete, before committing.
+
+```bash
+# Format all C# files
+dotnet csharpier .
+
+# Format everything else (JSON, YAML, CSS, HTML, cshtml, etc.)
+npx prettier --write .
+```
+
+- **Never** manually adjust whitespace or style that CSharpier or Prettier would fix — let
+  the tools own it
+- If a file looks wrong after formatting, fix the code; do not fight the formatter
+- Both commands are idempotent — safe to run multiple times
+
 ## Commit Conventions
 
 All commits must use [Conventional Commits](https://www.conventionalcommits.org/):

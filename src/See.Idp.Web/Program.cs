@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -38,8 +38,7 @@ var builder = WebApplication.CreateBuilder(args);
 // restrict these in environments where the network boundary is untrusted.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
@@ -77,9 +76,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     // Configure Entity Framework Core to use PostgreSQL.
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     if (string.IsNullOrEmpty(connectionString))
-        throw new InvalidOperationException(
-            "Connection string 'DefaultConnection' not found."
-        );
+        throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     options.UseNpgsql(connectionString);
 
     // Register the entity sets needed by OpenIddict.
