@@ -67,6 +67,13 @@
     </div>
 
     <div>
+      <label asp-for="Input.PostLogoutRedirectUrisText" class="field-label"></label>
+      <textarea asp-for="Input.PostLogoutRedirectUrisText" class="field-input" rows="3"></textarea>
+      <p class="mt-1 text-xs text-slate-600">Enter one absolute URI per line. Used by the end-session (logout) flow.</p>
+      <span asp-validation-for="Input.PostLogoutRedirectUrisText" class="mt-1 block text-sm text-red-600"></span>
+    </div>
+
+    <div>
       <label asp-for="Input.PermissionsText" class="field-label"></label>
       <textarea asp-for="Input.PermissionsText" class="field-input" rows="6"></textarea>
       <p class="mt-1 text-xs text-slate-600">Advanced mode: enter one OpenIddict permission per line.</p>

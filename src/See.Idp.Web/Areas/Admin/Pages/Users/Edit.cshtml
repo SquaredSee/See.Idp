@@ -1,0 +1,71 @@
+@page "{userId}"
+@namespace See.Idp.Web.Areas.Admin.Pages.Users
+@model EditModel
+@{
+  ViewData["Title"] = "Edit user";
+}
+
+@section Scripts {
+  <script src="~/lib/jquery/dist/jquery.min.js"></script>
+  <partial name="_ValidationScriptsPartial" />
+}
+
+<div class="panel mx-auto w-full max-w-2xl">
+  <div class="flex items-center gap-3 mb-6">
+    <a asp-page="/Users/Index" asp-area="Admin" class="text-sm">&larr; Users</a>
+    <h1 class="mb-0">Edit user</h1>
+  </div>
+
+  @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+  {
+    var cls = Model.StatusKind == "error"
+      ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+      : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+    <div class="@cls mb-4">@Model.StatusMessage</div>
+  }
+
+  <section class="space-y-3">
+    <div>
+      <span class="field-label">Email</span>
+      <p class="mt-1 text-sm">@(Model.Email ?? "(none)")</p>
+    </div>
+  </section>
+
+  <form method="post" asp-page-handler="Save" class="mt-6 space-y-4">
+    <input asp-for="Input.UserId" type="hidden" />
+
+    <div>
+      <label asp-for="Input.PhoneNumber" class="field-label"></label>
+      <input asp-for="Input.PhoneNumber" class="field-input" placeholder="+1 555 000 0000" />
+      <p class="mt-1 text-xs text-slate-600">Leave blank to clear the phone number.</p>
+      <span asp-validation-for="Input.PhoneNumber" class="mt-1 block text-sm text-red-600"></span>
+    </div>
+
+    <div asp-validation-summary="ModelOnly" class="text-sm text-red-600"></div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button type="submit" class="btn-primary">Save</button>
+    </div>
+  </form>
+
+  <section class="mt-6 space-y-2 border-t border-border-soft pt-4">
+    <h2 class="field-label">Email confirmation</h2>
+    <p class="text-xs text-slate-600">
+      Generate a confirmation link you can send to the user manually.
+    </p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.GeneratedConfirmationUrl))
+    {
+      <div class="rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900">
+        <p class="font-semibold">Confirmation link generated</p>
+        <p class="mt-1 text-xs">Copy this URL and send it to the user.</p>
+        <input value="@Model.GeneratedConfirmationUrl" class="field-input mt-2 font-mono text-xs" readonly />
+      </div>
+    }
+
+    <form method="post" asp-page-handler="GenerateConfirmationLink" class="pt-2">
+      <input type="hidden" name="userId" value="@Model.UserId" />
+      <button type="submit" class="btn-primary">Generate confirmation link</button>
+    </form>
+  </section>
+</div>

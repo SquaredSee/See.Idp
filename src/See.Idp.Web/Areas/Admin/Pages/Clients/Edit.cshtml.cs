@@ -54,6 +54,7 @@ public sealed class EditModel(
                 Input.AllowClientCredentialsFlow,
                 Input.AllowRefreshTokenFlow,
                 SplitLines(Input.RedirectUrisText),
+                SplitLines(Input.PostLogoutRedirectUrisText),
                 SplitLines(Input.PermissionsText)
             )
         );
@@ -113,6 +114,7 @@ public sealed class EditModel(
             AllowClientCredentialsFlow = client.AllowClientCredentialsFlow,
             AllowRefreshTokenFlow = client.AllowRefreshTokenFlow,
             RedirectUrisText = string.Join(Environment.NewLine, client.RedirectUris),
+            PostLogoutRedirectUrisText = string.Join(Environment.NewLine, client.PostLogoutRedirectUris),
             PermissionsText = string.Join(Environment.NewLine, client.Permissions),
             IsConfidential = client.IsConfidential,
             HasClientSecret = client.HasClientSecret,
@@ -157,6 +159,9 @@ public sealed class EditModel(
 
         [Display(Name = "Redirect URIs (one per line)")]
         public string? RedirectUrisText { get; set; }
+
+        [Display(Name = "Post-logout redirect URIs (one per line)")]
+        public string? PostLogoutRedirectUrisText { get; set; }
 
         [Display(Name = "Additional permissions (one per line)")]
         public string? PermissionsText { get; set; }

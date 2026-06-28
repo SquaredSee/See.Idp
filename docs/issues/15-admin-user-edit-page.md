@@ -54,3 +54,17 @@ still unconfirmed.
 
 None — all three service methods are fully implemented and just need a Razor page wired to
 them.
+
+## Implementation
+
+**Status:** ✅ Done
+
+**Scope:** `UserProfileDto` only carries `Email` and `PhoneNumber` (no `EmailConfirmed`), so
+the page shows email (read-only), editable phone number, and a Generate Confirmation Link
+button that is always visible rather than conditionally shown.
+
+**Files changed:**
+- `src/See.Idp.Web/Areas/Admin/Pages/Users/Edit.cshtml[.cs]` — new page; GET loads profile,
+  POST `Save` updates phone number, POST `GenerateConfirmationLink` renders the URL inline
+- `src/See.Idp.Web/Areas/Admin/Pages/Users/Index.cshtml` — added Edit link as first action
+  in the actions column

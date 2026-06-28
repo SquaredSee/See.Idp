@@ -48,6 +48,7 @@ public sealed partial class ClientCommandService(
                 command.AllowClientCredentialsFlow,
                 command.AllowRefreshTokenFlow,
                 command.RedirectUris,
+                command.PostLogoutRedirectUris,
                 command.AdditionalPermissions,
                 out var configurationError
             )
@@ -108,6 +109,7 @@ public sealed partial class ClientCommandService(
                 command.AllowClientCredentialsFlow,
                 command.AllowRefreshTokenFlow,
                 command.RedirectUris,
+                command.PostLogoutRedirectUris,
                 command.AdditionalPermissions,
                 out var configurationError
             )
@@ -271,6 +273,7 @@ public sealed partial class ClientCommandService(
         bool allowClientCredentialsFlow,
         bool allowRefreshTokenFlow,
         IReadOnlyList<string> redirectUris,
+        IReadOnlyList<string> postLogoutRedirectUris,
         IReadOnlyList<string> additionalPermissions,
         out string configurationError
     )
@@ -291,6 +294,19 @@ public sealed partial class ClientCommandService(
         foreach (var redirectUri in parsedRedirectUris)
         {
             descriptor.RedirectUris.Add(redirectUri);
+        }
+
+        descriptor.PostLogoutRedirectUris.Clear();
+        foreach (var rawUri in postLogoutRedirectUris)
+        {
+            var trimmed = rawUri?.Trim();
+            if (string.IsNullOrEmpty(trimmed)) continue;
+            if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
+            {
+                configurationError = $"Invalid post-logout redirect URI '{trimmed}' for client '{clientId}'.";
+                return false;
+            }
+            descriptor.PostLogoutRedirectUris.Add(uri);
         }
 
         descriptor.ConsentType = OpenIddictConstants.ConsentTypes.Implicit;

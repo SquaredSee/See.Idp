@@ -42,6 +42,7 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
                 Input.AllowRefreshTokenFlow,
                 Input.GenerateClientSecret,
                 SplitLines(Input.RedirectUrisText),
+                SplitLines(Input.PostLogoutRedirectUrisText),
                 SplitLines(Input.PermissionsText)
             )
         );
@@ -102,6 +103,9 @@ public sealed class CreateModel(IClientCommandService clientCommandService) : Pa
 
         [Display(Name = "Redirect URIs (one per line)")]
         public string? RedirectUrisText { get; set; }
+
+        [Display(Name = "Post-logout redirect URIs (one per line)")]
+        public string? PostLogoutRedirectUrisText { get; set; }
 
         [Display(Name = "Additional permissions (one per line)")]
         public string? PermissionsText { get; set; }

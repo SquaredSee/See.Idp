@@ -61,6 +61,9 @@
             </td>
             <td>
               <div class="flex flex-wrap gap-2">
+                <a asp-page="/Users/Edit" asp-area="Admin" asp-route-userId="@user.UserId"
+                   class="btn-primary text-xs no-underline">Edit</a>
+
                 @if (!user.IsCurrentUser)
                 {
                   <form method="post" asp-page-handler="ToggleAdmin">

@@ -26,7 +26,7 @@ public sealed class ClientCommandServiceTests
         var sut = CreateSut(applicationManager);
 
         var result = await sut.CreateClientAsync(
-            new CreateClientCommand("", "Display", false, false, false, false, [], []),
+            new CreateClientCommand("", "Display", false, false, false, false, [], [], []),
             Ct
         );
 
@@ -50,7 +50,7 @@ public sealed class ClientCommandServiceTests
         var sut = CreateSut(applicationManager);
 
         var result = await sut.CreateClientAsync(
-            new CreateClientCommand("client-1", "Display", false, false, false, false, [], []),
+            new CreateClientCommand("client-1", "Display", false, false, false, false, [], [], []),
             Ct
         );
 
@@ -80,6 +80,7 @@ public sealed class ClientCommandServiceTests
                 false,
                 false,
                 ["https://localhost/signin-oidc"],
+                [],
                 ["scp:profile"]
             ),
             Ct
@@ -114,7 +115,7 @@ public sealed class ClientCommandServiceTests
         var sut = CreateSut(applicationManager);
 
         var result = await sut.UpdateClientAsync(
-            new UpdateClientCommand("missing", "Updated", false, false, false, [], []),
+            new UpdateClientCommand("missing", "Updated", false, false, false, [], [], []),
             Ct
         );
 
@@ -140,6 +141,7 @@ public sealed class ClientCommandServiceTests
                 true,
                 true,
                 ["https://localhost/callback"],
+                [],
                 ["scp:roles", "gt:authorization_code"]
             ),
             Ct
@@ -184,6 +186,7 @@ public sealed class ClientCommandServiceTests
                 false,
                 false,
                 ["not-a-uri"],
+                [],
                 []
             ),
             Ct
@@ -289,6 +292,7 @@ public sealed class ClientCommandServiceTests
                 true,
                 false,
                 true,
+                [],
                 [],
                 []
             ),

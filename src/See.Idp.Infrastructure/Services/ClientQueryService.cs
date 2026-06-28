@@ -92,6 +92,12 @@ public sealed partial class ClientQueryService(
             .OrderBy(uri => uri, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        var postLogoutRedirectUris = descriptor
+            .PostLogoutRedirectUris.Select(uri => uri.AbsoluteUri)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(uri => uri, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         var hasClientSecret = !string.IsNullOrWhiteSpace(descriptor.ClientSecret);
         var isConfidential =
             hasClientSecret
@@ -108,6 +114,7 @@ public sealed partial class ClientQueryService(
             ClientPermissionConventions.HasClientCredentialsFlow(permissions),
             ClientPermissionConventions.HasRefreshTokenFlow(permissions),
             redirectUris,
+            postLogoutRedirectUris,
             permissions
                 .Where(p => !ClientPermissionConventions.IsFlowControlledPermission(p))
                 .ToList(),

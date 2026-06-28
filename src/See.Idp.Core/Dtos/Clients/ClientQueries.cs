@@ -32,6 +32,7 @@ public sealed record ClientSummaryDto(string ClientId, string? DisplayName);
 /// <param name="AllowClientCredentialsFlow">Whether client credentials flow is enabled.</param>
 /// <param name="AllowRefreshTokenFlow">Whether refresh token flow is enabled.</param>
 /// <param name="RedirectUris">Configured redirect URIs for this client.</param>
+/// <param name="PostLogoutRedirectUris">Configured post-logout redirect URIs for this client.</param>
 /// <param name="Permissions">Permissions assigned to this client.</param>
 /// <param name="IsConfidential">Whether the client is configured as confidential.</param>
 /// <param name="HasClientSecret">Whether a client secret is configured.</param>
@@ -42,6 +43,7 @@ public sealed record ClientDetailsDto(
     bool AllowClientCredentialsFlow,
     bool AllowRefreshTokenFlow,
     IReadOnlyList<string> RedirectUris,
+    IReadOnlyList<string> PostLogoutRedirectUris,
     IReadOnlyList<string> Permissions,
     bool IsConfidential,
     bool HasClientSecret

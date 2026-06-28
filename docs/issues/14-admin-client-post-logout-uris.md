@@ -54,3 +54,15 @@ client, so that the end-session (logout) flow correctly redirects users after si
 
 None — all service and infrastructure code is already in place; this is a gap in the
 command/query DTOs and the two admin Razor pages.
+
+## Implementation
+
+**Status:** ✅ Done
+
+**Files changed:**
+- `src/See.Idp.Core/Dtos/Clients/ClientCommands.cs` — added `PostLogoutRedirectUris` to `CreateClientCommand` and `UpdateClientCommand`
+- `src/See.Idp.Core/Dtos/Clients/ClientQueries.cs` — added `PostLogoutRedirectUris` to `ClientDetailsDto`
+- `src/See.Idp.Infrastructure/Services/ClientCommandService.cs` — `TryConfigureClient` clears and repopulates `descriptor.PostLogoutRedirectUris`; both `CreateClientAsync` and `UpdateClientAsync` callers updated
+- `src/See.Idp.Infrastructure/Services/ClientQueryService.cs` — `GetClientByIdAsync` populates `PostLogoutRedirectUris` from the descriptor
+- `src/See.Idp.Web/Areas/Admin/Pages/Clients/Create.cshtml[.cs]` — added `PostLogoutRedirectUrisText` field and textarea
+- `src/See.Idp.Web/Areas/Admin/Pages/Clients/Edit.cshtml[.cs]` — added `PostLogoutRedirectUrisText` field, pre-filled from DTO, textarea in form

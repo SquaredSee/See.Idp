@@ -12,6 +12,7 @@ namespace See.Idp.Core.Dtos.Clients;
 /// <param name="AllowRefreshTokenFlow">Whether refresh token flow is enabled.</param>
 /// <param name="GenerateClientSecret">Whether an initial client secret should be generated during creation.</param>
 /// <param name="RedirectUris">The redirect URIs configured for authorization flows.</param>
+/// <param name="PostLogoutRedirectUris">The post-logout redirect URIs used by the end-session flow.</param>
 /// <param name="Permissions">Additional permissions granted to the client.</param>
 public sealed record CreateClientCommand(
     string ClientId,
@@ -21,6 +22,7 @@ public sealed record CreateClientCommand(
     bool AllowRefreshTokenFlow,
     bool GenerateClientSecret,
     IReadOnlyList<string> RedirectUris,
+    IReadOnlyList<string> PostLogoutRedirectUris,
     IReadOnlyList<string> AdditionalPermissions
 );
 
@@ -33,6 +35,7 @@ public sealed record CreateClientCommand(
 /// <param name="AllowClientCredentialsFlow">Whether client credentials flow is enabled.</param>
 /// <param name="AllowRefreshTokenFlow">Whether refresh token flow is enabled.</param>
 /// <param name="RedirectUris">The redirect URIs configured for authorization flows.</param>
+/// <param name="PostLogoutRedirectUris">The post-logout redirect URIs used by the end-session flow.</param>
 /// <param name="AdditionalPermissions">Additional permissions granted to the client.</param>
 public sealed record UpdateClientCommand(
     string ClientId,
@@ -41,6 +44,7 @@ public sealed record UpdateClientCommand(
     bool AllowClientCredentialsFlow,
     bool AllowRefreshTokenFlow,
     IReadOnlyList<string> RedirectUris,
+    IReadOnlyList<string> PostLogoutRedirectUris,
     IReadOnlyList<string> AdditionalPermissions
 );
 
