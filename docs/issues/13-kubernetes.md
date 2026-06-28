@@ -35,9 +35,27 @@ with a single `kubectl apply` so that I can run my own hosted identity infrastru
 - CloudNativePG is recommended for PostgreSQL — handles backups, failover, and connection
   pooling with minimal configuration
 
-## Dependencies
+## Implementation
 
-- `12-dockerfile-hardening`
-- `09-https-enforcement`
-- `06-data-protection-redis`
-- `05-persistent-keys`
+**Status:** ✅ Done
+
+**Files added:**
+- `k8s/namespace.yaml` — `seeidp` namespace
+- `k8s/configmap.yaml` — non-sensitive runtime config (environment, OTLP endpoint, Redis
+  address, seeding toggle)
+- `k8s/postgres-cluster.yaml` — CloudNativePG `Cluster`, 1 instance, 5 Gi storage;
+  CNPG creates `seeidp-postgres-app` Secret with credentials
+- `k8s/redis-pvc.yaml` — 1 Gi PVC for Redis AOF data
+- `k8s/redis-deployment.yaml` — Redis 7 alpine with AOF persistence
+- `k8s/redis-service.yaml` — ClusterIP service for Redis
+- `k8s/idp-deployment.yaml` — IDP Deployment; liveness and readiness probes on `/health`;
+  resource requests 256 Mi / 250m, limits 512 Mi / 500m; env from ConfigMap + Secret
+- `k8s/idp-service.yaml` — ClusterIP service, port 80 → container 8080
+- `k8s/idp-ingress.yaml` — nginx Ingress with `cert-manager.io/cluster-issuer:
+  letsencrypt-prod`; domain placeholder `idp.example.com`
+- `k8s/idp-hpa.yaml` — HPA, 1–3 replicas, CPU 70% / memory 80%
+- `k8s/README.md` — step-by-step deployment guide, prerequisites, secret creation
+  commands, update workflow
+
+**Secrets:** never committed. `kubectl create secret` commands are documented in
+`k8s/README.md`. The image registry and domain are left as placeholders.

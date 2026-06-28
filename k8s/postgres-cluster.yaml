@@ -1,0 +1,24 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: seeidp-postgres
+  namespace: seeidp
+spec:
+  instances: 1
+
+  storage:
+    size: 5Gi
+
+  bootstrap:
+    initdb:
+      database: seeidp
+      owner: seeidp
+
+  postgresql:
+    parameters:
+      max_connections: "100"
+
+  # CloudNativePG creates a Secret named seeidp-postgres-app containing:
+  #   username, password, host, port, dbname, uri (postgres:// URI)
+  # Use these values to construct ConnectionStrings__DefaultConnection in the
+  # seeidp-secrets Secret (see README.md).

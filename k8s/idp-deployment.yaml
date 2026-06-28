@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seeidp
+  namespace: seeidp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seeidp
+  template:
+    metadata:
+      labels:
+        app: seeidp
+    spec:
+      containers:
+        - name: seeidp
+          # Replace with your registry and tag, e.g.:
+          #   ghcr.io/YOUR_USERNAME/see-idp-web:1.0.0
+          image: YOUR_REGISTRY/see-idp-web:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: seeidp-config
+            - secretRef:
+                name: seeidp-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

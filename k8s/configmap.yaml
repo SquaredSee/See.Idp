@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: seeidp-config
+    namespace: seeidp
+data:
+    ASPNETCORE_ENVIRONMENT: "Production"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.monitoring.svc.cluster.local:4317"
+    # Redis is in the same namespace; no secret needed for the address.
+    ConnectionStrings__Redis: "seeidp-redis:6379"
+    # Disable automatic seeding after the first deployment.
+    # Set to "true" temporarily when bootstrapping a new environment.
+    Initialization__Enabled: "false"

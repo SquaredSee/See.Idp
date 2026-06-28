@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seeidp-redis
+  namespace: seeidp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seeidp-redis
+  template:
+    metadata:
+      labels:
+        app: seeidp-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          args: ["--appendonly", "yes"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: seeidp-redis-data

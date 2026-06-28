@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seeidp
+  namespace: seeidp
+spec:
+  selector:
+    app: seeidp
+  ports:
+    - port: 80
+      targetPort: 8080
