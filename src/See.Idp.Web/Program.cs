@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -31,6 +32,17 @@ using See.Idp.Web.Cors;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Trust X-Forwarded-For and X-Forwarded-Proto from the ingress/reverse proxy.
+// KnownNetworks and KnownProxies are cleared so any in-cluster proxy is accepted;
+// restrict these in environments where the network boundary is untrusted.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Observability
 builder
@@ -296,6 +308,8 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+builder.Services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>();
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages(options =>
 {
@@ -303,6 +317,9 @@ builder.Services.AddRazorPages(options =>
 });
 
 var app = builder.Build();
+
+// Must be first — rewrites scheme/IP before any other middleware reads them.
+app.UseForwardedHeaders();
 
 if (!string.IsNullOrEmpty(redisCs) && !redisDataProtectionReady)
 {
@@ -338,6 +355,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapHealthChecks("/health");
 app.MapControllers();
 app.MapRazorPages().WithStaticAssets();
 

@@ -51,6 +51,19 @@ built with the correct scheme.
 - The TLS certificate itself lives in the Kubernetes ingress (cert-manager + Let's Encrypt)
   and is configured in issue 13
 
-## Dependencies
+## Implementation
 
-- `13-kubernetes` — the ingress that sets `X-Forwarded-Proto` is defined there
+**Status:** ✅ Done
+
+**Files changed:**
+- `src/See.Idp.Web/Program.cs` — added `Configure<ForwardedHeadersOptions>` (trusts
+  `XForwardedFor` + `XForwardedProto`; clears `KnownIPNetworks` and `KnownProxies` so any
+  in-cluster proxy is accepted); `UseForwardedHeaders()` called first in the middleware
+  pipeline, before routing, auth, and rate limiting
+
+**Notes:**
+- `DisableTransportSecurityRequirement()` was already development-only in `Program.cs`;
+  no change needed there.
+- `KnownNetworks` is obsolete in .NET 10; used `KnownIPNetworks` instead.
+- `UseHttpsRedirection` and `UseHsts` are not present, consistent with the acceptance
+  criteria (TLS terminated at ingress).

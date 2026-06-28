@@ -61,8 +61,8 @@ each other and can be worked in parallel; 13 needs both.
 
 | #   | Issue                                                                    | Status | Notes                                              |
 | --- | ------------------------------------------------------------------------ | ------ | -------------------------------------------------- |
-| 09  | [Forwarded Headers & Transport Security](issues/09-https-enforcement.md) | ⬜     | No deps on 12; unblocks 13                         |
-| 12  | [Dockerfile Hardening](issues/12-dockerfile-hardening.md)                | ⬜     | Needs 05 ✅, 06 ✅; adds IDP to docker-compose     |
+| 09  | [Forwarded Headers & Transport Security](issues/09-https-enforcement.md) | ✅ done | No deps on 12; unblocks 13                         |
+| 12  | [Dockerfile Hardening](issues/12-dockerfile-hardening.md)                | ✅ done | Needs 05 ✅, 06 ✅; adds IDP to docker-compose     |
 | 13  | [Kubernetes Manifests](issues/13-kubernetes.md)                          | ⬜     | Needs 09, 12                                       |
 
 ---

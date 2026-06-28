@@ -40,8 +40,21 @@ can route traffic only to ready instances and restart unhealthy ones automatical
   `ConnectionStrings__Redis`, `OpenIddict__SigningKey`, `OpenIddict__EncryptionKey`,
   `Email__ApiKey`, `Email__FromAddress`); set `ASPNETCORE_ENVIRONMENT=Production`
 
-## Dependencies
+## Implementation
 
-- `05-persistent-keys` — key configuration must be environment-variable-driven before
-  the container is considered production-ready
-- `06-data-protection-redis` — Redis connection must be injectable
+**Status:** ✅ Done
+
+**Files changed:**
+- `src/See.Idp.Web/See.Idp.Web.csproj` — added
+  `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore` 10.0.5
+- `src/See.Idp.Web/Program.cs` — added `AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()`
+  in DI registration; added `app.MapHealthChecks("/health")`
+- `src/See.Idp.Web/Dockerfile` — installs `curl` (for HEALTHCHECK), adds all three `.csproj`
+  files before `dotnet restore` so project references resolve correctly, adds
+  `HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3`
+- `docker-compose.yml` — added `see-idp-web` service (build context `./src`, Development
+  environment, connection strings pointing to the compose postgres/redis services,
+  OTLP endpoint pointing to otel-lgtm); resolves the broken `Oidc__Authority` reference
+  in `client-web`
+- `docs/configuration.md` — new file documenting all required and optional environment
+  variables, key generation instructions, and local dev notes
