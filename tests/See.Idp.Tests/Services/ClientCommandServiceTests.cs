@@ -168,6 +168,118 @@ public sealed class ClientCommandServiceTests
     }
 
     [TestMethod]
+    public async Task CreateClientAsync_SetsPostLogoutRedirectUris_WhenProvided()
+    {
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .FindByClientIdAsync("client-new", Ct)
+            .Returns(new ValueTask<object?>((object?)null));
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.CreateClientAsync(
+            new CreateClientCommand(
+                "client-new",
+                "New Client",
+                true,
+                false,
+                false,
+                false,
+                ["https://localhost/signin-oidc"],
+                ["https://localhost/"],
+                []
+            ),
+            Ct
+        );
+
+        Assert.IsTrue(result.Succeeded);
+        await applicationManager
+            .Received(1)
+            .CreateAsync(
+                Arg.Is<OpenIddictApplicationDescriptor>(d =>
+                    d.PostLogoutRedirectUris.Contains(new Uri("https://localhost/"))
+                ),
+                Ct
+            );
+    }
+
+    [TestMethod]
+    public async Task CreateClientAsync_ReturnsFailure_WhenPostLogoutRedirectUriInvalid()
+    {
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .FindByClientIdAsync("client-invalid", Ct)
+            .Returns(new ValueTask<object?>((object?)null));
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.CreateClientAsync(
+            new CreateClientCommand(
+                "client-invalid",
+                "Invalid",
+                false,
+                false,
+                false,
+                false,
+                [],
+                ["not-a-uri"],
+                []
+            ),
+            Ct
+        );
+
+        Assert.IsFalse(result.Succeeded);
+        StringAssert.Contains(result.Error, "Invalid post-logout redirect URI");
+        await applicationManager
+            .DidNotReceive()
+            .CreateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), Ct);
+    }
+
+    [TestMethod]
+    public async Task UpdateClientAsync_ReplacesPostLogoutRedirectUris()
+    {
+        var app = new object();
+
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager
+            .When(x => x.PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct))
+            .Do(callInfo =>
+            {
+                var descriptor = callInfo.Arg<OpenIddictApplicationDescriptor>();
+                descriptor.PostLogoutRedirectUris.Add(new Uri("https://old.example.com/"));
+            });
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.UpdateClientAsync(
+            new UpdateClientCommand(
+                "client-1",
+                "Updated",
+                false,
+                false,
+                false,
+                [],
+                ["https://new.example.com/"],
+                []
+            ),
+            Ct
+        );
+
+        Assert.IsTrue(result.Succeeded);
+        await applicationManager
+            .Received(1)
+            .UpdateAsync(
+                app,
+                Arg.Is<OpenIddictApplicationDescriptor>(d =>
+                    d.PostLogoutRedirectUris.Contains(new Uri("https://new.example.com/"))
+                    && !d.PostLogoutRedirectUris.Contains(new Uri("https://old.example.com/"))
+                ),
+                Ct
+            );
+    }
+
+    [TestMethod]
     public async Task CreateClientAsync_ReturnsFailure_WhenRedirectUriInvalid()
     {
         var applicationManager = CreateApplicationManager();

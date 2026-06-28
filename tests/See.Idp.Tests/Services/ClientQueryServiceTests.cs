@@ -219,6 +219,32 @@ public sealed class ClientQueryServiceTests
         Assert.IsTrue(result.HasClientSecret);
     }
 
+    [TestMethod]
+    public async Task GetClientByIdAsync_ReturnsPostLogoutRedirectUris_WhenConfigured()
+    {
+        var app = new object();
+
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager.GetClientIdAsync(app, Ct).Returns(new ValueTask<string?>("client-1"));
+        applicationManager
+            .When(x => x.PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct))
+            .Do(callInfo =>
+            {
+                var descriptor = callInfo.Arg<OpenIddictApplicationDescriptor>();
+                descriptor.PostLogoutRedirectUris.Add(new Uri("https://localhost/"));
+                descriptor.PostLogoutRedirectUris.Add(new Uri("https://localhost/"));
+            });
+
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
+
+        Assert.IsNotNull(result);
+        Assert.HasCount(1, result.PostLogoutRedirectUris);
+        Assert.AreEqual("https://localhost/", result.PostLogoutRedirectUris[0]);
+    }
+
     private static IOpenIddictApplicationManager CreateApplicationManager()
     {
         return Substitute.For<IOpenIddictApplicationManager>();
