@@ -14,3 +14,6 @@ public sealed record UserSummaryDto(
 /// <param name="Email">The email address (read-only).</param>
 /// <param name="PhoneNumber">The phone number.</param>
 public sealed record UserProfileDto(string? Email, string? PhoneNumber);
+
+/// <summary>Represents the result of a find-user-by-email query.</summary>
+public sealed record FindUserByEmailResult(string? UserId);

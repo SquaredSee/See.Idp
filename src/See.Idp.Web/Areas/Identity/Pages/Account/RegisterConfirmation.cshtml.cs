@@ -27,8 +27,8 @@ public sealed class RegisterConfirmationModel(
         if (email is null)
             return RedirectToPage("/Index", new { area = "" });
 
-        var userId = await userQueryService.FindUserIdByEmailAsync(new FindUserByEmailQuery(email));
-        if (userId is null)
+        var result = await userQueryService.FindUserIdByEmailAsync(new FindUserByEmailQuery(email));
+        if (result.UserId is null)
             return NotFound($"Unable to load user with email '{email}'.");
 
         Email = email;
@@ -39,7 +39,7 @@ public sealed class RegisterConfirmationModel(
         if (DisplayConfirmAccountLink)
         {
             var tokenResult = await registrationService.GenerateEmailConfirmationTokenAsync(
-                new GenerateEmailConfirmationTokenCommand(userId)
+                new GenerateEmailConfirmationTokenCommand(result.UserId)
             );
             if (tokenResult.Succeeded && tokenResult.Token is not null)
             {

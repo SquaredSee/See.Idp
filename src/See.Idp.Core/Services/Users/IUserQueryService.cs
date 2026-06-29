@@ -26,7 +26,7 @@ public interface IUserQueryService
     ///     Returns the user ID for the account with the given email, or <see langword="null"/>
     ///     if no such account exists.
     /// </summary>
-    Task<string?> FindUserIdByEmailAsync(
+    Task<FindUserByEmailResult> FindUserIdByEmailAsync(
         FindUserByEmailQuery query,
         CancellationToken ct = default
     );

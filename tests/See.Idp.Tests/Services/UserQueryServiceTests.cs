@@ -231,11 +231,11 @@ public sealed class UserQueryServiceTests
             Ct
         );
 
-        Assert.AreEqual("user-1", result);
+        Assert.AreEqual("user-1", result.UserId);
     }
 
     [TestMethod]
-    public async Task FindUserIdByEmailAsync_ReturnsNull_WhenUserNotFound()
+    public async Task FindUserIdByEmailAsync_ReturnsNullUserId_WhenUserNotFound()
     {
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager
@@ -249,6 +249,6 @@ public sealed class UserQueryServiceTests
             Ct
         );
 
-        Assert.IsNull(result);
+        Assert.IsNull(result.UserId);
     }
 }
