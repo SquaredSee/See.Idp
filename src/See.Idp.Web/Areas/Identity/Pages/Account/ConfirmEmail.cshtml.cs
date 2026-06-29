@@ -8,21 +8,40 @@ using See.Idp.Core.Services.Users;
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class ConfirmEmailModel(IUserRegistrationCommandService registrationService)
-    : PageModel
+public sealed class ConfirmEmailModel(IRegistrationCommandService registrationService) : PageModel
 {
-    public string StatusMessage { get; set; } = string.Empty;
+    [BindProperty]
+    public string UserId { get; set; } = string.Empty;
 
-    public bool Succeeded { get; set; }
+    [BindProperty]
+    public string Code { get; set; } = string.Empty;
 
-    public async Task<IActionResult> OnGetAsync(string? userId, string? code)
+    public bool Confirmed { get; private set; }
+
+    public bool Succeeded { get; private set; }
+
+    public string StatusMessage { get; private set; } = string.Empty;
+
+    public IActionResult OnGet(string? userId, string? code)
     {
         if (userId is null || code is null)
             return RedirectToPage("/Index", new { area = "" });
 
+        UserId = userId;
+        Code = code;
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        if (string.IsNullOrEmpty(UserId) || string.IsNullOrEmpty(Code))
+            return RedirectToPage("/Index", new { area = "" });
+
         var result = await registrationService.ConfirmEmailAsync(
-            new ConfirmEmailCommand(userId, code)
+            new ConfirmEmailCommand(UserId, Code)
         );
+
+        Confirmed = true;
 
         if (result.Succeeded)
         {

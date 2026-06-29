@@ -251,44 +251,4 @@ public sealed class UserQueryServiceTests
 
         Assert.IsNull(result);
     }
-
-    [TestMethod]
-    public async Task GenerateEmailConfirmationTokenAsync_ReturnsEncodedToken_WhenUserExists()
-    {
-        var user = new ApplicationUser { Id = "user-1" };
-        const string rawToken = "raw-confirmation-token";
-
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync("user-1").Returns(Task.FromResult<ApplicationUser?>(user));
-        userManager.GenerateEmailConfirmationTokenAsync(user).Returns(Task.FromResult(rawToken));
-
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.GenerateEmailConfirmationTokenAsync(
-            new GenerateEmailConfirmationTokenQuery("user-1"),
-            Ct
-        );
-
-        Assert.IsNotNull(result);
-        var decoded = System.Text.Encoding.UTF8.GetString(
-            Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlDecode(result)
-        );
-        Assert.AreEqual(rawToken, decoded);
-    }
-
-    [TestMethod]
-    public async Task GenerateEmailConfirmationTokenAsync_ReturnsNull_WhenUserNotFound()
-    {
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
-
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.GenerateEmailConfirmationTokenAsync(
-            new GenerateEmailConfirmationTokenQuery("missing"),
-            Ct
-        );
-
-        Assert.IsNull(result);
-    }
 }

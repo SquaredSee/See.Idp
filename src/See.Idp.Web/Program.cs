@@ -197,14 +197,10 @@ builder.Services.AddScoped<IClientQueryService, ClientQueryService>();
 builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
-builder.Services.AddScoped<UserAccountService>();
-builder.Services.AddScoped<IUserAuthenticationCommandService>(sp =>
-    sp.GetRequiredService<UserAccountService>()
-);
-builder.Services.AddScoped<IUserPasswordCommandService>(sp =>
-    sp.GetRequiredService<UserAccountService>()
-);
-builder.Services.AddScoped<IUserRegistrationCommandService, UserRegistrationService>();
+
+builder.Services.AddScoped<IAuthenticationCommandService, AuthenticationCommandService>();
+builder.Services.AddScoped<IPasswordCommandService, PasswordCommandService>();
+builder.Services.AddScoped<IRegistrationCommandService, RegistrationCommandService>();
 builder.Services.AddScoped<TwoFactorService>();
 builder.Services.AddScoped<ITwoFactorCommandService>(sp =>
     sp.GetRequiredService<TwoFactorService>()

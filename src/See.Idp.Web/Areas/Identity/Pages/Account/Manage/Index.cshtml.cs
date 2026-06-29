@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using See.Idp.Core.Dtos.Users;
-using See.Idp.Core.Services.Auth;
 using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
@@ -13,8 +12,7 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 [Authorize]
 public sealed class IndexModel(
     IUserQueryService userQueryService,
-    IUserCommandService userCommandService,
-    IUserAuthenticationCommandService authService
+    IUserCommandService userCommandService
 ) : PageModel
 {
     public string Username { get; set; } = string.Empty;
@@ -68,9 +66,8 @@ public sealed class IndexModel(
                 StatusMessage = "Error: Unable to set phone number.";
                 return RedirectToPage();
             }
-
-            await authService.RefreshSignInAsync();
         }
+
         StatusMessage = "Your profile has been updated.";
         return RedirectToPage();
     }

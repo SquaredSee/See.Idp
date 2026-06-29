@@ -2,20 +2,12 @@ using System.Collections.Generic;
 
 namespace See.Idp.Core.Dtos.Users;
 
-/// <summary>
-///     Represents a command to register a new user account.
-/// </summary>
+/// <summary>Represents a command to register a new user account.</summary>
 /// <param name="Email">The email address for the new account.</param>
 /// <param name="Password">The password for the new account.</param>
 public sealed record RegisterUserCommand(string Email, string Password);
 
-/// <summary>
-///     Represents the result of a user registration attempt.
-/// </summary>
-/// <param name="Succeeded">Whether the registration succeeded.</param>
-/// <param name="UserId">The ID of the newly created user, when successful.</param>
-/// <param name="EmailConfirmationToken">The Base64Url-encoded email confirmation token, when successful.</param>
-/// <param name="Errors">The error descriptions, when unsuccessful.</param>
+/// <summary>Represents the result of a user registration attempt.</summary>
 public sealed record RegisterUserResult(
     bool Succeeded,
     string? UserId,
@@ -32,15 +24,29 @@ public sealed record RegisterUserResult(
         new(false, null, null, new List<string>(errors));
 }
 
-/// <summary>
-///     Represents a command to confirm a user's email address.
-/// </summary>
+/// <summary>Represents a command to confirm a user's email address.</summary>
 /// <param name="UserId">The ID of the user whose email is being confirmed.</param>
 /// <param name="EncodedToken">The Base64Url-encoded confirmation token.</param>
 public sealed record ConfirmEmailCommand(string UserId, string EncodedToken);
 
-/// <summary>
-///     Represents a command to generate a password reset token for a user.
-/// </summary>
-/// <param name="Email">The email address of the user requesting a password reset.</param>
-public sealed record GeneratePasswordResetTokenCommand(string Email);
+/// <summary>Represents a command to generate an email confirmation token for a user.</summary>
+/// <param name="UserId">The ID of the user.</param>
+public sealed record GenerateEmailConfirmationTokenCommand(string UserId);
+
+/// <summary>Represents the result of generating an email confirmation token.</summary>
+/// <param name="Succeeded">Whether the token was generated successfully.</param>
+/// <param name="Token">The Base64Url-encoded token, when successful.</param>
+/// <param name="Error">An optional error message.</param>
+public sealed record GenerateEmailConfirmationTokenResult(
+    bool Succeeded,
+    string? Token,
+    string? Error = null
+)
+{
+    /// <summary>Creates a successful result containing the token.</summary>
+    public static GenerateEmailConfirmationTokenResult Success(string token) => new(true, token);
+
+    /// <summary>Creates a failed result when the user was not found.</summary>
+    public static GenerateEmailConfirmationTokenResult NotFound() =>
+        new(false, null, "User not found.");
+}

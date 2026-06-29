@@ -21,12 +21,6 @@ public sealed record FindUserByEmailQuery(string Email);
 public sealed record GetUserProfileQuery(string UserId);
 
 /// <summary>
-///     Represents a query to generate an email confirmation token for a user.
-/// </summary>
-/// <param name="UserId">The ID of the user.</param>
-public sealed record GenerateEmailConfirmationTokenQuery(string UserId);
-
-/// <summary>
 ///     Represents a summarized view of a user account.
 /// </summary>
 /// <param name="UserId">The identifier of the user.</param>

@@ -5,17 +5,10 @@ using See.Idp.Core.Dtos.Users;
 
 namespace See.Idp.Core.Services.Users;
 
-/// <summary>
-///     Provides read operations for user data.
-/// </summary>
+/// <summary>Provides read operations for user data.</summary>
 public interface IUserQueryService
 {
-    /// <summary>
-    ///     Lists users that match the supplied query criteria.
-    /// </summary>
-    /// <param name="query">The query containing filter and paging options.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>A read-only list of matching users.</returns>
+    /// <summary>Lists users that match the supplied query criteria.</summary>
     Task<IReadOnlyList<UserSummaryDto>> ListUsersAsync(
         ListUsersQuery query,
         CancellationToken ct = default
@@ -24,38 +17,17 @@ public interface IUserQueryService
     /// <summary>
     ///     Returns the profile of a user by their ID, or <see langword="null"/> if not found.
     /// </summary>
-    /// <param name="query">The query containing the user ID.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>The user's profile, or <see langword="null"/> if not found.</returns>
     Task<UserProfileDto?> GetUserProfileAsync(
         GetUserProfileQuery query,
         CancellationToken ct = default
     );
 
     /// <summary>
-    ///     Returns the user ID for the account with the given email, or <see langword="null"/> if
-    ///     no such account exists.
+    ///     Returns the user ID for the account with the given email, or <see langword="null"/>
+    ///     if no such account exists.
     /// </summary>
-    /// <param name="query">The query containing the email address to look up.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>The user ID, or <see langword="null"/> if not found.</returns>
     Task<string?> FindUserIdByEmailAsync(
         FindUserByEmailQuery query,
-        CancellationToken ct = default
-    );
-
-    /// <summary>
-    ///     Generates a new email confirmation token for the given user.
-    ///     Returns <see langword="null"/> if no user with the given ID was found.
-    /// </summary>
-    /// <param name="query">The query containing the user ID.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>
-    ///     The Base64Url-encoded confirmation token, or <see langword="null"/> if no user with
-    ///     the given ID was found.
-    /// </returns>
-    Task<string?> GenerateEmailConfirmationTokenAsync(
-        GenerateEmailConfirmationTokenQuery query,
         CancellationToken ct = default
     );
 }

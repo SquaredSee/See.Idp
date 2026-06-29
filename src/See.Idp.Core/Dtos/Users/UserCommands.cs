@@ -45,3 +45,10 @@ public sealed record ToggleUserLockCommand(string TargetUserId, string? CurrentU
 /// <param name="TargetUserId">The identifier of the user to delete.</param>
 /// <param name="CurrentUserId">The identifier of the user issuing the command.</param>
 public sealed record DeleteUserCommand(string TargetUserId, string? CurrentUserId);
+
+/// <summary>
+///     Represents a command to update a user's phone number.
+/// </summary>
+/// <param name="UserId">The ID of the user to update.</param>
+/// <param name="PhoneNumber">The new phone number, or <see langword="null"/> to clear it.</param>
+public sealed record UpdatePhoneNumberCommand(string UserId, string? PhoneNumber);

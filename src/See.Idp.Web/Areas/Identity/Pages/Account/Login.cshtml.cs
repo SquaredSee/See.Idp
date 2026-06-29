@@ -13,7 +13,7 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
 [EnableRateLimiting("login")]
-public sealed class LoginModel(IUserAuthenticationCommandService authService) : PageModel
+public sealed class LoginModel(IAuthenticationCommandService authService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = default!;

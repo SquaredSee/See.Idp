@@ -9,7 +9,7 @@ using See.Idp.Core.Services.Auth;
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class LoginWithRecoveryCodeModel(IUserAuthenticationCommandService authService)
+public sealed class LoginWithRecoveryCodeModel(IAuthenticationCommandService authService)
     : PageModel
 {
     [BindProperty]

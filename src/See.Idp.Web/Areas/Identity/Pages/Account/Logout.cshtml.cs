@@ -7,7 +7,7 @@ using See.Idp.Core.Services.Auth;
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class LogoutModel(IUserAuthenticationCommandService authService) : PageModel
+public sealed class LogoutModel(IAuthenticationCommandService authService) : PageModel
 {
     public IActionResult OnGet()
     {

@@ -9,7 +9,7 @@ using See.Idp.Core.Services.Auth;
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class LoginWith2faModel(IUserAuthenticationCommandService authService) : PageModel
+public sealed class LoginWith2faModel(IAuthenticationCommandService authService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = default!;

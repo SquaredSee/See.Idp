@@ -12,6 +12,7 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account;
 [AllowAnonymous]
 public sealed class RegisterConfirmationModel(
     IUserQueryService userQueryService,
+    IRegistrationCommandService registrationService,
     IWebHostEnvironment env
 ) : PageModel
 {
@@ -37,10 +38,10 @@ public sealed class RegisterConfirmationModel(
 
         if (DisplayConfirmAccountLink)
         {
-            var code = await userQueryService.GenerateEmailConfirmationTokenAsync(
-                new GenerateEmailConfirmationTokenQuery(userId)
+            var tokenResult = await registrationService.GenerateEmailConfirmationTokenAsync(
+                new GenerateEmailConfirmationTokenCommand(userId)
             );
-            if (code is not null)
+            if (tokenResult.Succeeded && tokenResult.Token is not null)
             {
                 EmailConfirmationUrl = Url.Page(
                     "/Account/ConfirmEmail",
@@ -49,7 +50,7 @@ public sealed class RegisterConfirmationModel(
                     {
                         area = "Identity",
                         userId,
-                        code,
+                        code = tokenResult.Token,
                         returnUrl,
                     },
                     protocol: Request.Scheme

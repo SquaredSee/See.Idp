@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Dtos.Auth;
 using See.Idp.Core.Services.Auth;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 
 [Authorize]
-public sealed class ChangePasswordModel(IUserPasswordCommandService passwordService) : PageModel
+public sealed class ChangePasswordModel(IPasswordCommandService passwordService) : PageModel
 {
     [TempData]
     public string? StatusMessage { get; set; }

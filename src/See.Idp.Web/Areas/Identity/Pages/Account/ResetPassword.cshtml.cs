@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Dtos.Auth;
 using See.Idp.Core.Services.Auth;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class ResetPasswordModel(IUserPasswordCommandService passwordService) : PageModel
+public sealed class ResetPasswordModel(IPasswordCommandService passwordService) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = default!;

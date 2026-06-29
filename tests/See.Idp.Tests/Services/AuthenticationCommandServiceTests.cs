@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,34 @@ using See.Idp.Tests.Support;
 namespace See.Idp.Tests.Services;
 
 [TestClass]
-public sealed class UserAccountServiceTests
+public sealed class AuthenticationCommandServiceTests
 {
+    public TestContext TestContext { get; set; } = null!;
+
+    private CancellationToken Ct => TestContext.CancellationToken;
+
+    [TestMethod]
+    public async Task PasswordSignInAsync_ReturnsSuccess_WhenCredentialsAreValid()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        var signInManager = IdentityTestFactory.CreateSignInManager(userManager);
+        signInManager
+            .PasswordSignInAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<bool>(),
+                Arg.Any<bool>()
+            )
+            .Returns(SignInResult.Success);
+
+        var result = await CreateSut(userManager, signInManager)
+            .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false), Ct);
+
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(result.IsLockedOut);
+        Assert.IsFalse(result.RequiresTwoFactor);
+    }
+
     [TestMethod]
     public async Task PasswordSignInAsync_ReturnsTwoFactorRequired_WhenSignInRequiresTwoFactor()
     {
@@ -28,11 +55,32 @@ public sealed class UserAccountServiceTests
             .Returns(SignInResult.TwoFactorRequired);
 
         var result = await CreateSut(userManager, signInManager)
-            .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false));
+            .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false), Ct);
 
         Assert.IsTrue(result.RequiresTwoFactor);
         Assert.IsFalse(result.Succeeded);
         Assert.IsFalse(result.IsLockedOut);
+    }
+
+    [TestMethod]
+    public async Task PasswordSignInAsync_ReturnsLockedOut_WhenUserIsLockedOut()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        var signInManager = IdentityTestFactory.CreateSignInManager(userManager);
+        signInManager
+            .PasswordSignInAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<bool>(),
+                Arg.Any<bool>()
+            )
+            .Returns(SignInResult.LockedOut);
+
+        var result = await CreateSut(userManager, signInManager)
+            .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false), Ct);
+
+        Assert.IsTrue(result.IsLockedOut);
+        Assert.IsFalse(result.Succeeded);
     }
 
     [TestMethod]
@@ -45,7 +93,7 @@ public sealed class UserAccountServiceTests
             .Returns(SignInResult.Success);
 
         var result = await CreateSut(userManager, signInManager)
-            .TwoFactorSignInAsync(new TwoFactorSignInCommand("123456", false, false));
+            .TwoFactorSignInAsync(new TwoFactorSignInCommand("123456", false, false), Ct);
 
         Assert.IsTrue(result.Succeeded);
     }
@@ -60,7 +108,7 @@ public sealed class UserAccountServiceTests
             .Returns(SignInResult.LockedOut);
 
         var result = await CreateSut(userManager, signInManager)
-            .TwoFactorSignInAsync(new TwoFactorSignInCommand("123456", false, false));
+            .TwoFactorSignInAsync(new TwoFactorSignInCommand("123456", false, false), Ct);
 
         Assert.IsTrue(result.IsLockedOut);
         Assert.IsFalse(result.Succeeded);
@@ -76,7 +124,7 @@ public sealed class UserAccountServiceTests
             .Returns(SignInResult.Failed);
 
         var result = await CreateSut(userManager, signInManager)
-            .TwoFactorSignInAsync(new TwoFactorSignInCommand("000000", false, false));
+            .TwoFactorSignInAsync(new TwoFactorSignInCommand("000000", false, false), Ct);
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsNotNull(result.Error);
@@ -92,7 +140,7 @@ public sealed class UserAccountServiceTests
             .Returns(SignInResult.Success);
 
         var result = await CreateSut(userManager, signInManager)
-            .RecoveryCodeSignInAsync(new RecoveryCodeSignInCommand("abc-def-ghi"));
+            .RecoveryCodeSignInAsync(new RecoveryCodeSignInCommand("abc-def-ghi"), Ct);
 
         Assert.IsTrue(result.Succeeded);
     }
@@ -107,19 +155,19 @@ public sealed class UserAccountServiceTests
             .Returns(SignInResult.Failed);
 
         var result = await CreateSut(userManager, signInManager)
-            .RecoveryCodeSignInAsync(new RecoveryCodeSignInCommand("bad-code"));
+            .RecoveryCodeSignInAsync(new RecoveryCodeSignInCommand("bad-code"), Ct);
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsNotNull(result.Error);
     }
 
-    private static UserAccountService CreateSut(
+    private static AuthenticationCommandService CreateSut(
         UserManager<ApplicationUser>? userManager = null,
         SignInManager<ApplicationUser>? signInManager = null
     ) =>
         new(
             userManager ?? IdentityTestFactory.CreateUserManager(),
             signInManager ?? IdentityTestFactory.CreateSignInManager(),
-            Substitute.For<ILogger<UserAccountService>>()
+            Substitute.For<ILogger<AuthenticationCommandService>>()
         );
 }

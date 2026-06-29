@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Auth;
@@ -114,27 +112,4 @@ public sealed partial class UserQueryService(
         var user = await userManager.FindByEmailAsync(query.Email);
         return user is null ? null : await userManager.GetUserIdAsync(user);
     }
-
-    public async Task<string?> GenerateEmailConfirmationTokenAsync(
-        GenerateEmailConfirmationTokenQuery query,
-        CancellationToken ct = default
-    )
-    {
-        var user = await userManager.FindByIdAsync(query.UserId);
-        if (user is null)
-            return null;
-
-        var code = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-        LogUserEmailConfirmationTokenGenerated(query.UserId);
-        return encodedCode;
-    }
-
-    [LoggerMessage(
-        EventId = EventIds.UserEmailConfirmationTokenGenerated,
-        Level = LogLevel.Information,
-        Message = "Email confirmation token generated for user {UserId}"
-    )]
-    private partial void LogUserEmailConfirmationTokenGenerated(string userId);
 }

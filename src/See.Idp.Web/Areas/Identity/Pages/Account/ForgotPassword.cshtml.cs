@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
-using See.Idp.Core.Dtos.Users;
-using See.Idp.Core.Services.Users;
+using See.Idp.Core.Dtos.Auth;
+using See.Idp.Core.Services.Auth;
 using See.Idp.Infrastructure;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
 public sealed class ForgotPasswordModel(
-    IUserRegistrationCommandService registrationService,
+    IPasswordCommandService passwordService,
     IEmailSender<ApplicationUser> emailSender,
     IWebHostEnvironment env
 ) : PageModel
@@ -38,18 +38,18 @@ public sealed class ForgotPasswordModel(
         if (!ModelState.IsValid)
             return Page();
 
-        var encodedCode = await registrationService.GeneratePasswordResetTokenAsync(
+        var result = await passwordService.GeneratePasswordResetTokenAsync(
             new GeneratePasswordResetTokenCommand(Input.Email)
         );
 
         // Always redirect to confirmation page to prevent user enumeration.
-        if (encodedCode is null)
+        if (!result.Succeeded)
             return RedirectToPage("./ForgotPasswordConfirmation");
 
         var resetUrl = Url.Page(
             "/Account/ResetPassword",
             pageHandler: null,
-            values: new { area = "Identity", code = encodedCode },
+            values: new { area = "Identity", code = result.Token },
             protocol: Request.Scheme
         )!;
 

@@ -9,7 +9,8 @@ namespace See.Idp.Web.Areas.Admin.Pages.Users;
 
 public sealed class EditModel(
     IUserQueryService userQueryService,
-    IUserCommandService userCommandService
+    IUserCommandService userCommandService,
+    IRegistrationCommandService registrationService
 ) : PageModel
 {
     [TempData]
@@ -61,14 +62,14 @@ public sealed class EditModel(
 
     public async Task<IActionResult> OnPostGenerateConfirmationLinkAsync(string userId)
     {
-        var token = await userQueryService.GenerateEmailConfirmationTokenAsync(
-            new GenerateEmailConfirmationTokenQuery(userId)
+        var tokenResult = await registrationService.GenerateEmailConfirmationTokenAsync(
+            new GenerateEmailConfirmationTokenCommand(userId)
         );
 
-        if (token is null)
+        if (!tokenResult.Succeeded)
         {
             StatusKind = "error";
-            StatusMessage = "User not found.";
+            StatusMessage = tokenResult.Error ?? "User not found.";
             return RedirectToPage(new { userId });
         }
 
@@ -82,7 +83,7 @@ public sealed class EditModel(
             {
                 area = "Identity",
                 userId,
-                code = token,
+                code = tokenResult.Token,
             },
             protocol: Request.Scheme
         );

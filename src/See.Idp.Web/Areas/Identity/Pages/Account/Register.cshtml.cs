@@ -11,7 +11,7 @@ using See.Idp.Infrastructure;
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 public sealed class RegisterModel(
-    IUserRegistrationCommandService registrationService,
+    IRegistrationCommandService registrationService,
     IEmailSender<ApplicationUser> emailSender
 ) : PageModel
 {

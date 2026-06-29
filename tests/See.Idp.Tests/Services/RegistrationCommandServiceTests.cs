@@ -14,7 +14,7 @@ using See.Idp.Tests.Support;
 namespace See.Idp.Tests.Services;
 
 [TestClass]
-public sealed class UserRegistrationServiceTests
+public sealed class RegistrationCommandServiceTests
 {
     public TestContext TestContext { get; set; } = null!;
 
@@ -34,12 +34,8 @@ public sealed class UserRegistrationServiceTests
             .GenerateEmailConfirmationTokenAsync(Arg.Any<ApplicationUser>())
             .Returns(Task.FromResult(rawToken));
 
-        var sut = CreateSut(userManager);
-
-        var result = await sut.RegisterAsync(
-            new RegisterUserCommand("new@example.com", "Password1!"),
-            Ct
-        );
+        var result = await CreateSut(userManager)
+            .RegisterAsync(new RegisterUserCommand("new@example.com", "Password1!"), Ct);
 
         Assert.IsTrue(result.Succeeded);
         Assert.AreEqual("new-id", result.UserId);
@@ -64,12 +60,8 @@ public sealed class UserRegistrationServiceTests
                 )
             );
 
-        var sut = CreateSut(userManager);
-
-        var result = await sut.RegisterAsync(
-            new RegisterUserCommand("taken@example.com", "weak"),
-            Ct
-        );
+        var result = await CreateSut(userManager)
+            .RegisterAsync(new RegisterUserCommand("taken@example.com", "weak"), Ct);
 
         Assert.IsFalse(result.Succeeded);
         Assert.IsNull(result.UserId);
@@ -98,12 +90,8 @@ public sealed class UserRegistrationServiceTests
             .ConfirmEmailAsync(user, rawToken)
             .Returns(Task.FromResult(IdentityResult.Success));
 
-        var sut = CreateSut(userManager);
-
-        var result = await sut.ConfirmEmailAsync(
-            new ConfirmEmailCommand("user-1", encodedToken),
-            Ct
-        );
+        var result = await CreateSut(userManager)
+            .ConfirmEmailAsync(new ConfirmEmailCommand("user-1", encodedToken), Ct);
 
         Assert.IsTrue(result.Succeeded);
     }
@@ -114,12 +102,8 @@ public sealed class UserRegistrationServiceTests
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
 
-        var sut = CreateSut(userManager);
-
-        var result = await sut.ConfirmEmailAsync(
-            new ConfirmEmailCommand("missing", "any-token"),
-            Ct
-        );
+        var result = await CreateSut(userManager)
+            .ConfirmEmailAsync(new ConfirmEmailCommand("missing", "any-token"), Ct);
 
         Assert.IsFalse(result.Succeeded);
     }
@@ -137,90 +121,56 @@ public sealed class UserRegistrationServiceTests
             .ConfirmEmailAsync(user, rawToken)
             .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Invalid token.")));
 
-        var sut = CreateSut(userManager);
-
-        var result = await sut.ConfirmEmailAsync(
-            new ConfirmEmailCommand("user-1", encodedToken),
-            Ct
-        );
+        var result = await CreateSut(userManager)
+            .ConfirmEmailAsync(new ConfirmEmailCommand("user-1", encodedToken), Ct);
 
         Assert.IsFalse(result.Succeeded);
     }
 
     [TestMethod]
-    public async Task GeneratePasswordResetTokenAsync_ReturnsEncodedToken_WhenUserExistsAndEmailConfirmed()
+    public async Task GenerateEmailConfirmationTokenAsync_ReturnsSuccess_WhenUserExists()
     {
-        const string rawToken = "reset-token";
-        var user = new ApplicationUser { Id = "user-1", Email = "user@example.com" };
+        const string rawToken = "confirmation-token";
+        var user = new ApplicationUser { Id = "user-1" };
 
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager
-            .FindByEmailAsync("user@example.com")
-            .Returns(Task.FromResult<ApplicationUser?>(user));
-        userManager.IsEmailConfirmedAsync(user).Returns(Task.FromResult(true));
-        userManager.GeneratePasswordResetTokenAsync(user).Returns(Task.FromResult(rawToken));
+        userManager.FindByIdAsync("user-1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager.GenerateEmailConfirmationTokenAsync(user).Returns(Task.FromResult(rawToken));
 
-        var sut = CreateSut(userManager);
+        var result = await CreateSut(userManager)
+            .GenerateEmailConfirmationTokenAsync(
+                new GenerateEmailConfirmationTokenCommand("user-1"),
+                Ct
+            );
 
-        var result = await sut.GeneratePasswordResetTokenAsync(
-            new GeneratePasswordResetTokenCommand("user@example.com"),
-            Ct
-        );
-
-        Assert.IsNotNull(result);
-        var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(result));
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Token);
+        var decoded = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(result.Token));
         Assert.AreEqual(rawToken, decoded);
     }
 
     [TestMethod]
-    public async Task GeneratePasswordResetTokenAsync_ReturnsNull_WhenUserNotFound()
+    public async Task GenerateEmailConfirmationTokenAsync_ReturnsNotFound_WhenUserNotFound()
     {
         var userManager = IdentityTestFactory.CreateUserManager();
-        userManager
-            .FindByEmailAsync("missing@example.com")
-            .Returns(Task.FromResult<ApplicationUser?>(null));
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
 
-        var sut = CreateSut(userManager);
+        var result = await CreateSut(userManager)
+            .GenerateEmailConfirmationTokenAsync(
+                new GenerateEmailConfirmationTokenCommand("missing"),
+                Ct
+            );
 
-        var result = await sut.GeneratePasswordResetTokenAsync(
-            new GeneratePasswordResetTokenCommand("missing@example.com"),
-            Ct
-        );
-
-        Assert.IsNull(result);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNull(result.Token);
+        Assert.IsNotNull(result.Error);
     }
 
-    [TestMethod]
-    public async Task GeneratePasswordResetTokenAsync_ReturnsNull_WhenEmailNotConfirmed()
-    {
-        var user = new ApplicationUser { Id = "user-1", Email = "unconfirmed@example.com" };
-
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager
-            .FindByEmailAsync("unconfirmed@example.com")
-            .Returns(Task.FromResult<ApplicationUser?>(user));
-        userManager.IsEmailConfirmedAsync(user).Returns(Task.FromResult(false));
-
-        var sut = CreateSut(userManager);
-
-        var result = await sut.GeneratePasswordResetTokenAsync(
-            new GeneratePasswordResetTokenCommand("unconfirmed@example.com"),
-            Ct
-        );
-
-        Assert.IsNull(result);
-        await userManager
-            .DidNotReceive()
-            .GeneratePasswordResetTokenAsync(Arg.Any<ApplicationUser>());
-    }
-
-    private static UserRegistrationService CreateSut(
+    private static RegistrationCommandService CreateSut(
         UserManager<ApplicationUser>? userManager = null
-    )
-    {
-        var effectiveUserManager = userManager ?? IdentityTestFactory.CreateUserManager();
-        var logger = Substitute.For<ILogger<UserRegistrationService>>();
-
-        return new UserRegistrationService(effectiveUserManager, logger);
-    }
+    ) =>
+        new(
+            userManager ?? IdentityTestFactory.CreateUserManager(),
+            Substitute.For<ILogger<RegistrationCommandService>>()
+        );
 }
