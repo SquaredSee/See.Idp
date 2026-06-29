@@ -161,6 +161,17 @@ public sealed class AuthenticationCommandServiceTests
         Assert.IsNotNull(result.Error);
     }
 
+    [TestMethod]
+    public async Task SignOutAsync_CallsSignInManagerSignOut()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        var signInManager = IdentityTestFactory.CreateSignInManager(userManager);
+
+        await CreateSut(signInManager).SignOutAsync(Ct);
+
+        await signInManager.Received(1).SignOutAsync();
+    }
+
     private static AuthenticationCommandService CreateSut(
         SignInManager<ApplicationUser>? signInManager = null
     ) =>

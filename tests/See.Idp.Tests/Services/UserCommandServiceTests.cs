@@ -283,6 +283,98 @@ public sealed class UserCommandServiceTests
         await userManager.Received(1).DeleteAsync(user);
     }
 
+    [TestMethod]
+    public async Task ToggleAdminAsync_GrantsAdminRole_WhenUserIsNotAdmin()
+    {
+        var user = new ApplicationUser { Id = "user-2", Email = "user2@example.com" };
+
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager.IsInRoleAsync(user, Roles.Admin).Returns(Task.FromResult(false));
+        userManager
+            .AddToRoleAsync(user, Roles.Admin)
+            .Returns(Task.FromResult(IdentityResult.Success));
+
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.ToggleAdminAsync(
+            new ToggleUserAdminCommand(user.Id, "current-user"),
+            Ct
+        );
+
+        Assert.IsTrue(result.Succeeded);
+        Assert.AreEqual("Granted admin role to user2@example.com.", result.Message);
+        await userManager.Received(1).AddToRoleAsync(user, Roles.Admin);
+    }
+
+    [TestMethod]
+    public async Task UpdatePhoneNumberAsync_ReturnsFailure_WhenUserIdIsEmpty()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("").Returns(Task.FromResult<ApplicationUser?>(null));
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.UpdatePhoneNumberAsync(new UpdatePhoneNumberCommand("", null), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+    }
+
+    [TestMethod]
+    public async Task UpdatePhoneNumberAsync_ReturnsFailure_WhenUserNotFound()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.UpdatePhoneNumberAsync(
+            new UpdatePhoneNumberCommand("missing", null),
+            Ct
+        );
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
+    public async Task UpdatePhoneNumberAsync_UpdatesPhoneNumber_WhenUserExists()
+    {
+        var user = new ApplicationUser { Id = "u1", Email = "u@example.com" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager
+            .SetPhoneNumberAsync(user, "+15550001234")
+            .Returns(Task.FromResult(IdentityResult.Success));
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.UpdatePhoneNumberAsync(
+            new UpdatePhoneNumberCommand(user.Id, "+15550001234"),
+            Ct
+        );
+
+        Assert.IsTrue(result.Succeeded);
+        await userManager.Received(1).SetPhoneNumberAsync(user, "+15550001234");
+    }
+
+    [TestMethod]
+    public async Task UpdatePhoneNumberAsync_ReturnsFailure_WhenSetPhoneNumberFails()
+    {
+        var user = new ApplicationUser { Id = "u1", Email = "u@example.com" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync(user.Id).Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager
+            .SetPhoneNumberAsync(user, Arg.Any<string?>())
+            .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Invalid phone number.")));
+        var sut = CreateSut(userManager: userManager);
+
+        var result = await sut.UpdatePhoneNumberAsync(
+            new UpdatePhoneNumberCommand(user.Id, "not-a-phone"),
+            Ct
+        );
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
     private static UserCommandService CreateSut(UserManager<ApplicationUser>? userManager = null)
     {
         var effectiveUserManager = userManager ?? IdentityTestFactory.CreateUserManager();

@@ -175,6 +175,25 @@ public sealed class TwoFactorCommandServiceTests
         Assert.AreEqual(10, result.Codes.Count());
     }
 
+    [TestMethod]
+    public async Task DisableTwoFactorAsync_ReturnsFailure_WhenSetTwoFactorEnabledFails()
+    {
+        var user = new ApplicationUser { Id = "u1" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("u1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager
+            .SetTwoFactorEnabledAsync(user, false)
+            .Returns(
+                Task.FromResult(IdentityTestFactory.FailedResult("Cannot disable two-factor."))
+            );
+
+        var result = await CreateSut(userManager)
+            .DisableTwoFactorAsync(new DisableTwoFactorCommand("u1"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
     private static TwoFactorCommandService CreateSut(
         UserManager<ApplicationUser>? userManager = null
     ) =>
