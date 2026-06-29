@@ -32,7 +32,7 @@ public sealed class AuthenticationCommandServiceTests
             )
             .Returns(SignInResult.Success);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false), Ct);
 
         Assert.IsTrue(result.Succeeded);
@@ -54,7 +54,7 @@ public sealed class AuthenticationCommandServiceTests
             )
             .Returns(SignInResult.TwoFactorRequired);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false), Ct);
 
         Assert.IsTrue(result.RequiresTwoFactor);
@@ -76,7 +76,7 @@ public sealed class AuthenticationCommandServiceTests
             )
             .Returns(SignInResult.LockedOut);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .PasswordSignInAsync(new PasswordSignInCommand("u@t.com", "pw", false), Ct);
 
         Assert.IsTrue(result.IsLockedOut);
@@ -92,7 +92,7 @@ public sealed class AuthenticationCommandServiceTests
             .TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
             .Returns(SignInResult.Success);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .TwoFactorSignInAsync(new TwoFactorSignInCommand("123456", false, false), Ct);
 
         Assert.IsTrue(result.Succeeded);
@@ -107,7 +107,7 @@ public sealed class AuthenticationCommandServiceTests
             .TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
             .Returns(SignInResult.LockedOut);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .TwoFactorSignInAsync(new TwoFactorSignInCommand("123456", false, false), Ct);
 
         Assert.IsTrue(result.IsLockedOut);
@@ -123,7 +123,7 @@ public sealed class AuthenticationCommandServiceTests
             .TwoFactorAuthenticatorSignInAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<bool>())
             .Returns(SignInResult.Failed);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .TwoFactorSignInAsync(new TwoFactorSignInCommand("000000", false, false), Ct);
 
         Assert.IsFalse(result.Succeeded);
@@ -139,7 +139,7 @@ public sealed class AuthenticationCommandServiceTests
             .TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
             .Returns(SignInResult.Success);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .RecoveryCodeSignInAsync(new RecoveryCodeSignInCommand("abc-def-ghi"), Ct);
 
         Assert.IsTrue(result.Succeeded);
@@ -154,7 +154,7 @@ public sealed class AuthenticationCommandServiceTests
             .TwoFactorRecoveryCodeSignInAsync(Arg.Any<string>())
             .Returns(SignInResult.Failed);
 
-        var result = await CreateSut(userManager, signInManager)
+        var result = await CreateSut(signInManager)
             .RecoveryCodeSignInAsync(new RecoveryCodeSignInCommand("bad-code"), Ct);
 
         Assert.IsFalse(result.Succeeded);
@@ -162,11 +162,9 @@ public sealed class AuthenticationCommandServiceTests
     }
 
     private static AuthenticationCommandService CreateSut(
-        UserManager<ApplicationUser>? userManager = null,
         SignInManager<ApplicationUser>? signInManager = null
     ) =>
         new(
-            userManager ?? IdentityTestFactory.CreateUserManager(),
             signInManager ?? IdentityTestFactory.CreateSignInManager(),
             Substitute.For<ILogger<AuthenticationCommandService>>()
         );

@@ -9,7 +9,6 @@ using See.Idp.Infrastructure.Logging;
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class AuthenticationCommandService(
-    UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
     ILogger<AuthenticationCommandService> logger
 ) : IAuthenticationCommandService
