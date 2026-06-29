@@ -224,6 +224,112 @@ public sealed class ApplicationSeedCommandServiceTests
             );
     }
 
+    [TestMethod]
+    public async Task CreateRoleIfMissingAsync_ReturnsFailure_WhenCreateFails()
+    {
+        const string roleName = "FailRole";
+        var roleManager = IdentityTestFactory.CreateRoleManager();
+        roleManager.RoleExistsAsync(roleName).Returns(Task.FromResult(false));
+        roleManager
+            .CreateAsync(Arg.Any<ApplicationRole>())
+            .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Create failed.")));
+
+        var result = await CreateSut(roleManager: roleManager)
+            .CreateRoleIfMissingAsync(new CreateRoleIfMissingCommand(roleName), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
+    public async Task CreateUserIfMissingAsync_CreatesUserWithoutPassword_WhenPasswordBlank()
+    {
+        const string email = "no-password@example.com";
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByEmailAsync(email).Returns(Task.FromResult<ApplicationUser?>(null));
+        userManager
+            .CreateAsync(Arg.Any<ApplicationUser>())
+            .Returns(Task.FromResult(IdentityResult.Success));
+
+        var result = await CreateSut(userManager: userManager)
+            .CreateUserIfMissingAsync(new CreateUserIfMissingCommand(email, " "), Ct);
+
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.Created);
+        await userManager.Received(1).CreateAsync(Arg.Is<ApplicationUser>(u => u.Email == email));
+        await userManager
+            .DidNotReceive()
+            .CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>());
+    }
+
+    [TestMethod]
+    public async Task CreateUserIfMissingAsync_ReturnsFailure_WhenCreateFails()
+    {
+        const string email = "fail@example.com";
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByEmailAsync(email).Returns(Task.FromResult<ApplicationUser?>(null));
+        userManager
+            .CreateAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>())
+            .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Password too weak.")));
+
+        var result = await CreateSut(userManager: userManager)
+            .CreateUserIfMissingAsync(new CreateUserIfMissingCommand(email, "weak"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        StringAssert.Contains(result.Error, "Password too weak.");
+    }
+
+    [TestMethod]
+    public async Task AddUserToRoleIfMissingAsync_ReturnsFailure_WhenUserIdMissing()
+    {
+        var result = await CreateSut()
+            .AddUserToRoleIfMissingAsync(new AddUserToRoleIfMissingCommand("", "Admin"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
+    public async Task AddUserToRoleIfMissingAsync_ReturnsFailure_WhenRoleNameMissing()
+    {
+        var result = await CreateSut()
+            .AddUserToRoleIfMissingAsync(new AddUserToRoleIfMissingCommand("u1", ""), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
+    public async Task AddUserToRoleIfMissingAsync_ReturnsFailure_WhenUserNotFound()
+    {
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
+
+        var result = await CreateSut(userManager: userManager)
+            .AddUserToRoleIfMissingAsync(new AddUserToRoleIfMissingCommand("missing", "Admin"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
+    public async Task AddUserToRoleIfMissingAsync_ReturnsFailure_WhenAddToRoleFails()
+    {
+        var user = new ApplicationUser { Id = "u1" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("u1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager.IsInRoleAsync(user, "Admin").Returns(Task.FromResult(false));
+        userManager
+            .AddToRoleAsync(user, "Admin")
+            .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Add role failed.")));
+
+        var result = await CreateSut(userManager: userManager)
+            .AddUserToRoleIfMissingAsync(new AddUserToRoleIfMissingCommand("u1", "Admin"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual("Add role failed.", result.Error);
+    }
+
     private static IOpenIddictApplicationManager CreateApplicationManager() =>
         Substitute.For<IOpenIddictApplicationManager>();
 
