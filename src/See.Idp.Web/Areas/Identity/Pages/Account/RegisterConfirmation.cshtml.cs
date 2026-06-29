@@ -49,7 +49,7 @@ public sealed class RegisterConfirmationModel(
                     values: new
                     {
                         area = "Identity",
-                        userId,
+                        userId = result.UserId,
                         code = tokenResult.Token,
                         returnUrl,
                     },
