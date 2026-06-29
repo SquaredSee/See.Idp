@@ -78,6 +78,7 @@ public sealed class RegisterModel(
             HtmlEncoder.Default.Encode(confirmationLink)
         );
 
+        TempData["EmailConfirmationUrl"] = confirmationLink;
         return RedirectToPage("./RegisterConfirmation", new { email = Input.Email, returnUrl });
     }
 }

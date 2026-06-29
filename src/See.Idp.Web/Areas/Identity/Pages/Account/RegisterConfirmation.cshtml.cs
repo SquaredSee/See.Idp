@@ -1,20 +1,13 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
-using See.Idp.Core.Dtos.Users;
-using See.Idp.Core.Services.Users;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
-public sealed class RegisterConfirmationModel(
-    IUserQueryService userQueryService,
-    IRegistrationCommandService registrationService,
-    IWebHostEnvironment env
-) : PageModel
+public sealed class RegisterConfirmationModel(IWebHostEnvironment env) : PageModel
 {
     public string Email { get; set; } = string.Empty;
 
@@ -22,41 +15,16 @@ public sealed class RegisterConfirmationModel(
 
     public string? EmailConfirmationUrl { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(string? email, string? returnUrl = null)
+    public IActionResult OnGet(string? email, string? returnUrl = null)
     {
         if (email is null)
             return RedirectToPage("/Index", new { area = "" });
 
-        var result = await userQueryService.FindUserIdByEmailAsync(new FindUserByEmailQuery(email));
-        if (result.UserId is null)
-            return NotFound($"Unable to load user with email '{email}'.");
-
         Email = email;
 
-        // Show the confirmation link directly in development.
         DisplayConfirmAccountLink = env.IsDevelopment();
-
         if (DisplayConfirmAccountLink)
-        {
-            var tokenResult = await registrationService.GenerateEmailConfirmationTokenAsync(
-                new GenerateEmailConfirmationTokenCommand(result.UserId)
-            );
-            if (tokenResult.Succeeded && tokenResult.Token is not null)
-            {
-                EmailConfirmationUrl = Url.Page(
-                    "/Account/ConfirmEmail",
-                    pageHandler: null,
-                    values: new
-                    {
-                        area = "Identity",
-                        userId = result.UserId,
-                        code = tokenResult.Token,
-                        returnUrl,
-                    },
-                    protocol: Request.Scheme
-                );
-            }
-        }
+            EmailConfirmationUrl = TempData["EmailConfirmationUrl"] as string;
 
         return Page();
     }
