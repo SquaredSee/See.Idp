@@ -77,6 +77,12 @@ public static class EventIds
     public const int RecoveryCodesGenerated = 1719;
     public const int AuthenticatorKeyProvisioned = 1720;
 
+    // Two-factor query service
+    public const int TwoFactorInfoRetrieved = 1721;
+    public const int TwoFactorSetupRetrieved = 1722;
+    public const int TwoFactorUserNotFound = 1723;
+    public const int TwoFactorKeyNotProvisioned = 1724;
+
     // User registration service: 1800 - 1899
     public const int UserRegistered = 1800;
     public const int UserRegistrationFailed = 1801;

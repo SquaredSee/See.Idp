@@ -25,9 +25,12 @@ public sealed partial class TwoFactorQueryService(
     {
         var user = await userManager.FindByIdAsync(query.UserId);
         if (user is null)
+        {
+            LogTwoFactorUserNotFound(query.UserId);
             return null;
+        }
 
-        return new TwoFactorInfo(
+        var result = new TwoFactorInfo(
             IsTwoFactorEnabled: await userManager.GetTwoFactorEnabledAsync(user),
             HasAuthenticator: !string.IsNullOrEmpty(
                 await userManager.GetAuthenticatorKeyAsync(user)
@@ -35,6 +38,8 @@ public sealed partial class TwoFactorQueryService(
             RecoveryCodesLeft: await userManager.CountRecoveryCodesAsync(user),
             IsMachineRemembered: await signInManager.IsTwoFactorClientRememberedAsync(user)
         );
+        LogTwoFactorInfoRetrieved(query.UserId);
+        return result;
     }
 
     public async Task<AuthenticatorSetupInfo?> GetAuthenticatorSetupAsync(
@@ -44,17 +49,25 @@ public sealed partial class TwoFactorQueryService(
     {
         var user = await userManager.FindByIdAsync(query.UserId);
         if (user is null)
+        {
+            LogTwoFactorUserNotFound(query.UserId);
             return null;
+        }
 
         var key = await userManager.GetAuthenticatorKeyAsync(user);
         if (string.IsNullOrEmpty(key))
+        {
+            LogTwoFactorKeyNotProvisioned(query.UserId);
             return null;
+        }
 
         var email = await userManager.GetEmailAsync(user) ?? string.Empty;
-        return new AuthenticatorSetupInfo(
+        var setup = new AuthenticatorSetupInfo(
             SharedKey: FormatKey(key),
             AuthenticatorUri: GenerateQrCodeUri(email, key)
         );
+        LogTwoFactorSetupRetrieved(query.UserId);
+        return setup;
     }
 
     private static string FormatKey(string key)
@@ -74,4 +87,32 @@ public sealed partial class TwoFactorQueryService(
     private static string GenerateQrCodeUri(string email, string key) =>
         $"otpauth://totp/{Uri.EscapeDataString(Issuer)}:{Uri.EscapeDataString(email)}"
         + $"?secret={Uri.EscapeDataString(key)}&issuer={Uri.EscapeDataString(Issuer)}&digits=6";
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorUserNotFound,
+        Level = LogLevel.Warning,
+        Message = "Two-factor query failed: user {UserId} not found"
+    )]
+    private partial void LogTwoFactorUserNotFound(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorInfoRetrieved,
+        Level = LogLevel.Debug,
+        Message = "Two-factor info retrieved for user {UserId}"
+    )]
+    private partial void LogTwoFactorInfoRetrieved(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorKeyNotProvisioned,
+        Level = LogLevel.Debug,
+        Message = "Authenticator setup requested but no key provisioned for user {UserId}"
+    )]
+    private partial void LogTwoFactorKeyNotProvisioned(string userId);
+
+    [LoggerMessage(
+        EventId = EventIds.TwoFactorSetupRetrieved,
+        Level = LogLevel.Debug,
+        Message = "Authenticator setup retrieved for user {UserId}"
+    )]
+    private partial void LogTwoFactorSetupRetrieved(string userId);
 }
