@@ -25,13 +25,13 @@ cannot be accessed with a password alone.
 ## Technical Notes
 
 - Scaffold the following Identity pages:
-  - `Areas/Identity/Pages/Account/Manage/EnableAuthenticator.cshtml`
-  - `Areas/Identity/Pages/Account/Manage/DisableTwoFactorAuthentication.cshtml`
-  - `Areas/Identity/Pages/Account/Manage/TwoFactorAuthentication.cshtml`
-  - `Areas/Identity/Pages/Account/Manage/GenerateRecoveryCodes.cshtml`
-  - `Areas/Identity/Pages/Account/Manage/ResetAuthenticator.cshtml`
-  - `Areas/Identity/Pages/Account/LoginWith2fa.cshtml`
-  - `Areas/Identity/Pages/Account/LoginWithRecoveryCode.cshtml`
+    - `Areas/Identity/Pages/Account/Manage/EnableAuthenticator.cshtml`
+    - `Areas/Identity/Pages/Account/Manage/DisableTwoFactorAuthentication.cshtml`
+    - `Areas/Identity/Pages/Account/Manage/TwoFactorAuthentication.cshtml`
+    - `Areas/Identity/Pages/Account/Manage/GenerateRecoveryCodes.cshtml`
+    - `Areas/Identity/Pages/Account/Manage/ResetAuthenticator.cshtml`
+    - `Areas/Identity/Pages/Account/LoginWith2fa.cshtml`
+    - `Areas/Identity/Pages/Account/LoginWithRecoveryCode.cshtml`
 - QR code generation requires a JavaScript QR library (e.g. `qrcodejs` via CDN,
   or server-side via `QRCoder` NuGet)
 - `UserManager.GetTwoFactorEnabledAsync`, `VerifyTwoFactorTokenAsync`, etc. are already
@@ -48,6 +48,7 @@ cannot be accessed with a password alone.
 **Status:** ✅ Done
 
 **New Core files:**
+
 - `Dtos/Auth/TwoFactorCommands.cs` — `TwoFactorSignInCommand`, `RecoveryCodeSignInCommand`,
   `TwoFactorSignInResult`, `EnableTwoFactorCommand`, `DisableTwoFactorCommand`,
   `ResetAuthenticatorKeyCommand`, `GenerateRecoveryCodesCommand`, `GenerateRecoveryCodesResult`.
@@ -57,21 +58,25 @@ cannot be accessed with a password alone.
 - `Services/Auth/ITwoFactorQueryService.cs` — GetTwoFactorInfo, GetAuthenticatorSetup.
 
 **Updated Core files:**
+
 - `Dtos/Auth/AuthenticationCommands.cs` — added `RequiresTwoFactor` to `PasswordSignInResult`.
 - `Services/Auth/IUserAuthenticationCommandService.cs` — added `TwoFactorSignInAsync` and
   `RecoveryCodeSignInAsync`.
 
 **New Infrastructure files:**
+
 - `Services/TwoFactorService.cs` — implements both interfaces; uses `UserManager` for all key/code
   operations; `FormatKey` groups base32 key in 4-char chunks; `GenerateQrCodeUri` produces
   standard `otpauth://totp/` URI; QR code rendered client-side via `qrcodejs` CDN.
 
 **Updated Infrastructure files:**
+
 - `Services/UserAccountService.cs` — `PasswordSignInAsync` now returns `TwoFactorRequired()` when
   `SignInResult.RequiresTwoFactor`; added `TwoFactorSignInAsync` and `RecoveryCodeSignInAsync`.
 - `Logging/EventIds.cs` — event IDs 1711–1719 for 2FA sign-in and management events.
 
 **New Web files:**
+
 - `Account/LoginWith2fa.cshtml[.cs]` — TOTP code entry; passes `RememberMe` + `RememberClient`.
 - `Account/LoginWithRecoveryCode.cshtml[.cs]` — recovery code sign-in.
 - `Account/Manage/TwoFactorAuthentication.cshtml[.cs]` — 2FA status dashboard.
@@ -83,6 +88,7 @@ cannot be accessed with a password alone.
 - `Account/Manage/_ManageNav.cshtml` — added Two-factor authentication link.
 
 **Updated Web files:**
+
 - `Account/Login.cshtml.cs` — redirects to `LoginWith2fa` when `RequiresTwoFactor`.
 - `Program.cs` — registers `TwoFactorService` as both `ITwoFactorCommandService` and
   `ITwoFactorQueryService`.

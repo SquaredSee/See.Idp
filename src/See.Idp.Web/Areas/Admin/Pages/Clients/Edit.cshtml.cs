@@ -114,7 +114,10 @@ public sealed class EditModel(
             AllowClientCredentialsFlow = client.AllowClientCredentialsFlow,
             AllowRefreshTokenFlow = client.AllowRefreshTokenFlow,
             RedirectUrisText = string.Join(Environment.NewLine, client.RedirectUris),
-            PostLogoutRedirectUrisText = string.Join(Environment.NewLine, client.PostLogoutRedirectUris),
+            PostLogoutRedirectUrisText = string.Join(
+                Environment.NewLine,
+                client.PostLogoutRedirectUris
+            ),
             PermissionsText = string.Join(Environment.NewLine, client.Permissions),
             IsConfidential = client.IsConfidential,
             HasClientSecret = client.HasClientSecret,

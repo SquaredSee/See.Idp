@@ -25,8 +25,8 @@ logged out of applications.
 ## Technical Notes
 
 - Recommended approach: **EF Core key storage** via OpenIddict's built-in support
-  - Keys are stored in the database alongside OpenIddict's other tables
-  - No external secret store needed initially
+    - Keys are stored in the database alongside OpenIddict's other tables
+    - No external secret store needed initially
 - Alternative for later: load a PFX from a Kubernetes Secret mounted as a file, using
   `X509Certificate2` loaded from a configured path
 - Remove the production `TODO` block and replace with real configuration
@@ -41,6 +41,7 @@ logged out of applications.
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Web/Program.cs` — replaced the `// TODO` production block with RSA key loading
   from config. Two 2048-bit RSA keys are expected: `OpenIddict:SigningKey` (for JWT signing)
   and `OpenIddict:EncryptionKey` (for access-token encryption). Each is an XML-serialised RSA
@@ -52,9 +53,11 @@ logged out of applications.
   keys with placeholder values pointing to the env-var override pattern.
 
 **Key generation (one-time setup):**
+
 ```csharp
 using var rsa = RSA.Create(2048);
 Console.WriteLine(rsa.ToXmlString(includePrivateParameters: true));
 ```
+
 Run this once per key type, store the output in a Kubernetes Secret or secrets manager,
 and expose via environment variables (`OPENIDDICT__SIGNINGKEY`, `OPENIDDICT__ENCRYPTIONKEY`).

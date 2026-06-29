@@ -7,11 +7,11 @@ Manifests for running See.Idp and its dependencies on a home Kubernetes cluster.
 The following must be installed and configured in the cluster before applying these
 manifests.
 
-| Component | Purpose | Install |
-|---|---|---|
-| [nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) | HTTP(S) ingress | `helm install ingress-nginx ingress-nginx/ingress-nginx` |
-| [cert-manager](https://cert-manager.io/) | Automatic TLS via Let's Encrypt | `helm install cert-manager jetstack/cert-manager --set crds.enabled=true` |
-| [CloudNativePG operator](https://cloudnative-pg.io/) | PostgreSQL cluster management | `helm install cnpg cloudnative-pg/cloudnative-pg` |
+| Component                                                               | Purpose                         | Install                                                                   |
+| ----------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| [nginx ingress controller](https://kubernetes.github.io/ingress-nginx/) | HTTP(S) ingress                 | `helm install ingress-nginx ingress-nginx/ingress-nginx`                  |
+| [cert-manager](https://cert-manager.io/)                                | Automatic TLS via Let's Encrypt | `helm install cert-manager jetstack/cert-manager --set crds.enabled=true` |
+| [CloudNativePG operator](https://cloudnative-pg.io/)                    | PostgreSQL cluster management   | `helm install cnpg cloudnative-pg/cloudnative-pg`                         |
 
 ### cert-manager ClusterIssuer
 
@@ -21,17 +21,17 @@ Apply this once after cert-manager is running. Replace the email address.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod
+    name: letsencrypt-prod
 spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: you@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-      - http01:
-          ingress:
-            ingressClassName: nginx
+    acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        email: you@example.com
+        privateKeySecretRef:
+            name: letsencrypt-prod
+        solvers:
+            - http01:
+                  ingress:
+                      ingressClassName: nginx
 ```
 
 ---
@@ -42,10 +42,10 @@ spec:
 
 Before applying anything, replace the placeholders in these files:
 
-| File | Placeholder | Replace with |
-|---|---|---|
+| File                  | Placeholder                        | Replace with                          |
+| --------------------- | ---------------------------------- | ------------------------------------- |
 | `idp-deployment.yaml` | `YOUR_REGISTRY/see-idp-web:latest` | Your container registry and image tag |
-| `idp-ingress.yaml` | `idp.example.com` (×2) | Your public domain name |
+| `idp-ingress.yaml`    | `idp.example.com` (×2)             | Your public domain name               |
 
 ### 2 — Create the namespace
 
@@ -164,18 +164,18 @@ kubectl rollout status deployment/seeidp -n seeidp
 
 ## Manifest inventory
 
-| File | Kind | Purpose |
-|---|---|---|
-| `namespace.yaml` | Namespace | `seeidp` namespace |
-| `configmap.yaml` | ConfigMap | Non-sensitive runtime config |
-| `postgres-cluster.yaml` | Cluster (CNPG) | PostgreSQL cluster, 1 instance, 5 Gi |
-| `redis-pvc.yaml` | PersistentVolumeClaim | Redis data volume, 1 Gi |
-| `redis-deployment.yaml` | Deployment | Redis 7 (alpine) with AOF persistence |
-| `redis-service.yaml` | Service | ClusterIP for Redis |
-| `idp-deployment.yaml` | Deployment | See.Idp web app, 1 replica, `/health` probes |
-| `idp-service.yaml` | Service | ClusterIP on port 80 → container 8080 |
-| `idp-ingress.yaml` | Ingress | nginx + cert-manager TLS, letsencrypt-prod |
-| `idp-hpa.yaml` | HorizontalPodAutoscaler | Scale 1–3 replicas on CPU 70% / memory 80% |
+| File                    | Kind                    | Purpose                                      |
+| ----------------------- | ----------------------- | -------------------------------------------- |
+| `namespace.yaml`        | Namespace               | `seeidp` namespace                           |
+| `configmap.yaml`        | ConfigMap               | Non-sensitive runtime config                 |
+| `postgres-cluster.yaml` | Cluster (CNPG)          | PostgreSQL cluster, 1 instance, 5 Gi         |
+| `redis-pvc.yaml`        | PersistentVolumeClaim   | Redis data volume, 1 Gi                      |
+| `redis-deployment.yaml` | Deployment              | Redis 7 (alpine) with AOF persistence        |
+| `redis-service.yaml`    | Service                 | ClusterIP for Redis                          |
+| `idp-deployment.yaml`   | Deployment              | See.Idp web app, 1 replica, `/health` probes |
+| `idp-service.yaml`      | Service                 | ClusterIP on port 80 → container 8080        |
+| `idp-ingress.yaml`      | Ingress                 | nginx + cert-manager TLS, letsencrypt-prod   |
+| `idp-hpa.yaml`          | HorizontalPodAutoscaler | Scale 1–3 replicas on CPU 70% / memory 80%   |
 
 ---
 

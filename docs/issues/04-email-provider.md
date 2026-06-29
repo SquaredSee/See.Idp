@@ -30,8 +30,8 @@ link when I request one, so that I can verify my account and recover access.
 - Implement `IEmailSender<ApplicationUser>` in `See.Idp.Infrastructure/Services/EmailSender.cs`
 - Add a config section `Email` with `ApiKey` and `FromAddress`
 - Register conditionally in `Program.cs`:
-  - Development → keep `NoOpEmailSender`
-  - Production → real sender
+    - Development → keep `NoOpEmailSender`
+    - Production → real sender
 - Email templates can be plain text or simple HTML — no need for a templating engine yet
 
 ## Dependencies

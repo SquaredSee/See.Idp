@@ -34,17 +34,17 @@ built with the correct scheme.
 ## Technical Notes
 
 - Add `services.Configure<ForwardedHeadersOptions>(...)` in `Program.cs`:
-  ```csharp
-  builder.Services.Configure<ForwardedHeadersOptions>(options =>
-  {
-      options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-      // Lock down to the ingress IP range in production via options.KnownNetworks or KnownProxies
-      // In Kubernetes, clearing KnownNetworks and KnownProxies with AllowedHosts lets any
-      // in-cluster proxy through — acceptable when the cluster network is trusted
-      options.KnownNetworks.Clear();
-      options.KnownProxies.Clear();
-  });
-  ```
+    ```csharp
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        // Lock down to the ingress IP range in production via options.KnownNetworks or KnownProxies
+        // In Kubernetes, clearing KnownNetworks and KnownProxies with AllowedHosts lets any
+        // in-cluster proxy through — acceptable when the cluster network is trusted
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+    ```
 - Call `app.UseForwardedHeaders()` as the **first** middleware, before anything else
 - Remove `aspNetCoreBuilder.DisableTransportSecurityRequirement()` from the production
   OpenIddict config — it is only needed in development
@@ -56,12 +56,14 @@ built with the correct scheme.
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Web/Program.cs` — added `Configure<ForwardedHeadersOptions>` (trusts
   `XForwardedFor` + `XForwardedProto`; clears `KnownIPNetworks` and `KnownProxies` so any
   in-cluster proxy is accepted); `UseForwardedHeaders()` called first in the middleware
   pipeline, before routing, auth, and rate limiting
 
 **Notes:**
+
 - `DisableTransportSecurityRequirement()` was already development-only in `Program.cs`;
   no change needed there.
 - `KnownNetworks` is obsolete in .NET 10; used `KnownIPNetworks` instead.

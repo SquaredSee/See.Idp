@@ -60,6 +60,7 @@ command/query DTOs and the two admin Razor pages.
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Core/Dtos/Clients/ClientCommands.cs` — added `PostLogoutRedirectUris` to `CreateClientCommand` and `UpdateClientCommand`
 - `src/See.Idp.Core/Dtos/Clients/ClientQueries.cs` — added `PostLogoutRedirectUris` to `ClientDetailsDto`
 - `src/See.Idp.Infrastructure/Services/ClientCommandService.cs` — `TryConfigureClient` clears and repopulates `descriptor.PostLogoutRedirectUris`; both `CreateClientAsync` and `UpdateClientAsync` callers updated

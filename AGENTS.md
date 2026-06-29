@@ -31,17 +31,20 @@ tests/
 **Dependency rule**: Core ← Infrastructure ← Web. Never reference Web from Infrastructure or Core.
 
 ### Core
+
 - Service interfaces live in `See.Idp.Core/Services/` (split by domain: `Auth/`, `Clients/`, `Users/`)
 - Configuration models in `See.Idp.Core/Configuration/`
 - Role constants in `See.Idp.Core/Auth/Roles.cs`
 
 ### Infrastructure
+
 - `ApplicationDbContext` (EF Core, registered with `UseOpenIddict()`)
 - `ApplicationUser` / `ApplicationRole` — ASP.NET Core Identity entities
 - Service implementations in `See.Idp.Infrastructure/Services/`
 - EF migrations in `See.Idp.Infrastructure/Migrations/`
 
 ### Web
+
 - `Program.cs` — composition root (DI, middleware, OpenIddict config)
 - `Areas/Admin/Pages/` — protected admin portal (Clients, Users)
 - `Areas/Identity/Pages/Account/` — scaffolded Identity UI
@@ -82,18 +85,21 @@ dotnet run --project src/See.Idp.Web
 The project uses **direct-injection CQRS** — no MediatR. Razor Pages inject specific command/query service interfaces; there is no dispatcher.
 
 ### Interface segregation
+
 - Every service interface is either a command service (`IXxxCommandService`) or a query service (`IXxxQueryService`) — never mixed
 - Query interfaces: read-only, no side effects, no state mutation
 - Command interfaces: mutating operations only; must never be called from `OnGet` handlers
 - If an operation has side effects it belongs on a command interface, even if it returns data
 
 ### Command and query objects
+
 - Every service method takes a **typed record** as its sole meaningful parameter — never bare primitives (`string`, `Guid`, etc.)
 - Commands: `sealed record XxxCommand(...)` in `See.Idp.Core/Dtos/`
 - Queries: `sealed record XxxQuery(...)` in `See.Idp.Core/Dtos/`
 - Results: strongly-typed result records (e.g. `CommandResult`, `CreateClientResult`) — not `bool` or raw strings
 
 ### File layout for new domains
+
 ```
 See.Idp.Core/
   Services/<Domain>/
@@ -110,6 +116,7 @@ See.Idp.Infrastructure/Services/
 ```
 
 ### Razor Pages
+
 - `OnGet` / `OnGetAsync` → inject and call **query services only**
 - `OnPost` / `OnPostAsync` → construct a typed command record inline and call a **command service**
 - A page may inject both interfaces; a handler may not use the wrong kind
@@ -150,6 +157,7 @@ All commits must use [Conventional Commits](https://www.conventionalcommits.org/
 ```
 
 Common types:
+
 - `feat` — new feature or behaviour
 - `fix` — bug fix
 - `chore` — maintenance, config, tooling, dependencies
@@ -159,6 +167,7 @@ Common types:
 - `style` — formatting changes only
 
 Examples:
+
 ```
 feat(auth): add authorization controller and claims
 docs: add issues backlog
@@ -185,11 +194,11 @@ Test-driven development is the **primary mode of development**. Write tests befo
 
 ## Local Infrastructure (docker-compose.yml)
 
-| Service | Port | Purpose |
-|---|---|---|
-| postgres:16 | 5432 | Primary DB (`seeidp`) |
-| redis:7 | 6379 | Data Protection key persistence |
-| grafana/otel-lgtm | 3000 / 4317 / 4318 | Grafana + OTLP collector |
+| Service           | Port               | Purpose                         |
+| ----------------- | ------------------ | ------------------------------- |
+| postgres:16       | 5432               | Primary DB (`seeidp`)           |
+| redis:7           | 6379               | Data Protection key persistence |
+| grafana/otel-lgtm | 3000 / 4317 / 4318 | Grafana + OTLP collector        |
 
 Connection string key: `ConnectionStrings:DefaultConnection`
 OTLP endpoint key: `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4317`)

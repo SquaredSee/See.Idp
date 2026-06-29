@@ -40,6 +40,7 @@ with a single `kubectl apply` so that I can run my own hosted identity infrastru
 **Status:** ✅ Done
 
 **Files added:**
+
 - `k8s/namespace.yaml` — `seeidp` namespace
 - `k8s/configmap.yaml` — non-sensitive runtime config (environment, OTLP endpoint, Redis
   address, seeding toggle)
@@ -52,7 +53,7 @@ with a single `kubectl apply` so that I can run my own hosted identity infrastru
   resource requests 256 Mi / 250m, limits 512 Mi / 500m; env from ConfigMap + Secret
 - `k8s/idp-service.yaml` — ClusterIP service, port 80 → container 8080
 - `k8s/idp-ingress.yaml` — nginx Ingress with `cert-manager.io/cluster-issuer:
-  letsencrypt-prod`; domain placeholder `idp.example.com`
+letsencrypt-prod`; domain placeholder `idp.example.com`
 - `k8s/idp-hpa.yaml` — HPA, 1–3 replicas, CPU 70% / memory 80%
 - `k8s/README.md` — step-by-step deployment guide, prerequisites, secret creation
   commands, update workflow

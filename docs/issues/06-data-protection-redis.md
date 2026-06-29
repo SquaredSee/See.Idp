@@ -25,12 +25,12 @@ when multiple instances of the IDP are running, so that I am not randomly logged
 
 - Add NuGet packages: `Microsoft.AspNetCore.DataProtection.StackExchangeRedis`, `StackExchange.Redis`
 - Register in `Program.cs`:
-  ```csharp
-  builder.Services
-      .AddDataProtection()
-      .PersistKeysToStackExchangeRedis(ConnectionMultiplexer.Connect(redisConnectionString), "DataProtection-Keys")
-      .SetApplicationName("See.Idp");
-  ```
+    ```csharp
+    builder.Services
+        .AddDataProtection()
+        .PersistKeysToStackExchangeRedis(ConnectionMultiplexer.Connect(redisConnectionString), "DataProtection-Keys")
+        .SetApplicationName("See.Idp");
+    ```
 - Add connection string key `ConnectionStrings:Redis` to `appsettings.json`
   (value: `localhost:6379` for local dev)
 - Use `SetApplicationName` to ensure key isolation if Redis is shared with other apps later
@@ -44,6 +44,7 @@ when multiple instances of the IDP are running, so that I am not randomly logged
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Web/See.Idp.Web.csproj` — added `Microsoft.AspNetCore.DataProtection.StackExchangeRedis`
   10.0.5 and `StackExchange.Redis` 2.8.41.
 - `src/See.Idp.Infrastructure/Logging/EventIds.cs` — added `DataProtectionRedisUnavailable = 2000`.

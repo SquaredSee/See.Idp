@@ -11,21 +11,21 @@ Environment variables use the `__` double-underscore separator for nested keys
 
 ## Required in production
 
-| Variable | Example | Description |
-|---|---|---|
-| `ConnectionStrings__DefaultConnection` | `Host=db;Port=5432;Database=seeidp;Username=seeidp;Password=…` | PostgreSQL connection string |
-| `OpenIddict__SigningKey` | `<RSAKeyValue>…</RSAKeyValue>` | RSA-2048 signing key in XML format (see below) |
-| `OpenIddict__EncryptionKey` | `<RSAKeyValue>…</RSAKeyValue>` | RSA-2048 encryption key in XML format (see below) |
-| `Email__ApiKey` | `re_…` | [Resend](https://resend.com) API key |
-| `Email__FromAddress` | `noreply@example.com` | Sender address for outbound email |
+| Variable                               | Example                                                        | Description                                       |
+| -------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
+| `ConnectionStrings__DefaultConnection` | `Host=db;Port=5432;Database=seeidp;Username=seeidp;Password=…` | PostgreSQL connection string                      |
+| `OpenIddict__SigningKey`               | `<RSAKeyValue>…</RSAKeyValue>`                                 | RSA-2048 signing key in XML format (see below)    |
+| `OpenIddict__EncryptionKey`            | `<RSAKeyValue>…</RSAKeyValue>`                                 | RSA-2048 encryption key in XML format (see below) |
+| `Email__ApiKey`                        | `re_…`                                                         | [Resend](https://resend.com) API key              |
+| `Email__FromAddress`                   | `noreply@example.com`                                          | Sender address for outbound email                 |
 
 ## Optional
 
-| Variable | Default | Description |
-|---|---|---|
-| `ConnectionStrings__Redis` | *(empty — in-memory fallback)* | Redis connection string for Data Protection key persistence |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317` | OpenTelemetry OTLP collector endpoint |
-| `ASPNETCORE_ENVIRONMENT` | `Production` | Runtime environment (`Development` disables signing key requirement and uses dev certs) |
+| Variable                      | Default                        | Description                                                                             |
+| ----------------------------- | ------------------------------ | --------------------------------------------------------------------------------------- |
+| `ConnectionStrings__Redis`    | _(empty — in-memory fallback)_ | Redis connection string for Data Protection key persistence                             |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:4317`        | OpenTelemetry OTLP collector endpoint                                                   |
+| `ASPNETCORE_ENVIRONMENT`      | `Production`                   | Runtime environment (`Development` disables signing key requirement and uses dev certs) |
 
 ---
 

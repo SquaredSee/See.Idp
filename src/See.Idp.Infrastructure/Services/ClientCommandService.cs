@@ -300,10 +300,12 @@ public sealed partial class ClientCommandService(
         foreach (var rawUri in postLogoutRedirectUris)
         {
             var trimmed = rawUri?.Trim();
-            if (string.IsNullOrEmpty(trimmed)) continue;
+            if (string.IsNullOrEmpty(trimmed))
+                continue;
             if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
             {
-                configurationError = $"Invalid post-logout redirect URI '{trimmed}' for client '{clientId}'.";
+                configurationError =
+                    $"Invalid post-logout redirect URI '{trimmed}' for client '{clientId}'.";
                 return false;
             }
             descriptor.PostLogoutRedirectUris.Add(uri);

@@ -36,44 +36,44 @@ beyond registering the client.
 
 - Implement a custom `ICorsPolicyProvider` that queries `IOpenIddictApplicationManager`
   to derive allowed origins dynamically:
-  ```csharp
-  public sealed class OpenIddictCorsPolicyProvider(
-      IOpenIddictApplicationManager applicationManager
-  ) : ICorsPolicyProvider
-  {
-      public async Task<CorsPolicy?> GetPolicyAsync(HttpContext context, string? policyName)
-      {
-          var origin = context.Request.Headers.Origin.ToString();
-          if (string.IsNullOrEmpty(origin))
-              return null;
+    ```csharp
+    public sealed class OpenIddictCorsPolicyProvider(
+        IOpenIddictApplicationManager applicationManager
+    ) : ICorsPolicyProvider
+    {
+        public async Task<CorsPolicy?> GetPolicyAsync(HttpContext context, string? policyName)
+        {
+            var origin = context.Request.Headers.Origin.ToString();
+            if (string.IsNullOrEmpty(origin))
+                return null;
 
-          // Check if any registered client has a redirect URI matching this origin
-          await foreach (var application in applicationManager.ListAsync())
-          {
-              await foreach (var uri in applicationManager.GetRedirectUrisAsync(application))
-              {
-                  if (new Uri(uri).GetLeftPart(UriPartial.Authority)
-                          .Equals(origin, StringComparison.OrdinalIgnoreCase))
-                  {
-                      return new CorsPolicyBuilder()
-                          .WithOrigins(origin)
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials()
-                          .Build();
-                  }
-              }
-          }
+            // Check if any registered client has a redirect URI matching this origin
+            await foreach (var application in applicationManager.ListAsync())
+            {
+                await foreach (var uri in applicationManager.GetRedirectUrisAsync(application))
+                {
+                    if (new Uri(uri).GetLeftPart(UriPartial.Authority)
+                            .Equals(origin, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new CorsPolicyBuilder()
+                            .WithOrigins(origin)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials()
+                            .Build();
+                    }
+                }
+            }
 
-          return null;
-      }
-  }
-  ```
+            return null;
+        }
+    }
+    ```
 - Register in `Program.cs`:
-  ```csharp
-  builder.Services.AddCors();
-  builder.Services.AddSingleton<ICorsPolicyProvider, OpenIddictCorsPolicyProvider>();
-  ```
+    ```csharp
+    builder.Services.AddCors();
+    builder.Services.AddSingleton<ICorsPolicyProvider, OpenIddictCorsPolicyProvider>();
+    ```
 - Call `app.UseCors()` between `UseRouting` and `UseAuthentication`
 - The provider lives in `See.Idp.Web` (it's a web concern, not infrastructure)
 - `IOpenIddictApplicationManager.ListAsync()` and `GetRedirectUrisAsync()` are available
@@ -88,6 +88,7 @@ beyond registering the client.
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Web/Cors/DynamicCorsPolicyProvider.cs` — new; iterates all OpenIddict applications
   via `IOpenIddictApplicationManager.ListAsync()`, extracts origins from redirect URIs, builds a
   `CorsPolicy` allowing all discovered origins with any header/method + credentials.
@@ -96,6 +97,7 @@ beyond registering the client.
   `app.UseRouting()` and `app.UseAuthentication()`.
 
 **Design decisions:**
+
 - Provider is `AddSingleton` — it resolves `IOpenIddictApplicationManager` per-request via
   `context.RequestServices` (scoped services resolved at request time, not at construction time).
 - Returns `null` when no redirect URIs are registered, which causes the CORS middleware to allow

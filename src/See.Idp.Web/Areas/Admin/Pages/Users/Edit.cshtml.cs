@@ -28,7 +28,8 @@ public sealed class EditModel(
 
     public async Task<IActionResult> OnGetAsync(string userId)
     {
-        if (!await TryLoadProfileAsync(userId)) return NotFound();
+        if (!await TryLoadProfileAsync(userId))
+            return NotFound();
         return Page();
     }
 
@@ -41,7 +42,8 @@ public sealed class EditModel(
         }
 
         var result = await userCommandService.UpdatePhoneNumberAsync(
-            new UpdatePhoneNumberCommand(Input.UserId, NullIfEmpty(Input.PhoneNumber)));
+            new UpdatePhoneNumberCommand(Input.UserId, NullIfEmpty(Input.PhoneNumber))
+        );
 
         if (result.Succeeded)
         {
@@ -60,7 +62,8 @@ public sealed class EditModel(
     public async Task<IActionResult> OnPostGenerateConfirmationLinkAsync(string userId)
     {
         var token = await userQueryService.GenerateEmailConfirmationTokenAsync(
-            new GenerateEmailConfirmationTokenQuery(userId));
+            new GenerateEmailConfirmationTokenQuery(userId)
+        );
 
         if (token is null)
         {
@@ -69,23 +72,32 @@ public sealed class EditModel(
             return RedirectToPage(new { userId });
         }
 
-        if (!await TryLoadProfileAsync(userId)) return NotFound();
+        if (!await TryLoadProfileAsync(userId))
+            return NotFound();
 
         GeneratedConfirmationUrl = Url.Page(
             "/Account/ConfirmEmail",
             pageHandler: null,
-            values: new { area = "Identity", userId, code = token },
-            protocol: Request.Scheme);
+            values: new
+            {
+                area = "Identity",
+                userId,
+                code = token,
+            },
+            protocol: Request.Scheme
+        );
 
         return Page();
     }
 
     private async Task<bool> TryLoadProfileAsync(string? userId)
     {
-        if (string.IsNullOrWhiteSpace(userId)) return false;
+        if (string.IsNullOrWhiteSpace(userId))
+            return false;
 
         var profile = await userQueryService.GetUserProfileAsync(new GetUserProfileQuery(userId));
-        if (profile is null) return false;
+        if (profile is null)
+            return false;
 
         UserId = userId;
         Email = profile.Email;

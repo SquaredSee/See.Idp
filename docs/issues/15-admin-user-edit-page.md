@@ -6,11 +6,11 @@ The admin Users area (`Areas/Admin/Pages/Users/Index.cshtml`) lists users with a
 toggle-admin, toggle-lock, and delete. Three additional service methods are fully
 implemented in the service layer but are never called from any admin page:
 
-| Method | Location | Purpose |
-|---|---|---|
-| `GetUserProfileAsync` | `IUserQueryService` / `UserQueryService` | Returns `UserProfileDto(Email, PhoneNumber)` |
-| `UpdatePhoneNumberAsync` | `IUserCommandService` / `UserCommandService` | Sets or clears a user's phone number |
-| `GenerateEmailConfirmationTokenAsync` | `IUserQueryService` / `UserQueryService` | Produces a Base64Url-encoded confirmation token |
+| Method                                | Location                                     | Purpose                                         |
+| ------------------------------------- | -------------------------------------------- | ----------------------------------------------- |
+| `GetUserProfileAsync`                 | `IUserQueryService` / `UserQueryService`     | Returns `UserProfileDto(Email, PhoneNumber)`    |
+| `UpdatePhoneNumberAsync`              | `IUserCommandService` / `UserCommandService` | Sets or clears a user's phone number            |
+| `GenerateEmailConfirmationTokenAsync` | `IUserQueryService` / `UserQueryService`     | Produces a Base64Url-encoded confirmation token |
 
 There is no admin page at `Users/Edit.cshtml` or `Users/Detail.cshtml`. Admins have no
 way to view a user's profile details, update their phone number, or manually generate a
@@ -64,6 +64,7 @@ the page shows email (read-only), editable phone number, and a Generate Confirma
 button that is always visible rather than conditionally shown.
 
 **Files changed:**
+
 - `src/See.Idp.Web/Areas/Admin/Pages/Users/Edit.cshtml[.cs]` — new page; GET loads profile,
   POST `Save` updates phone number, POST `GenerateConfirmationLink` renders the URL inline
 - `src/See.Idp.Web/Areas/Admin/Pages/Users/Index.cshtml` — added Edit link as first action

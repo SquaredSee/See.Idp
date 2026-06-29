@@ -25,8 +25,8 @@ automated attacks cannot brute-force user credentials.
 
 - Use ASP.NET Core's built-in `AddRateLimiter` / `UseRateLimiter`
 - Use a fixed window or sliding window limiter — a starting point:
-  - Login: 10 requests / 1 minute per IP
-  - Token endpoint: 30 requests / 1 minute per IP
+    - Login: 10 requests / 1 minute per IP
+    - Token endpoint: 30 requests / 1 minute per IP
 - Apply via `[EnableRateLimiting("policy-name")]` on the controller action or via
   endpoint metadata in `Program.cs`
 - Load limits from configuration under `RateLimiting:Login` and `RateLimiting:Token`
@@ -43,6 +43,7 @@ automated attacks cannot brute-force user credentials.
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Web/appsettings.json` — added `RateLimiting.Login` (10 req/60 s) and
   `RateLimiting.Token` (30 req/60 s) configuration sections.
 - `src/See.Idp.Infrastructure/Logging/EventIds.cs` — added `RateLimitExceeded = 1900`.

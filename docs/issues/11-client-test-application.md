@@ -28,23 +28,23 @@ that I can demonstrate the full OIDC flow and have confidence the IDP works corr
 - Create the project: `dotnet new webapp -n See.Client.Web -o clients/See.Client.Web`
 - Add `Microsoft.AspNetCore.Authentication.OpenIdConnect` NuGet package
 - Register in `Program.cs`:
-  ```csharp
-  builder.Services
-      .AddAuthentication(...)
-      .AddCookie()
-      .AddOpenIdConnect(options =>
-      {
-          options.Authority = "https://localhost:5001";
-          options.ClientId = "see.client";
-          options.ClientSecret = "...";
-          options.ResponseType = "code";
-          options.Scope.Add("email");
-          options.Scope.Add("profile");
-          options.Scope.Add("roles");
-          options.SaveTokens = true;
-          options.GetClaimsFromUserInfoEndpoint = true;
-      });
-  ```
+    ```csharp
+    builder.Services
+        .AddAuthentication(...)
+        .AddCookie()
+        .AddOpenIdConnect(options =>
+        {
+            options.Authority = "https://localhost:5001";
+            options.ClientId = "see.client";
+            options.ClientSecret = "...";
+            options.ResponseType = "code";
+            options.Scope.Add("email");
+            options.Scope.Add("profile");
+            options.Scope.Add("roles");
+            options.SaveTokens = true;
+            options.GetClaimsFromUserInfoEndpoint = true;
+        });
+    ```
 - Add the client to `appsettings.json` under the IDP's `Initialization:Clients` section
 - A single protected `/Profile` page that displays claims is sufficient
 
@@ -62,6 +62,7 @@ that I can demonstrate the full OIDC flow and have confidence the IDP works corr
 **Scope:** Minimal auth-test client only — no UI polish, just a working OIDC round-trip.
 
 **Files:**
+
 - `clients/See.Client.Web/` — new ASP.NET Core Razor Pages app (net10.0).
 - `Program.cs` — `AddAuthentication` with cookie + OIDC (`code` flow, `email`/`profile`/`roles`
   scopes, `GetClaimsFromUserInfoEndpoint = true`, `MapInboundClaims = false`); `GET /logout`

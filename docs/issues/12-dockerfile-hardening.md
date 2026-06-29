@@ -29,10 +29,10 @@ can route traffic only to ready instances and restart unhealthy ones automatical
 - Add optional database health check via `AddDbContextCheck<ApplicationDbContext>()`
   (NuGet: `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore`)
 - Dockerfile `HEALTHCHECK`:
-  ```dockerfile
-  HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-  ```
+    ```dockerfile
+    HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+      CMD curl -f http://localhost:8080/health || exit 1
+    ```
 - Verify `COPY` paths are correct relative to the expected `docker build` context
 - Document required environment variables in `docs/configuration.md`
 - Add `see-idp-web` service to `docker-compose.yml` wired to the IDP Dockerfile with the
@@ -45,6 +45,7 @@ can route traffic only to ready instances and restart unhealthy ones automatical
 **Status:** ✅ Done
 
 **Files changed:**
+
 - `src/See.Idp.Web/See.Idp.Web.csproj` — added
   `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore` 10.0.5
 - `src/See.Idp.Web/Program.cs` — added `AddHealthChecks().AddDbContextCheck<ApplicationDbContext>()`
