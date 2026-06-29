@@ -60,7 +60,7 @@ public sealed class EditModel(
         return RedirectToPage(new { userId = Input.UserId });
     }
 
-    public async Task<IActionResult> OnGetGenerateConfirmationLinkAsync(string userId)
+    public async Task<IActionResult> OnPostGenerateConfirmationLinkAsync(string userId)
     {
         var tokenResult = await registrationService.GenerateEmailConfirmationTokenAsync(
             new GenerateEmailConfirmationTokenCommand(userId)

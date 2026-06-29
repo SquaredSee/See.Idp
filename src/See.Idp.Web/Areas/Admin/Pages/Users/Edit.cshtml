@@ -64,7 +64,10 @@
     }
 
     <div class="pt-2">
-      <a asp-page-handler="GenerateConfirmationLink" asp-route-userId="@Model.UserId" class="btn-primary no-underline">Generate confirmation link</a>
+      <form method="post" asp-page-handler="GenerateConfirmationLink">
+        <input type="hidden" name="userId" value="@Model.UserId" />
+        <button type="submit" class="btn-primary">Generate confirmation link</button>
+      </form>
     </div>
   </section>
 </div>
