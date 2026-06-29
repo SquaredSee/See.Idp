@@ -20,7 +20,7 @@ public interface IAuthenticationCommandService
     );
 
     /// <summary>Completes a 2FA sign-in with a recovery code.</summary>
-    Task<TwoFactorSignInResult> RecoveryCodeSignInAsync(
+    Task<RecoveryCodeSignInResult> RecoveryCodeSignInAsync(
         RecoveryCodeSignInCommand command,
         CancellationToken ct = default
     );

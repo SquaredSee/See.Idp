@@ -201,11 +201,8 @@ builder.Services.AddScoped<IUserCommandService, UserCommandService>();
 builder.Services.AddScoped<IAuthenticationCommandService, AuthenticationCommandService>();
 builder.Services.AddScoped<IPasswordCommandService, PasswordCommandService>();
 builder.Services.AddScoped<IRegistrationCommandService, RegistrationCommandService>();
-builder.Services.AddScoped<TwoFactorService>();
-builder.Services.AddScoped<ITwoFactorCommandService>(sp =>
-    sp.GetRequiredService<TwoFactorService>()
-);
-builder.Services.AddScoped<ITwoFactorQueryService>(sp => sp.GetRequiredService<TwoFactorService>());
+builder.Services.AddScoped<ITwoFactorCommandService, TwoFactorCommandService>();
+builder.Services.AddScoped<ITwoFactorQueryService, TwoFactorQueryService>();
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();

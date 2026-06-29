@@ -12,64 +12,37 @@ using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
-public sealed partial class TwoFactorService(
+public sealed partial class TwoFactorCommandService(
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager,
-    ILogger<TwoFactorService> logger
-) : ITwoFactorCommandService, ITwoFactorQueryService
+    ILogger<TwoFactorCommandService> logger
+) : ITwoFactorCommandService
 {
-    private const string Issuer = "See.Idp";
-
-    public async Task<TwoFactorInfo?> GetTwoFactorInfoAsync(
-        GetTwoFactorInfoQuery query,
+    public async Task<CommandResult> ProvisionAuthenticatorKeyAsync(
+        ProvisionAuthenticatorKeyCommand command,
         CancellationToken ct = default
     )
     {
-        var user = await userManager.FindByIdAsync(query.UserId);
+        var user = await userManager.FindByIdAsync(command.UserId);
         if (user is null)
-            return null;
+            return CommandResult.Failure($"User '{command.UserId}' not found.");
 
-        return new TwoFactorInfo(
-            IsTwoFactorEnabled: await userManager.GetTwoFactorEnabledAsync(user),
-            HasAuthenticator: !string.IsNullOrEmpty(
-                await userManager.GetAuthenticatorKeyAsync(user)
-            ),
-            RecoveryCodesLeft: await userManager.CountRecoveryCodesAsync(user),
-            IsMachineRemembered: await signInManager.IsTwoFactorClientRememberedAsync(user)
-        );
+        var existing = await userManager.GetAuthenticatorKeyAsync(user);
+        if (!string.IsNullOrEmpty(existing))
+            return CommandResult.Success();
+
+        await userManager.ResetAuthenticatorKeyAsync(user);
+        LogAuthenticatorKeyProvisioned(command.UserId);
+        return CommandResult.Success();
     }
 
-    public async Task<AuthenticatorSetupInfo?> GetAuthenticatorSetupAsync(
-        GetAuthenticatorSetupQuery query,
-        CancellationToken ct = default
-    )
-    {
-        var user = await userManager.FindByIdAsync(query.UserId);
-        if (user is null)
-            return null;
-
-        var key = await userManager.GetAuthenticatorKeyAsync(user);
-        if (string.IsNullOrEmpty(key))
-        {
-            await userManager.ResetAuthenticatorKeyAsync(user);
-            key = await userManager.GetAuthenticatorKeyAsync(user);
-        }
-
-        var email = await userManager.GetEmailAsync(user) ?? string.Empty;
-        return new AuthenticatorSetupInfo(
-            SharedKey: FormatKey(key!),
-            AuthenticatorUri: GenerateQrCodeUri(email, key!)
-        );
-    }
-
-    public async Task<GenerateRecoveryCodesResult> EnableTwoFactorAsync(
+    public async Task<EnableTwoFactorResult> EnableTwoFactorAsync(
         EnableTwoFactorCommand command,
         CancellationToken ct = default
     )
     {
         var user = await userManager.FindByIdAsync(command.UserId);
         if (user is null)
-            return GenerateRecoveryCodesResult.Failure($"User '{command.UserId}' not found.");
+            return EnableTwoFactorResult.Failure($"User '{command.UserId}' not found.");
 
         var code = command.VerificationCode.Replace(" ", string.Empty).Replace("-", string.Empty);
 
@@ -80,12 +53,12 @@ public sealed partial class TwoFactorService(
         );
 
         if (!isValid)
-            return GenerateRecoveryCodesResult.Failure("Verification code is invalid.");
+            return EnableTwoFactorResult.Failure("Verification code is invalid.");
 
         await userManager.SetTwoFactorEnabledAsync(user, true);
         var codes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
         LogTwoFactorEnabled(command.UserId);
-        return GenerateRecoveryCodesResult.Success(codes ?? Array.Empty<string>());
+        return EnableTwoFactorResult.Success(codes ?? Array.Empty<string>());
     }
 
     public async Task<CommandResult> DisableTwoFactorAsync(
@@ -136,23 +109,12 @@ public sealed partial class TwoFactorService(
         return GenerateRecoveryCodesResult.Success(codes ?? Array.Empty<string>());
     }
 
-    private static string FormatKey(string key)
-    {
-        var result = new StringBuilder();
-        var pos = 0;
-        while (pos + 4 < key.Length)
-        {
-            result.Append(key, pos, 4).Append(' ');
-            pos += 4;
-        }
-        if (pos < key.Length)
-            result.Append(key, pos, key.Length - pos);
-        return result.ToString().ToUpperInvariant();
-    }
-
-    private static string GenerateQrCodeUri(string email, string key) =>
-        $"otpauth://totp/{Uri.EscapeDataString(Issuer)}:{Uri.EscapeDataString(email)}"
-        + $"?secret={Uri.EscapeDataString(key)}&issuer={Uri.EscapeDataString(Issuer)}&digits=6";
+    [LoggerMessage(
+        EventId = EventIds.AuthenticatorKeyProvisioned,
+        Level = LogLevel.Information,
+        Message = "Authenticator key provisioned for user {UserId}"
+    )]
+    private partial void LogAuthenticatorKeyProvisioned(string userId);
 
     [LoggerMessage(
         EventId = EventIds.TwoFactorEnabled,

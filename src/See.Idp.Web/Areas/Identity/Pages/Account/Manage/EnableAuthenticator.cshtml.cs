@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -77,7 +76,7 @@ public sealed class EnableAuthenticatorModel(
         }
 
         StatusMessage = "Your authenticator app has been verified.";
-        RecoveryCodes = result.Codes.ToArray();
+        RecoveryCodes = result.RecoveryCodes.ToArray();
         return RedirectToPage("./ShowRecoveryCodes");
     }
 }

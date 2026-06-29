@@ -8,8 +8,17 @@ namespace See.Idp.Core.Services.Auth;
 /// <summary>Provides commands for managing a user's two-factor authentication settings.</summary>
 public interface ITwoFactorCommandService
 {
+    /// <summary>
+    ///     Provisions a TOTP authenticator key for the user if one does not already exist.
+    ///     Idempotent — no-op if a key has already been provisioned.
+    /// </summary>
+    Task<CommandResult> ProvisionAuthenticatorKeyAsync(
+        ProvisionAuthenticatorKeyCommand command,
+        CancellationToken ct = default
+    );
+
     /// <summary>Verifies the TOTP code and enables 2FA, returning new recovery codes.</summary>
-    Task<GenerateRecoveryCodesResult> EnableTwoFactorAsync(
+    Task<EnableTwoFactorResult> EnableTwoFactorAsync(
         EnableTwoFactorCommand command,
         CancellationToken ct = default
     );

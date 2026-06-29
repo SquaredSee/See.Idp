@@ -9,7 +9,10 @@ using See.Idp.Core.Services.Auth;
 namespace See.Idp.Web.Areas.Identity.Pages.Account.Manage;
 
 [Authorize]
-public sealed class TwoFactorAuthenticationModel(ITwoFactorQueryService twoFactorQuery) : PageModel
+public sealed class TwoFactorAuthenticationModel(
+    ITwoFactorQueryService twoFactorQuery,
+    ITwoFactorCommandService twoFactorCommand
+) : PageModel
 {
     public bool HasAuthenticator { get; set; }
     public bool Is2faEnabled { get; set; }
@@ -31,5 +34,21 @@ public sealed class TwoFactorAuthenticationModel(ITwoFactorQueryService twoFacto
         IsMachineRemembered = info.IsMachineRemembered;
         RecoveryCodesLeft = info.RecoveryCodesLeft;
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostProvisionAuthenticatorAsync()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await twoFactorCommand.ProvisionAuthenticatorKeyAsync(
+            new ProvisionAuthenticatorKeyCommand(userId)
+        );
+
+        if (!result.Succeeded)
+        {
+            StatusMessage = $"Error: {result.Error}";
+            return RedirectToPage();
+        }
+
+        return RedirectToPage("./EnableAuthenticator");
     }
 }

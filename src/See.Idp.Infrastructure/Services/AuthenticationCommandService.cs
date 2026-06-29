@@ -79,7 +79,7 @@ public sealed partial class AuthenticationCommandService(
         return TwoFactorSignInResult.Failure("Invalid authenticator code.");
     }
 
-    public async Task<TwoFactorSignInResult> RecoveryCodeSignInAsync(
+    public async Task<RecoveryCodeSignInResult> RecoveryCodeSignInAsync(
         RecoveryCodeSignInCommand command,
         CancellationToken ct = default
     )
@@ -89,14 +89,14 @@ public sealed partial class AuthenticationCommandService(
         if (result.Succeeded)
         {
             LogRecoveryCodeSignInSucceeded();
-            return TwoFactorSignInResult.Success();
+            return RecoveryCodeSignInResult.Success();
         }
 
         if (result.IsLockedOut)
-            return TwoFactorSignInResult.LockedOut();
+            return RecoveryCodeSignInResult.LockedOut();
 
         LogRecoveryCodeSignInFailed();
-        return TwoFactorSignInResult.Failure("Invalid recovery code.");
+        return RecoveryCodeSignInResult.Failure("Invalid recovery code.");
     }
 
     public async Task SignOutAsync(CancellationToken ct = default)

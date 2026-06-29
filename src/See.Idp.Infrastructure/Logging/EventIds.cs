@@ -75,6 +75,7 @@ public static class EventIds
     public const int TwoFactorDisabled = 1717;
     public const int AuthenticatorKeyReset = 1718;
     public const int RecoveryCodesGenerated = 1719;
+    public const int AuthenticatorKeyProvisioned = 1720;
 
     // User registration service: 1800 - 1899
     public const int UserRegistered = 1800;
