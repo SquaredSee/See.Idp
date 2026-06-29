@@ -8,15 +8,12 @@ using See.Idp.Core.Configuration;
 using See.Idp.Core.Dtos.Clients;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services;
-using See.Idp.Core.Services.Clients;
-using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class ConfigurationApplicationInitializer(
-    IUserCommandService userCommandService,
-    IClientCommandService clientCommandService,
+    IApplicationSeedCommandService seedCommandService,
     IOptions<InitializationOptions> options,
     ILogger<ConfigurationApplicationInitializer> logger
 ) : IApplicationInitializer
@@ -35,22 +32,16 @@ public sealed partial class ConfigurationApplicationInitializer(
         foreach (var user in config.Users)
         {
             foreach (var role in user.Roles)
-            {
                 allRoles.Add(role);
-            }
         }
 
         await SeedRolesAsync([.. allRoles], ct);
 
         foreach (var user in config.Users)
-        {
             await SeedUserAsync(user, ct);
-        }
 
         foreach (var client in config.Clients)
-        {
             await SeedClientAsync(client, ct);
-        }
     }
 
     private async Task SeedRolesAsync(List<string> roles, CancellationToken ct)
@@ -58,22 +49,18 @@ public sealed partial class ConfigurationApplicationInitializer(
         foreach (var role in roles)
         {
             if (string.IsNullOrWhiteSpace(role))
-            {
                 continue;
-            }
 
             LogSeedingRole(role);
 
-            var result = await userCommandService.CreateRoleIfMissingAsync(
+            var result = await seedCommandService.CreateRoleIfMissingAsync(
                 new CreateRoleIfMissingCommand(role),
                 ct
             );
             if (!result.Succeeded)
-            {
                 throw new InvalidOperationException(
                     $"Failed to seed role '{role}': {result.Error ?? "Unknown error."}"
                 );
-            }
 
             if (result.Created)
                 LogRoleSeeded(role);
@@ -85,23 +72,19 @@ public sealed partial class ConfigurationApplicationInitializer(
     private async Task SeedUserAsync(SeedUserOptions user, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(user.Email))
-        {
             throw new InvalidOperationException("Initialization users require a non-empty email.");
-        }
 
         LogSeedingUser(user.Email);
 
-        var ensureUserResult = await userCommandService.CreateUserIfMissingAsync(
+        var ensureUserResult = await seedCommandService.CreateUserIfMissingAsync(
             new CreateUserIfMissingCommand(user.Email, user.Password, user.EmailConfirmed),
             ct
         );
 
         if (!ensureUserResult.Succeeded || string.IsNullOrWhiteSpace(ensureUserResult.UserId))
-        {
             throw new InvalidOperationException(
                 $"Failed to seed user '{user.Email}': {ensureUserResult.Error ?? "Unknown error."}"
             );
-        }
 
         if (ensureUserResult.Created)
             LogUserSeeded(user.Email);
@@ -111,21 +94,17 @@ public sealed partial class ConfigurationApplicationInitializer(
         foreach (var role in user.Roles)
         {
             if (string.IsNullOrWhiteSpace(role))
-            {
                 continue;
-            }
 
-            var addRoleResult = await userCommandService.AddUserToRoleIfMissingAsync(
+            var addRoleResult = await seedCommandService.AddUserToRoleIfMissingAsync(
                 new AddUserToRoleIfMissingCommand(ensureUserResult.UserId, role),
                 ct
             );
 
             if (!addRoleResult.Succeeded)
-            {
                 throw new InvalidOperationException(
                     $"Failed adding role '{role}' to '{user.Email}': {addRoleResult.Error ?? "Unknown error."}"
                 );
-            }
 
             if (addRoleResult.Created)
                 LogUserAddedToRole(user.Email, role);
@@ -135,15 +114,13 @@ public sealed partial class ConfigurationApplicationInitializer(
     private async Task SeedClientAsync(SeedClientOptions client, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(client.ClientId))
-        {
             throw new InvalidOperationException(
                 "Initialization clients require a non-empty client id."
             );
-        }
 
         LogSeedingClient(client.ClientId);
 
-        var ensureClientResult = await clientCommandService.CreateClientIfMissingAsync(
+        var ensureClientResult = await seedCommandService.CreateClientIfMissingAsync(
             new CreateClientIfMissingCommand(
                 client.ClientId,
                 client.ClientSecret,
@@ -156,11 +133,9 @@ public sealed partial class ConfigurationApplicationInitializer(
         );
 
         if (!ensureClientResult.Succeeded)
-        {
             throw new InvalidOperationException(
                 $"Failed to seed client '{client.ClientId}': {ensureClientResult.Error ?? "Unknown error."}"
             );
-        }
 
         if (ensureClientResult.Created)
             LogClientSeeded(client.ClientId);

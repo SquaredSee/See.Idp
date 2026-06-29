@@ -197,6 +197,7 @@ builder.Services.AddScoped<IClientQueryService, ClientQueryService>();
 builder.Services.AddScoped<IClientCommandService, ClientCommandService>();
 builder.Services.AddScoped<IUserQueryService, UserQueryService>();
 builder.Services.AddScoped<IUserCommandService, UserCommandService>();
+builder.Services.AddScoped<IApplicationSeedCommandService, ApplicationSeedCommandService>();
 
 builder.Services.AddScoped<IAuthenticationCommandService, AuthenticationCommandService>();
 builder.Services.AddScoped<IPasswordCommandService, PasswordCommandService>();

@@ -53,15 +53,4 @@ public interface IClientCommandService
         RotateClientSecretCommand command,
         CancellationToken ct = default
     );
-
-    /// <summary>
-    ///     Creates a client when it does not already exist.
-    /// </summary>
-    /// <param name="command">The command containing the client details.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>The result indicating whether the client was created.</returns>
-    Task<CreateIfMissingResult> CreateClientIfMissingAsync(
-        CreateClientIfMissingCommand command,
-        CancellationToken ct = default
-    );
 }
