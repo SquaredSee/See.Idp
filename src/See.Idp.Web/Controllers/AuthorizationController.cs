@@ -29,11 +29,8 @@ public sealed class AuthorizationController(
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Authorize()
     {
-        var request =
-            HttpContext.GetOpenIddictServerRequest()
-            ?? throw new InvalidOperationException(
-                "The OpenIddict server request cannot be retrieved."
-            );
+        if (HttpContext.GetOpenIddictServerRequest() is not { } request)
+            return BadRequest();
 
         // Redirect to login if the user is not authenticated.
         var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
@@ -55,14 +52,36 @@ public sealed class AuthorizationController(
             );
         }
 
-        var userId =
-            result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? throw new InvalidOperationException("The user details cannot be retrieved.");
+        var userId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId is null)
+            return Forbid(
+                authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                properties: new AuthenticationProperties(
+                    new Dictionary<string, string?>
+                    {
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants
+                            .Errors
+                            .InvalidGrant,
+                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+                            "The user account no longer exists.",
+                    }
+                )
+            );
 
-        var application =
-            await applicationManager.FindByClientIdAsync(request.ClientId!)
-            ?? throw new InvalidOperationException(
-                $"The client application '{request.ClientId}' cannot be found."
+        var application = await applicationManager.FindByClientIdAsync(request.ClientId!);
+        if (application is null)
+            return Forbid(
+                authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                properties: new AuthenticationProperties(
+                    new Dictionary<string, string?>
+                    {
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants
+                            .Errors
+                            .InvalidClient,
+                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+                            "The client application cannot be found.",
+                    }
+                )
             );
 
         var applicationId = (await applicationManager.GetIdAsync(application))!;
@@ -82,12 +101,25 @@ public sealed class AuthorizationController(
             authorization = auth;
         }
 
-        var identity =
-            await authenticationQueryService.BuildUserIdentityAsync(
-                userId,
-                request.GetScopes(),
-                HttpContext.RequestAborted
-            ) ?? throw new InvalidOperationException("The user details cannot be retrieved.");
+        var identity = await authenticationQueryService.BuildUserIdentityAsync(
+            userId,
+            request.GetScopes(),
+            HttpContext.RequestAborted
+        );
+        if (identity is null)
+            return Forbid(
+                authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                properties: new AuthenticationProperties(
+                    new Dictionary<string, string?>
+                    {
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants
+                            .Errors
+                            .InvalidGrant,
+                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+                            "The user account no longer exists.",
+                    }
+                )
+            );
 
         // Create an ad-hoc authorization if no permanent one exists.
         // Note: a consent page (issue 03) will replace this with an explicit approval step.
@@ -113,11 +145,8 @@ public sealed class AuthorizationController(
     [EnableRateLimiting("token")]
     public async Task<IActionResult> Exchange()
     {
-        var request =
-            HttpContext.GetOpenIddictServerRequest()
-            ?? throw new InvalidOperationException(
-                "The OpenIddict server request cannot be retrieved."
-            );
+        if (HttpContext.GetOpenIddictServerRequest() is not { } request)
+            return BadRequest();
 
         if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
         {
@@ -168,7 +197,19 @@ public sealed class AuthorizationController(
             );
         }
 
-        throw new InvalidOperationException("The specified grant type is not supported.");
+        return Forbid(
+            authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+            properties: new AuthenticationProperties(
+                new Dictionary<string, string?>
+                {
+                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants
+                        .Errors
+                        .UnsupportedGrantType,
+                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+                        "The specified grant type is not supported.",
+                }
+            )
+        );
     }
 
     [HttpGet("~/connect/userinfo")]
