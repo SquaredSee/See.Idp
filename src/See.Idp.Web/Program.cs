@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
@@ -33,14 +34,24 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Trust X-Forwarded-For and X-Forwarded-Proto from the ingress/reverse proxy.
-// KnownNetworks and KnownProxies are cleared so any in-cluster proxy is accepted;
-// restrict these in environments where the network boundary is untrusted.
+// Trust X-Forwarded-For and X-Forwarded-Proto only from configured proxy networks.
+// Set ReverseProxy:TrustedNetworks to your cluster pod CIDR(s) in appsettings or env vars.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
+
+    var cidrs = builder.Configuration.GetSection("ReverseProxy:TrustedNetworks").Get<string[]>();
+
+    if (cidrs is { Length: > 0 })
+    {
+        foreach (var cidr in cidrs)
+        {
+            if (System.Net.IPNetwork.TryParse(cidr, out var network))
+                options.KnownIPNetworks.Add(network);
+        }
+    }
 });
 
 // Observability
@@ -327,6 +338,17 @@ if (!string.IsNullOrEmpty(redisCs) && !redisDataProtectionReady)
         ),
         "Redis unavailable at startup; Data Protection keys are in-memory and will not survive restarts."
     );
+}
+
+if (!app.Environment.IsDevelopment())
+{
+    var cidrs = app.Configuration.GetSection("ReverseProxy:TrustedNetworks").Get<string[]>();
+    if (cidrs is null || cidrs.Length == 0)
+        app.Logger.LogWarning(
+            "ReverseProxy:TrustedNetworks is not configured. X-Forwarded-For headers will not "
+                + "be trusted from any proxy. Set this to your ingress pod CIDR or the rate "
+                + "limiter will not receive real client IPs."
+        );
 }
 
 // Configure the HTTP request pipeline.

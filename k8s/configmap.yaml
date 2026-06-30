@@ -11,3 +11,7 @@ data:
   # Disable automatic seeding after the first deployment.
   # Set to "true" temporarily when bootstrapping a new environment.
   Initialization__Enabled: "false"
+  # Set to your cluster pod CIDR so X-Forwarded-For is trusted only from the ingress.
+  # Example: "10.244.0.0/16" for Flannel, "192.168.0.0/16" for Calico.
+  # Multiple CIDRs can be set via separate env vars: REVERSEPROXY__TRUSTEDNETWORKS__0, __1, etc.
+  # REVERSEPROXY__TRUSTEDNETWORKS__0: "10.244.0.0/16"
