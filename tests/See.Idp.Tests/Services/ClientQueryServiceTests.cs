@@ -112,19 +112,21 @@ public sealed class ClientQueryServiceTests
     }
 
     [TestMethod]
-    public async Task GetClientByIdAsync_ReturnsNull_WhenClientIdMissing()
+    public async Task GetClientByIdAsync_ReturnsFailure_WhenClientIdMissing()
     {
         var applicationManager = CreateApplicationManager();
         var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery(""), Ct);
 
-        Assert.IsNull(result);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsFalse(result.NotFound);
+        Assert.IsNotNull(result.Error);
         await applicationManager.DidNotReceive().FindByClientIdAsync(Arg.Any<string>(), Ct);
     }
 
     [TestMethod]
-    public async Task GetClientByIdAsync_ReturnsNull_WhenClientNotFound()
+    public async Task GetClientByIdAsync_ReturnsMissing_WhenClientNotFound()
     {
         var applicationManager = CreateApplicationManager();
         applicationManager
@@ -135,11 +137,12 @@ public sealed class ClientQueryServiceTests
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("missing"), Ct);
 
-        Assert.IsNull(result);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.NotFound);
     }
 
     [TestMethod]
-    public async Task GetClientByIdAsync_ReturnsNull_WhenResolvedClientIdIsEmpty()
+    public async Task GetClientByIdAsync_ReturnsFailure_WhenResolvedClientIdIsEmpty()
     {
         var app = new object();
 
@@ -151,7 +154,9 @@ public sealed class ClientQueryServiceTests
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
 
-        Assert.IsNull(result);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsFalse(result.NotFound);
+        Assert.IsNotNull(result.Error);
     }
 
     [TestMethod]
@@ -180,16 +185,18 @@ public sealed class ClientQueryServiceTests
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
 
         Assert.IsNotNull(result);
-        Assert.AreEqual("client-1", result.ClientId);
-        Assert.AreEqual("Client One", result.DisplayName);
-        Assert.IsTrue(result.AllowAuthorizationCodeFlow);
-        Assert.IsTrue(result.AllowClientCredentialsFlow);
-        Assert.IsFalse(result.AllowRefreshTokenFlow);
-        Assert.IsFalse(result.IsConfidential);
-        Assert.IsFalse(result.HasClientSecret);
-        Assert.HasCount(1, result.RedirectUris);
-        Assert.AreEqual("https://localhost/callback", result.RedirectUris[0]);
-        Assert.IsTrue(result.Permissions.Contains("scp:profile"));
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsNotNull(result.Client);
+        Assert.AreEqual("client-1", result.Client.ClientId);
+        Assert.AreEqual("Client One", result.Client.DisplayName);
+        Assert.IsTrue(result.Client.AllowAuthorizationCodeFlow);
+        Assert.IsTrue(result.Client.AllowClientCredentialsFlow);
+        Assert.IsFalse(result.Client.AllowRefreshTokenFlow);
+        Assert.IsFalse(result.Client.IsConfidential);
+        Assert.IsFalse(result.Client.HasClientSecret);
+        Assert.HasCount(1, result.Client.RedirectUris);
+        Assert.AreEqual("https://localhost/callback", result.Client.RedirectUris[0]);
+        Assert.IsTrue(result.Client.Permissions.Contains("scp:profile"));
     }
 
     [TestMethod]
@@ -215,8 +222,9 @@ public sealed class ClientQueryServiceTests
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-2"), Ct);
 
         Assert.IsNotNull(result);
-        Assert.IsTrue(result.IsConfidential);
-        Assert.IsTrue(result.HasClientSecret);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsTrue(result.Client!.IsConfidential);
+        Assert.IsTrue(result.Client.HasClientSecret);
     }
 
     [TestMethod]
@@ -241,8 +249,9 @@ public sealed class ClientQueryServiceTests
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
 
         Assert.IsNotNull(result);
-        Assert.HasCount(1, result.PostLogoutRedirectUris);
-        Assert.AreEqual("https://localhost/", result.PostLogoutRedirectUris[0]);
+        Assert.IsTrue(result.Succeeded);
+        Assert.HasCount(1, result.Client!.PostLogoutRedirectUris);
+        Assert.AreEqual("https://localhost/", result.Client.PostLogoutRedirectUris[0]);
     }
 
     private static ApplicationDbContext CreateDbContext() =>

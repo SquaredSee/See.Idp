@@ -100,12 +100,13 @@ public sealed class EditModel(
 
     private async Task<bool> TryLoadInputAsync(string clientId)
     {
-        var client = await clientQueryService.GetClientByIdAsync(new GetClientByIdQuery(clientId));
-        if (client is null)
+        var result = await clientQueryService.GetClientByIdAsync(new GetClientByIdQuery(clientId));
+        if (!result.Succeeded)
         {
             return false;
         }
 
+        var client = result.Client!;
         Input = new InputModel
         {
             ClientId = client.ClientId,

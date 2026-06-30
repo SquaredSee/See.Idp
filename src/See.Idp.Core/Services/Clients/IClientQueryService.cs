@@ -26,8 +26,8 @@ public interface IClientQueryService
     /// </summary>
     /// <param name="query">The query containing the client identifier.</param>
     /// <param name="ct">The cancellation token.</param>
-    /// <returns>The client details, or null when no client is found.</returns>
-    Task<ClientDetailsDto?> GetClientByIdAsync(
+    /// <returns>A result indicating success, not-found, or failure.</returns>
+    Task<GetClientResult> GetClientByIdAsync(
         GetClientByIdQuery query,
         CancellationToken ct = default
     );

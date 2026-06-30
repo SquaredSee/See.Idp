@@ -52,7 +52,7 @@ public sealed partial class ClientQueryService(
         return result;
     }
 
-    public async Task<ClientDetailsDto?> GetClientByIdAsync(
+    public async Task<GetClientResult> GetClientByIdAsync(
         GetClientByIdQuery query,
         CancellationToken ct = default
     )
@@ -60,24 +60,23 @@ public sealed partial class ClientQueryService(
         if (string.IsNullOrWhiteSpace(query.ClientId))
         {
             LogClientCommandRejected(nameof(GetClientByIdAsync), "Client ID is required.");
-            return null;
+            return GetClientResult.Failure("Client ID is required.");
         }
 
         var app = await applicationManager.FindByClientIdAsync(query.ClientId, ct);
         if (app is null)
         {
             LogClientLookupNotFound(query.ClientId);
-            return null;
+            return GetClientResult.Missing();
         }
 
         var clientId = await applicationManager.GetClientIdAsync(app, ct);
         if (string.IsNullOrWhiteSpace(clientId))
         {
-            LogClientCommandRejected(
-                nameof(GetClientByIdAsync),
-                $"Client '{query.ClientId}' returned an empty client id."
+            LogClientStoreIntegrityError(query.ClientId);
+            return GetClientResult.Failure(
+                $"Client '{query.ClientId}' has no client ID in the store."
             );
-            return null;
         }
 
         var descriptor = new OpenIddictApplicationDescriptor();
@@ -110,19 +109,21 @@ public sealed partial class ClientQueryService(
                 StringComparison.Ordinal
             );
 
-        return new ClientDetailsDto(
-            clientId,
-            descriptor.DisplayName,
-            ClientPermissionConventions.HasAuthorizationCodeFlow(permissions),
-            ClientPermissionConventions.HasClientCredentialsFlow(permissions),
-            ClientPermissionConventions.HasRefreshTokenFlow(permissions),
-            redirectUris,
-            postLogoutRedirectUris,
-            permissions
-                .Where(p => !ClientPermissionConventions.IsFlowControlledPermission(p))
-                .ToList(),
-            isConfidential,
-            hasClientSecret
+        return GetClientResult.Success(
+            new ClientDetailsDto(
+                clientId,
+                descriptor.DisplayName,
+                ClientPermissionConventions.HasAuthorizationCodeFlow(permissions),
+                ClientPermissionConventions.HasClientCredentialsFlow(permissions),
+                ClientPermissionConventions.HasRefreshTokenFlow(permissions),
+                redirectUris,
+                postLogoutRedirectUris,
+                permissions
+                    .Where(p => !ClientPermissionConventions.IsFlowControlledPermission(p))
+                    .ToList(),
+                isConfidential,
+                hasClientSecret
+            )
         );
     }
 
@@ -139,6 +140,13 @@ public sealed partial class ClientQueryService(
         Message = "Client not found: {ClientId}"
     )]
     private partial void LogClientLookupNotFound(string clientId);
+
+    [LoggerMessage(
+        EventId = EventIds.ClientStoreIntegrityError,
+        Level = LogLevel.Error,
+        Message = "Client store integrity error: client '{ClientId}' has no client ID in the store"
+    )]
+    private partial void LogClientStoreIntegrityError(string clientId);
 
     [LoggerMessage(
         EventId = EventIds.ClientCommandRejected,

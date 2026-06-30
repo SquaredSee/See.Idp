@@ -36,6 +36,7 @@ public static class EventIds
     public const int ClientSecretRotated = 1507;
     public const int ClientPromotedToConfidential = 1508;
     public const int ClientSecretGeneratedOnCreate = 1509;
+    public const int ClientStoreIntegrityError = 1510;
 
     // User query/command service: 1600 - 1699
     public const int UserListRetrieved = 1600;
