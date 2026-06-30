@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +14,7 @@ using See.Idp.Infrastructure.Logging;
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class UserQueryService(
+    ApplicationDbContext dbContext,
     UserManager<ApplicationUser> userManager,
     ILogger<UserQueryService> logger
 ) : IUserQueryService
@@ -24,65 +24,53 @@ public sealed partial class UserQueryService(
         CancellationToken ct = default
     )
     {
-        // TODO: Filtering and Paging is currently done in-memory which is not ideal for large datasets. Consider EF Core replacement.
-        var users = StreamUsersAsync(ct);
+        var adminRoleName = Roles.Admin.ToUpperInvariant();
+        var adminUserIdList = await dbContext
+            .UserRoles.Join(
+                dbContext.Roles,
+                ur => ur.RoleId,
+                r => r.Id,
+                (ur, r) => new { ur.UserId, r.NormalizedName }
+            )
+            .Where(x => x.NormalizedName == adminRoleName)
+            .Select(x => x.UserId)
+            .ToListAsync(ct);
+        var adminUserIds = new HashSet<string>(adminUserIdList, StringComparer.Ordinal);
+
+        var q = dbContext.Users.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm))
         {
-            var searchTerm = query.SearchTerm.Trim();
-            users = users.Where(u =>
-                (
-                    u.Email != null
-                    && u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                )
-                || (
-                    u.UserName != null
-                    && u.UserName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                )
+            var term = query.SearchTerm.Trim().ToLower();
+            q = q.Where(u =>
+                (u.Email != null && u.Email.ToLower().Contains(term))
+                || (u.UserName != null && u.UserName.ToLower().Contains(term))
             );
         }
 
-        users = users.OrderBy(u => u.Email).ThenBy(u => u.UserName);
+        q = q.OrderBy(u => u.Email).ThenBy(u => u.UserName);
 
         if (query.Skip > 0)
-            users = users.Skip(query.Skip);
+            q = q.Skip(query.Skip);
         if (query.Take is > 0)
-            users = users.Take(query.Take.Value);
+            q = q.Take(query.Take.Value);
 
-        var result = await users.ToListAsync(ct);
+        var users = await q.ToListAsync(ct);
+
+        var now = DateTimeOffset.UtcNow;
+        var result = users
+            .Select(u => new UserSummaryDto(
+                u.Id,
+                u.UserName,
+                u.Email,
+                u.EmailConfirmed,
+                adminUserIds.Contains(u.Id),
+                u.LockoutEnabled && u.LockoutEnd.HasValue && u.LockoutEnd.Value > now
+            ))
+            .ToList();
+
         LogUserListRetrieved(result.Count);
         return result;
-    }
-
-    private async IAsyncEnumerable<UserSummaryDto> StreamUsersAsync(
-        [EnumeratorCancellation] CancellationToken ct = default
-    )
-    {
-        var adminUsers = await userManager.GetUsersInRoleAsync(Roles.Admin);
-        var adminUserIds = new HashSet<string>(
-            adminUsers.Select(u => u.Id),
-            StringComparer.Ordinal
-        );
-
-        await foreach (
-            var user in userManager.Users.AsNoTracking().AsAsyncEnumerable().WithCancellation(ct)
-        )
-        {
-            var isAdmin = adminUserIds.Contains(user.Id);
-            var isLocked =
-                user.LockoutEnabled
-                && user.LockoutEnd.HasValue
-                && user.LockoutEnd.Value > DateTimeOffset.UtcNow;
-
-            yield return new UserSummaryDto(
-                UserId: user.Id,
-                UserName: user.UserName,
-                Email: user.Email,
-                EmailConfirmed: user.EmailConfirmed,
-                IsAdmin: isAdmin,
-                IsLockedOut: isLocked
-            );
-        }
     }
 
     [LoggerMessage(

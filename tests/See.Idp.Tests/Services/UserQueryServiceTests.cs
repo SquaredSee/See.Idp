@@ -2,10 +2,11 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using See.Idp.Core.Auth;
+using OpenIddict.EntityFrameworkCore;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
@@ -23,35 +24,43 @@ public sealed class UserQueryServiceTests
     [TestMethod]
     public async Task ListUsersAsync_MapsUsers_WithOrderingAdminAndLockState()
     {
+        await using var db = CreateDbContext();
+
+        var adminRole = new ApplicationRole
+        {
+            Id = "role-admin",
+            Name = "Admin",
+            NormalizedName = "ADMIN",
+        };
         var alpha = new ApplicationUser
         {
             Id = "user-alpha",
             UserName = "alpha",
+            NormalizedUserName = "ALPHA",
             Email = "alpha@example.com",
+            NormalizedEmail = "ALPHA@EXAMPLE.COM",
             EmailConfirmed = true,
             LockoutEnabled = true,
             LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(10),
         };
-
         var beta = new ApplicationUser
         {
             Id = "user-beta",
             UserName = "beta",
+            NormalizedUserName = "BETA",
             Email = "beta@example.com",
+            NormalizedEmail = "BETA@EXAMPLE.COM",
             EmailConfirmed = false,
             LockoutEnabled = true,
             LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(-10),
         };
 
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.Users.Returns(AsyncQueryableTestFactory.Create([beta, alpha]));
-        userManager
-            .GetUsersInRoleAsync(Roles.Admin)
-            .Returns(Task.FromResult(IdentityTestFactory.Users(alpha)));
+        db.Roles.Add(adminRole);
+        db.Users.AddRange(alpha, beta);
+        db.UserRoles.Add(new IdentityUserRole<string> { UserId = alpha.Id, RoleId = adminRole.Id });
+        await db.SaveChangesAsync(Ct);
 
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.ListUsersAsync(new ListUsersQuery(), Ct);
+        var result = await CreateSut(db).ListUsersAsync(new ListUsersQuery(), Ct);
 
         Assert.HasCount(2, result);
 
@@ -68,34 +77,28 @@ public sealed class UserQueryServiceTests
         Assert.IsFalse(result[1].EmailConfirmed);
         Assert.IsFalse(result[1].IsAdmin);
         Assert.IsFalse(result[1].IsLockedOut);
-
-        await userManager.Received(1).GetUsersInRoleAsync(Roles.Admin);
-        await userManager
-            .DidNotReceive()
-            .IsInRoleAsync(Arg.Any<ApplicationUser>(), Arg.Any<string>());
     }
 
     [TestMethod]
     public async Task ListUsersAsync_SetsIsLockedOutFalse_WhenLockoutDisabled()
     {
-        var user = new ApplicationUser
-        {
-            Id = "user-lock-disabled",
-            UserName = "nolock",
-            Email = "nolock@example.com",
-            LockoutEnabled = false,
-            LockoutEnd = DateTimeOffset.UtcNow.AddYears(1),
-        };
+        await using var db = CreateDbContext();
 
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.Users.Returns(AsyncQueryableTestFactory.Create([user]));
-        userManager
-            .GetUsersInRoleAsync(Roles.Admin)
-            .Returns(Task.FromResult(IdentityTestFactory.Users()));
+        db.Users.Add(
+            new ApplicationUser
+            {
+                Id = "user-lock-disabled",
+                UserName = "nolock",
+                NormalizedUserName = "NOLOCK",
+                Email = "nolock@example.com",
+                NormalizedEmail = "NOLOCK@EXAMPLE.COM",
+                LockoutEnabled = false,
+                LockoutEnd = DateTimeOffset.UtcNow.AddYears(1),
+            }
+        );
+        await db.SaveChangesAsync(Ct);
 
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.ListUsersAsync(new ListUsersQuery(), Ct);
+        var result = await CreateSut(db).ListUsersAsync(new ListUsersQuery(), Ct);
 
         Assert.HasCount(1, result);
         Assert.IsFalse(result[0].IsLockedOut);
@@ -104,29 +107,30 @@ public sealed class UserQueryServiceTests
     [TestMethod]
     public async Task ListUsersAsync_FiltersBySearchTerm()
     {
-        var alpha = new ApplicationUser
-        {
-            Id = "user-alpha",
-            UserName = "alpha",
-            Email = "alpha@example.com",
-        };
+        await using var db = CreateDbContext();
 
-        var beta = new ApplicationUser
-        {
-            Id = "user-beta",
-            UserName = "beta",
-            Email = "beta@example.com",
-        };
+        db.Users.AddRange(
+            new ApplicationUser
+            {
+                Id = "user-alpha",
+                UserName = "alpha",
+                NormalizedUserName = "ALPHA",
+                Email = "alpha@example.com",
+                NormalizedEmail = "ALPHA@EXAMPLE.COM",
+            },
+            new ApplicationUser
+            {
+                Id = "user-beta",
+                UserName = "beta",
+                NormalizedUserName = "BETA",
+                Email = "beta@example.com",
+                NormalizedEmail = "BETA@EXAMPLE.COM",
+            }
+        );
+        await db.SaveChangesAsync(Ct);
 
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.Users.Returns(AsyncQueryableTestFactory.Create([alpha, beta]));
-        userManager
-            .GetUsersInRoleAsync(Roles.Admin)
-            .Returns(Task.FromResult(IdentityTestFactory.Users()));
-
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.ListUsersAsync(new ListUsersQuery(SearchTerm: "alpha"), Ct);
+        var result = await CreateSut(db)
+            .ListUsersAsync(new ListUsersQuery(SearchTerm: "alpha"), Ct);
 
         Assert.HasCount(1, result);
         Assert.AreEqual("user-alpha", result[0].UserId);
@@ -135,47 +139,40 @@ public sealed class UserQueryServiceTests
     [TestMethod]
     public async Task ListUsersAsync_AppliesSkipAndTake()
     {
-        var userA = new ApplicationUser
-        {
-            Id = "user-a",
-            UserName = "a",
-            Email = "a@example.com",
-        };
+        await using var db = CreateDbContext();
 
-        var userB = new ApplicationUser
-        {
-            Id = "user-b",
-            UserName = "b",
-            Email = "b@example.com",
-        };
+        db.Users.AddRange(
+            new ApplicationUser
+            {
+                Id = "user-a",
+                UserName = "a",
+                NormalizedUserName = "A",
+                Email = "a@example.com",
+                NormalizedEmail = "A@EXAMPLE.COM",
+            },
+            new ApplicationUser
+            {
+                Id = "user-b",
+                UserName = "b",
+                NormalizedUserName = "B",
+                Email = "b@example.com",
+                NormalizedEmail = "B@EXAMPLE.COM",
+            },
+            new ApplicationUser
+            {
+                Id = "user-c",
+                UserName = "c",
+                NormalizedUserName = "C",
+                Email = "c@example.com",
+                NormalizedEmail = "C@EXAMPLE.COM",
+            }
+        );
+        await db.SaveChangesAsync(Ct);
 
-        var userC = new ApplicationUser
-        {
-            Id = "user-c",
-            UserName = "c",
-            Email = "c@example.com",
-        };
-
-        var userManager = IdentityTestFactory.CreateUserManager();
-        userManager.Users.Returns(AsyncQueryableTestFactory.Create([userC, userA, userB]));
-        userManager
-            .GetUsersInRoleAsync(Roles.Admin)
-            .Returns(Task.FromResult(IdentityTestFactory.Users()));
-
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.ListUsersAsync(new ListUsersQuery(Skip: 1, Take: 1), Ct);
+        var result = await CreateSut(db).ListUsersAsync(new ListUsersQuery(Skip: 1, Take: 1), Ct);
 
         Assert.HasCount(1, result);
         Assert.AreEqual("user-b", result[0].UserId);
-    }
-
-    private static UserQueryService CreateSut(UserManager<ApplicationUser>? userManager = null)
-    {
-        var effectiveUserManager = userManager ?? IdentityTestFactory.CreateUserManager();
-        var logger = Substitute.For<ILogger<UserQueryService>>();
-
-        return new UserQueryService(effectiveUserManager, logger);
     }
 
     [TestMethod]
@@ -191,9 +188,8 @@ public sealed class UserQueryServiceTests
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager.FindByIdAsync("user-1").Returns(Task.FromResult<ApplicationUser?>(user));
 
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.GetUserProfileAsync(new GetUserProfileQuery("user-1"), Ct);
+        var result = await CreateSut(userManager: userManager)
+            .GetUserProfileAsync(new GetUserProfileQuery("user-1"), Ct);
 
         Assert.IsNotNull(result);
         Assert.AreEqual("user@example.com", result.Email);
@@ -206,9 +202,8 @@ public sealed class UserQueryServiceTests
         var userManager = IdentityTestFactory.CreateUserManager();
         userManager.FindByIdAsync("missing").Returns(Task.FromResult<ApplicationUser?>(null));
 
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.GetUserProfileAsync(new GetUserProfileQuery("missing"), Ct);
+        var result = await CreateSut(userManager: userManager)
+            .GetUserProfileAsync(new GetUserProfileQuery("missing"), Ct);
 
         Assert.IsNull(result);
     }
@@ -224,12 +219,8 @@ public sealed class UserQueryServiceTests
             .Returns(Task.FromResult<ApplicationUser?>(user));
         userManager.GetUserIdAsync(user).Returns(Task.FromResult("user-1"));
 
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.FindUserIdByEmailAsync(
-            new FindUserByEmailQuery("user@example.com"),
-            Ct
-        );
+        var result = await CreateSut(userManager: userManager)
+            .FindUserIdByEmailAsync(new FindUserByEmailQuery("user@example.com"), Ct);
 
         Assert.AreEqual("user-1", result.UserId);
     }
@@ -242,13 +233,27 @@ public sealed class UserQueryServiceTests
             .FindByEmailAsync("missing@example.com")
             .Returns(Task.FromResult<ApplicationUser?>(null));
 
-        var sut = CreateSut(userManager: userManager);
-
-        var result = await sut.FindUserIdByEmailAsync(
-            new FindUserByEmailQuery("missing@example.com"),
-            Ct
-        );
+        var result = await CreateSut(userManager: userManager)
+            .FindUserIdByEmailAsync(new FindUserByEmailQuery("missing@example.com"), Ct);
 
         Assert.IsNull(result.UserId);
     }
+
+    private static ApplicationDbContext CreateDbContext() =>
+        new(
+            new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseOpenIddict()
+                .Options
+        );
+
+    private static UserQueryService CreateSut(
+        ApplicationDbContext? dbContext = null,
+        UserManager<ApplicationUser>? userManager = null
+    ) =>
+        new(
+            dbContext ?? CreateDbContext(),
+            userManager ?? IdentityTestFactory.CreateUserManager(),
+            Substitute.For<ILogger<UserQueryService>>()
+        );
 }

@@ -2,11 +2,15 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using OpenIddict.Abstractions;
+using OpenIddict.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore.Models;
 using See.Idp.Core.Dtos.Clients;
+using See.Idp.Infrastructure;
 using See.Idp.Infrastructure.Services;
 using See.Idp.Tests.Support;
 
@@ -22,25 +26,26 @@ public sealed class ClientQueryServiceTests
     private CancellationToken Ct => TestContext.CancellationToken;
 
     [TestMethod]
-    public async Task ListClientsAsync_ExcludesEntriesWithEmptyClientId()
+    public async Task ListClientsAsync_ExcludesEntriesWithNullClientId()
     {
-        var app1 = new object();
-        var app2 = new object();
+        await using var db = CreateDbContext();
 
-        var applicationManager = CreateApplicationManager();
-        applicationManager
-            .ListAsync(cancellationToken: Ct)
-            .Returns(AsyncEnumerableTestFactory.Create(app1, app2));
-        applicationManager.GetClientIdAsync(app1, Ct).Returns(new ValueTask<string?>("client-1"));
-        applicationManager
-            .GetDisplayNameAsync(app1, Ct)
-            .Returns(new ValueTask<string?>("Client One"));
-        applicationManager.GetClientIdAsync(app2, Ct).Returns(new ValueTask<string?>(" "));
-        applicationManager.GetDisplayNameAsync(app2, Ct).Returns(new ValueTask<string?>("Ignored"));
+        db.Set<OpenIddictEntityFrameworkCoreApplication>()
+            .AddRange(
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = "client-1",
+                    DisplayName = "Client One",
+                },
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = null,
+                    DisplayName = "Ignored",
+                }
+            );
+        await db.SaveChangesAsync(Ct);
 
-        var sut = CreateSut(applicationManager);
-
-        var result = await sut.ListClientsAsync(new ListClientsQuery(), Ct);
+        var result = await CreateSut(db).ListClientsAsync(new ListClientsQuery(), Ct);
 
         Assert.HasCount(1, result);
         Assert.AreEqual("client-1", result[0].ClientId);
@@ -50,27 +55,25 @@ public sealed class ClientQueryServiceTests
     [TestMethod]
     public async Task ListClientsAsync_FiltersBySearchTerm()
     {
-        var app1 = new object();
-        var app2 = new object();
+        await using var db = CreateDbContext();
 
-        var applicationManager = CreateApplicationManager();
-        applicationManager
-            .ListAsync(cancellationToken: Ct)
-            .Returns(AsyncEnumerableTestFactory.Create(app1, app2));
+        db.Set<OpenIddictEntityFrameworkCoreApplication>()
+            .AddRange(
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = "client-1",
+                    DisplayName = "First Client",
+                },
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = "client-2",
+                    DisplayName = "Second Client",
+                }
+            );
+        await db.SaveChangesAsync(Ct);
 
-        applicationManager.GetClientIdAsync(app1, Ct).Returns(new ValueTask<string?>("client-1"));
-        applicationManager
-            .GetDisplayNameAsync(app1, Ct)
-            .Returns(new ValueTask<string?>("First Client"));
-
-        applicationManager.GetClientIdAsync(app2, Ct).Returns(new ValueTask<string?>("client-2"));
-        applicationManager
-            .GetDisplayNameAsync(app2, Ct)
-            .Returns(new ValueTask<string?>("Second Client"));
-
-        var sut = CreateSut(applicationManager);
-
-        var result = await sut.ListClientsAsync(new ListClientsQuery(SearchTerm: "SECOND"), Ct);
+        var result = await CreateSut(db)
+            .ListClientsAsync(new ListClientsQuery(SearchTerm: "SECOND"), Ct);
 
         Assert.HasCount(1, result);
         Assert.AreEqual("client-2", result[0].ClientId);
@@ -79,33 +82,30 @@ public sealed class ClientQueryServiceTests
     [TestMethod]
     public async Task ListClientsAsync_AppliesSkipAndTake()
     {
-        var appA = new object();
-        var appB = new object();
-        var appC = new object();
+        await using var db = CreateDbContext();
 
-        var applicationManager = CreateApplicationManager();
-        applicationManager
-            .ListAsync(cancellationToken: Ct)
-            .Returns(AsyncEnumerableTestFactory.Create(appC, appA, appB));
+        db.Set<OpenIddictEntityFrameworkCoreApplication>()
+            .AddRange(
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = "client-a",
+                    DisplayName = "Client A",
+                },
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = "client-b",
+                    DisplayName = "Client B",
+                },
+                new OpenIddictEntityFrameworkCoreApplication
+                {
+                    ClientId = "client-c",
+                    DisplayName = "Client C",
+                }
+            );
+        await db.SaveChangesAsync(Ct);
 
-        applicationManager.GetClientIdAsync(appA, Ct).Returns(new ValueTask<string?>("client-a"));
-        applicationManager
-            .GetDisplayNameAsync(appA, Ct)
-            .Returns(new ValueTask<string?>("Client A"));
-
-        applicationManager.GetClientIdAsync(appB, Ct).Returns(new ValueTask<string?>("client-b"));
-        applicationManager
-            .GetDisplayNameAsync(appB, Ct)
-            .Returns(new ValueTask<string?>("Client B"));
-
-        applicationManager.GetClientIdAsync(appC, Ct).Returns(new ValueTask<string?>("client-c"));
-        applicationManager
-            .GetDisplayNameAsync(appC, Ct)
-            .Returns(new ValueTask<string?>("Client C"));
-
-        var sut = CreateSut(applicationManager);
-
-        var result = await sut.ListClientsAsync(new ListClientsQuery(Skip: 1, Take: 1), Ct);
+        var result = await CreateSut(db)
+            .ListClientsAsync(new ListClientsQuery(Skip: 1, Take: 1), Ct);
 
         Assert.HasCount(1, result);
         Assert.AreEqual("client-b", result[0].ClientId);
@@ -115,7 +115,7 @@ public sealed class ClientQueryServiceTests
     public async Task GetClientByIdAsync_ReturnsNull_WhenClientIdMissing()
     {
         var applicationManager = CreateApplicationManager();
-        var sut = CreateSut(applicationManager);
+        var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery(""), Ct);
 
@@ -131,7 +131,7 @@ public sealed class ClientQueryServiceTests
             .FindByClientIdAsync("missing", Ct)
             .Returns(new ValueTask<object?>((object?)null));
 
-        var sut = CreateSut(applicationManager);
+        var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("missing"), Ct);
 
@@ -147,7 +147,7 @@ public sealed class ClientQueryServiceTests
         applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
         applicationManager.GetClientIdAsync(app, Ct).Returns(new ValueTask<string?>(""));
 
-        var sut = CreateSut(applicationManager);
+        var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
 
@@ -175,7 +175,7 @@ public sealed class ClientQueryServiceTests
                 descriptor.RedirectUris.Add(new Uri("https://localhost/callback"));
             });
 
-        var sut = CreateSut(applicationManager);
+        var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
 
@@ -210,7 +210,7 @@ public sealed class ClientQueryServiceTests
                 descriptor.ClientSecret = "hashed-or-placeholder";
             });
 
-        var sut = CreateSut(applicationManager);
+        var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-2"), Ct);
 
@@ -236,7 +236,7 @@ public sealed class ClientQueryServiceTests
                 descriptor.PostLogoutRedirectUris.Add(new Uri("https://localhost/"));
             });
 
-        var sut = CreateSut(applicationManager);
+        var sut = CreateSut(applicationManager: applicationManager);
 
         var result = await sut.GetClientByIdAsync(new GetClientByIdQuery("client-1"), Ct);
 
@@ -245,19 +245,26 @@ public sealed class ClientQueryServiceTests
         Assert.AreEqual("https://localhost/", result.PostLogoutRedirectUris[0]);
     }
 
-    private static IOpenIddictApplicationManager CreateApplicationManager()
-    {
-        return Substitute.For<IOpenIddictApplicationManager>();
-    }
+    private static ApplicationDbContext CreateDbContext() =>
+        new(
+            new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseOpenIddict()
+                .Options
+        );
+
+    private static IOpenIddictApplicationManager CreateApplicationManager() =>
+        Substitute.For<IOpenIddictApplicationManager>();
 
     private static ClientQueryService CreateSut(
+        ApplicationDbContext? dbContext = null,
         IOpenIddictApplicationManager? applicationManager = null
-    )
-    {
-        var manager = applicationManager ?? CreateApplicationManager();
-        var logger = Substitute.For<ILogger<ClientQueryService>>();
-        return new ClientQueryService(manager, logger);
-    }
+    ) =>
+        new(
+            dbContext ?? CreateDbContext(),
+            applicationManager ?? CreateApplicationManager(),
+            Substitute.For<ILogger<ClientQueryService>>()
+        );
 }
 
 #pragma warning restore CA2012

@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
+using OpenIddict.EntityFrameworkCore.Models;
 using See.Idp.Core.Dtos.Clients;
 using See.Idp.Core.Services.Clients;
 using See.Idp.Infrastructure.Logging;
@@ -13,6 +14,7 @@ using See.Idp.Infrastructure.Logging;
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class ClientQueryService(
+    ApplicationDbContext dbContext,
     IOpenIddictApplicationManager applicationManager,
     ILogger<ClientQueryService> logger
 ) : IClientQueryService
@@ -22,29 +24,30 @@ public sealed partial class ClientQueryService(
         CancellationToken ct = default
     )
     {
-        // TODO: Filtering and Paging is currently done in-memory which is not ideal for large datasets. Consider EF Core replacement.
-        var clients = StreamClientsAsync(ct);
+        var q = dbContext
+            .Set<OpenIddictEntityFrameworkCoreApplication>()
+            .AsNoTracking()
+            .Where(a => a.ClientId != null && a.ClientId != string.Empty);
 
         if (!string.IsNullOrWhiteSpace(query.SearchTerm))
         {
-            var searchTerm = query.SearchTerm.Trim();
-            clients = clients.Where(c =>
-                c.ClientId.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                || (
-                    !string.IsNullOrWhiteSpace(c.DisplayName)
-                    && c.DisplayName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                )
+            var term = query.SearchTerm.Trim().ToLower();
+            q = q.Where(a =>
+                (a.ClientId != null && a.ClientId.ToLower().Contains(term))
+                || (a.DisplayName != null && a.DisplayName.ToLower().Contains(term))
             );
         }
 
-        clients = clients.OrderBy(c => c.ClientId, StringComparer.OrdinalIgnoreCase);
+        q = q.OrderBy(a => a.ClientId);
 
         if (query.Skip > 0)
-            clients = clients.Skip(query.Skip);
+            q = q.Skip(query.Skip);
         if (query.Take is > 0)
-            clients = clients.Take(query.Take.Value);
+            q = q.Take(query.Take.Value);
 
-        var result = await clients.ToListAsync(ct);
+        var result = await q.Select(a => new ClientSummaryDto(a.ClientId!, a.DisplayName))
+            .ToListAsync(ct);
+
         LogClientListRetrieved(result.Count);
         return result;
     }
@@ -121,22 +124,6 @@ public sealed partial class ClientQueryService(
             isConfidential,
             hasClientSecret
         );
-    }
-
-    private async IAsyncEnumerable<ClientSummaryDto> StreamClientsAsync(
-        [EnumeratorCancellation] CancellationToken ct = default
-    )
-    {
-        await foreach (var app in applicationManager.ListAsync(cancellationToken: ct))
-        {
-            var clientId = await applicationManager.GetClientIdAsync(app, ct);
-            var displayName = await applicationManager.GetDisplayNameAsync(app, ct);
-
-            if (!string.IsNullOrWhiteSpace(clientId))
-            {
-                yield return new ClientSummaryDto(clientId, displayName);
-            }
-        }
     }
 
     [LoggerMessage(
