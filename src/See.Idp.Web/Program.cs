@@ -258,6 +258,8 @@ else
     builder.Services.AddDataProtection().SetApplicationName("See.Idp");
 }
 
+ILogger? rateLimitLogger = null;
+
 builder.Services.AddRateLimiter(options =>
 {
     var loginPermitLimit = builder.Configuration.GetValue("RateLimiting:Login:PermitLimit", 10);
@@ -297,11 +299,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.OnRejected = async (context, ct) =>
     {
-        var logger = context
-            .HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
-            .CreateLogger("RateLimiting");
-
-        logger.LogWarning(
+        rateLimitLogger!.LogWarning(
             new EventId(EventIds.RateLimitExceeded, nameof(EventIds.RateLimitExceeded)),
             "Rate limit exceeded for {Path} from {IP}",
             context.HttpContext.Request.Path,
@@ -325,6 +323,7 @@ builder.Services.AddRazorPages(options =>
 });
 
 var app = builder.Build();
+rateLimitLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("RateLimiting");
 
 // Must be first — rewrites scheme/IP before any other middleware reads them.
 app.UseForwardedHeaders();
