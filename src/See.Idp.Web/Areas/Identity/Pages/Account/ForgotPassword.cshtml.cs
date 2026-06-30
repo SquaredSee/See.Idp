@@ -4,21 +4,19 @@ using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Auth;
 using See.Idp.Core.Services.Auth;
-using See.Idp.Infrastructure;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 [AllowAnonymous]
 public sealed class ForgotPasswordModel(
     IPasswordCommandService passwordService,
-    IEmailSender<ApplicationUser> emailSender,
+    IRegistrationEmailService registrationEmailService,
     IWebHostEnvironment env,
     ILogger<ForgotPasswordModel> logger
 ) : PageModel
@@ -65,10 +63,10 @@ public sealed class ForgotPasswordModel(
 
         try
         {
-            await emailSender.SendPasswordResetLinkAsync(
-                new ApplicationUser { Email = Input.Email, UserName = Input.Email },
+            await registrationEmailService.SendPasswordResetLinkAsync(
                 Input.Email,
-                HtmlEncoder.Default.Encode(resetUrl)
+                HtmlEncoder.Default.Encode(resetUrl),
+                HttpContext.RequestAborted
             );
         }
         catch (Exception ex)

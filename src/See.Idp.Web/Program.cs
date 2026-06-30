@@ -203,6 +203,7 @@ builder.Services.AddScoped<IAuthenticationQueryService, AuthenticationQueryServi
 builder.Services.AddScoped<IAuthenticationCommandService, AuthenticationCommandService>();
 builder.Services.AddScoped<IPasswordCommandService, PasswordCommandService>();
 builder.Services.AddScoped<IRegistrationCommandService, RegistrationCommandService>();
+builder.Services.AddScoped<IRegistrationEmailService, RegistrationEmailService>();
 builder.Services.AddScoped<ITwoFactorCommandService, TwoFactorCommandService>();
 builder.Services.AddScoped<ITwoFactorQueryService, TwoFactorQueryService>();
 if (builder.Environment.IsDevelopment())

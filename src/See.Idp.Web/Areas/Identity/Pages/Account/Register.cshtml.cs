@@ -7,14 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Users;
+using See.Idp.Core.Services.Auth;
 using See.Idp.Core.Services.Users;
-using See.Idp.Infrastructure;
 
 namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 public sealed class RegisterModel(
     IRegistrationCommandService registrationService,
-    IEmailSender<ApplicationUser> emailSender,
+    IRegistrationEmailService registrationEmailService,
     ILogger<RegisterModel> logger
 ) : PageModel
 {
@@ -79,10 +79,10 @@ public sealed class RegisterModel(
 
         try
         {
-            await emailSender.SendConfirmationLinkAsync(
-                new ApplicationUser { Email = Input.Email, UserName = Input.Email },
+            await registrationEmailService.SendConfirmationLinkAsync(
                 Input.Email,
-                HtmlEncoder.Default.Encode(confirmationLink)
+                HtmlEncoder.Default.Encode(confirmationLink),
+                HttpContext.RequestAborted
             );
         }
         catch (Exception ex)
