@@ -2,9 +2,11 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services.Auth;
@@ -15,6 +17,7 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account;
 public sealed class RegisterModel(
     IRegistrationCommandService registrationService,
     IRegistrationEmailService registrationEmailService,
+    IWebHostEnvironment env,
     ILogger<RegisterModel> logger
 ) : PageModel
 {
@@ -75,7 +78,8 @@ public sealed class RegisterModel(
             protocol: Request.Scheme
         )!;
 
-        TempData["EmailConfirmationUrl"] = confirmationLink;
+        if (env.IsDevelopment())
+            TempData["EmailConfirmationUrl"] = confirmationLink;
 
         try
         {
