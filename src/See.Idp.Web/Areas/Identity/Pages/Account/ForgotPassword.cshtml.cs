@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Auth;
 using See.Idp.Core.Services.Auth;
 using See.Idp.Infrastructure;
@@ -17,7 +19,8 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account;
 public sealed class ForgotPasswordModel(
     IPasswordCommandService passwordService,
     IEmailSender<ApplicationUser> emailSender,
-    IWebHostEnvironment env
+    IWebHostEnvironment env,
+    ILogger<ForgotPasswordModel> logger
 ) : PageModel
 {
     [BindProperty]
@@ -60,11 +63,18 @@ public sealed class ForgotPasswordModel(
             return RedirectToPage();
         }
 
-        await emailSender.SendPasswordResetLinkAsync(
-            new ApplicationUser { Email = Input.Email, UserName = Input.Email },
-            Input.Email,
-            HtmlEncoder.Default.Encode(resetUrl)
-        );
+        try
+        {
+            await emailSender.SendPasswordResetLinkAsync(
+                new ApplicationUser { Email = Input.Email, UserName = Input.Email },
+                Input.Email,
+                HtmlEncoder.Default.Encode(resetUrl)
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Failed to send password reset email to {Email}", Input.Email);
+        }
 
         return RedirectToPage("./ForgotPasswordConfirmation");
     }

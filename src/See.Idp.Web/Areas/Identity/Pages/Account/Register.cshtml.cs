@@ -1,9 +1,11 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 using See.Idp.Core.Dtos.Users;
 using See.Idp.Core.Services.Users;
 using See.Idp.Infrastructure;
@@ -12,7 +14,8 @@ namespace See.Idp.Web.Areas.Identity.Pages.Account;
 
 public sealed class RegisterModel(
     IRegistrationCommandService registrationService,
-    IEmailSender<ApplicationUser> emailSender
+    IEmailSender<ApplicationUser> emailSender,
+    ILogger<RegisterModel> logger
 ) : PageModel
 {
     [BindProperty]
@@ -72,13 +75,27 @@ public sealed class RegisterModel(
             protocol: Request.Scheme
         )!;
 
-        await emailSender.SendConfirmationLinkAsync(
-            new ApplicationUser { Email = Input.Email, UserName = Input.Email },
-            Input.Email,
-            HtmlEncoder.Default.Encode(confirmationLink)
-        );
-
         TempData["EmailConfirmationUrl"] = confirmationLink;
+
+        try
+        {
+            await emailSender.SendConfirmationLinkAsync(
+                new ApplicationUser { Email = Input.Email, UserName = Input.Email },
+                Input.Email,
+                HtmlEncoder.Default.Encode(confirmationLink)
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Failed to send confirmation email to {Email}", Input.Email);
+            ModelState.AddModelError(
+                string.Empty,
+                "Your account was created but we could not send the confirmation email. "
+                    + "Please contact support."
+            );
+            return Page();
+        }
+
         return RedirectToPage("./RegisterConfirmation", new { email = Input.Email, returnUrl });
     }
 }

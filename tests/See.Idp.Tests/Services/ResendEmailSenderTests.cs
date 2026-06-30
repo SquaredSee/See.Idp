@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
@@ -78,7 +77,7 @@ public sealed class ResendEmailSenderTests
     }
 
     [TestMethod]
-    public async Task SendConfirmationLinkAsync_DoesNotThrow_WhenResendFails()
+    public async Task SendConfirmationLinkAsync_PropagatesException_WhenResendFails()
     {
         var resend = Substitute.For<IResend>();
         resend
@@ -87,15 +86,17 @@ public sealed class ResendEmailSenderTests
 
         var sut = CreateSut(resend);
 
-        await sut.SendConfirmationLinkAsync(
-            new ApplicationUser(),
-            "user@example.com",
-            "https://example.com/confirm"
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+            sut.SendConfirmationLinkAsync(
+                new ApplicationUser(),
+                "user@example.com",
+                "https://example.com/confirm"
+            )
         );
     }
 
     [TestMethod]
-    public async Task SendPasswordResetLinkAsync_DoesNotThrow_WhenResendFails()
+    public async Task SendPasswordResetLinkAsync_PropagatesException_WhenResendFails()
     {
         var resend = Substitute.For<IResend>();
         resend
@@ -104,10 +105,12 @@ public sealed class ResendEmailSenderTests
 
         var sut = CreateSut(resend);
 
-        await sut.SendPasswordResetLinkAsync(
-            new ApplicationUser(),
-            "user@example.com",
-            "https://example.com/reset"
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+            sut.SendPasswordResetLinkAsync(
+                new ApplicationUser(),
+                "user@example.com",
+                "https://example.com/reset"
+            )
         );
     }
 
@@ -120,7 +123,6 @@ public sealed class ResendEmailSenderTests
             Options.Create(
                 emailOptions
                     ?? new EmailOptions { ApiKey = "test-key", FromAddress = "from@test.com" }
-            ),
-            Substitute.For<ILogger<ResendEmailSender>>()
+            )
         );
 }
