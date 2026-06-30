@@ -4,20 +4,31 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using OpenIddict.Abstractions;
+using See.Idp.Infrastructure.Cors;
 
 namespace See.Idp.Web.Cors;
 
 /// <summary>
 ///     Builds CORS policies dynamically from the registered OpenIddict client redirect URIs,
 ///     so any browser SPA client whose redirect URI is in the registry is automatically allowed.
+///     Results are cached for 60 seconds; the cache is invalidated on client mutations.
 /// </summary>
-public sealed class DynamicCorsPolicyProvider : ICorsPolicyProvider
+public sealed class DynamicCorsPolicyProvider(IMemoryCache cache, IServiceProvider services)
+    : ICorsPolicyProvider
 {
+    private static readonly TimeSpan Ttl = TimeSpan.FromSeconds(60);
+
     public async Task<CorsPolicy?> GetPolicyAsync(HttpContext context, string? policyName)
     {
-        var manager = context.RequestServices.GetRequiredService<IOpenIddictApplicationManager>();
+        if (cache.TryGetValue(CorsCacheKeys.DynamicPolicy, out CorsPolicy? cached))
+            return cached;
+
+        await using var scope = services.CreateAsyncScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+
         var origins = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         await foreach (
@@ -39,10 +50,13 @@ public sealed class DynamicCorsPolicyProvider : ICorsPolicyProvider
         if (origins.Count == 0)
             return null;
 
-        return new CorsPolicyBuilder([.. origins])
+        var policy = new CorsPolicyBuilder([.. origins])
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
             .Build();
+
+        cache.Set(CorsCacheKeys.DynamicPolicy, policy, Ttl);
+        return policy;
     }
 }

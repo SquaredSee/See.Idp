@@ -1,11 +1,13 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using OpenIddict.Abstractions;
 using See.Idp.Core.Dtos.Clients;
+using See.Idp.Infrastructure.Cors;
 using See.Idp.Infrastructure.Services;
 
 #pragma warning disable CA2012
@@ -457,18 +459,97 @@ public sealed class ClientCommandServiceTests
         await applicationManager.Received(1).DeleteAsync(app, Ct);
     }
 
+    [TestMethod]
+    public async Task CreateClientAsync_InvalidatesCorsCache_WhenSuccessful()
+    {
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .FindByClientIdAsync("client-1", Ct)
+            .Returns(new ValueTask<object?>(default(object?)));
+        applicationManager
+            .CreateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), Ct)
+            .Returns(ValueTask.CompletedTask);
+        var cache = Substitute.For<IMemoryCache>();
+        var sut = CreateSut(applicationManager, cache);
+
+        await sut.CreateClientAsync(
+            new CreateClientCommand(
+                "client-1",
+                "Display",
+                true,
+                false,
+                false,
+                false,
+                ["https://app.example.com/callback"],
+                [],
+                []
+            ),
+            Ct
+        );
+
+        cache.Received(1).Remove(CorsCacheKeys.DynamicPolicy);
+    }
+
+    [TestMethod]
+    public async Task UpdateClientAsync_InvalidatesCorsCache_WhenSuccessful()
+    {
+        var app = new object();
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager
+            .PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct)
+            .Returns(ValueTask.CompletedTask);
+        applicationManager
+            .UpdateAsync(app, Arg.Any<OpenIddictApplicationDescriptor>(), Ct)
+            .Returns(ValueTask.CompletedTask);
+        var cache = Substitute.For<IMemoryCache>();
+        var sut = CreateSut(applicationManager, cache);
+
+        await sut.UpdateClientAsync(
+            new UpdateClientCommand(
+                "client-1",
+                "Display",
+                true,
+                false,
+                false,
+                ["https://app.example.com/callback"],
+                [],
+                []
+            ),
+            Ct
+        );
+
+        cache.Received(1).Remove(CorsCacheKeys.DynamicPolicy);
+    }
+
+    [TestMethod]
+    public async Task DeleteClientAsync_InvalidatesCorsCache_WhenSuccessful()
+    {
+        var app = new object();
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager.DeleteAsync(app, Ct).Returns(ValueTask.CompletedTask);
+        var cache = Substitute.For<IMemoryCache>();
+        var sut = CreateSut(applicationManager, cache);
+
+        await sut.DeleteClientAsync(new DeleteClientCommand("client-1"), Ct);
+
+        cache.Received(1).Remove(CorsCacheKeys.DynamicPolicy);
+    }
+
     private static IOpenIddictApplicationManager CreateApplicationManager()
     {
         return Substitute.For<IOpenIddictApplicationManager>();
     }
 
     private static ClientCommandService CreateSut(
-        IOpenIddictApplicationManager? applicationManager = null
+        IOpenIddictApplicationManager? applicationManager = null,
+        IMemoryCache? cache = null
     )
     {
         var manager = applicationManager ?? CreateApplicationManager();
         var logger = Substitute.For<ILogger<ClientCommandService>>();
-        return new ClientCommandService(manager, logger);
+        return new ClientCommandService(manager, cache ?? Substitute.For<IMemoryCache>(), logger);
     }
 }
 

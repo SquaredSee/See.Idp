@@ -218,6 +218,7 @@ else
     builder.Services.AddScoped<IEmailSender<ApplicationUser>, ResendEmailSender>();
 }
 
+builder.Services.AddMemoryCache();
 builder.Services.AddCors();
 builder.Services.AddSingleton<ICorsPolicyProvider, DynamicCorsPolicyProvider>();
 

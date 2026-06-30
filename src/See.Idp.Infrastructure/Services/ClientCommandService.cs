@@ -3,17 +3,20 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
 using See.Idp.Core.Dtos.Clients;
 using See.Idp.Core.Dtos.Common;
 using See.Idp.Core.Services.Clients;
+using See.Idp.Infrastructure.Cors;
 using See.Idp.Infrastructure.Logging;
 
 namespace See.Idp.Infrastructure.Services;
 
 public sealed partial class ClientCommandService(
     IOpenIddictApplicationManager applicationManager,
+    IMemoryCache cache,
     ILogger<ClientCommandService> logger
 ) : IClientCommandService
 {
@@ -74,6 +77,7 @@ public sealed partial class ClientCommandService(
 
         await applicationManager.CreateAsync(descriptor, ct);
 
+        cache.Remove(CorsCacheKeys.DynamicPolicy);
         LogClientCreated(command.ClientId);
         return CreateClientResult.Success(generatedSecret);
     }
@@ -120,6 +124,7 @@ public sealed partial class ClientCommandService(
         }
 
         await applicationManager.UpdateAsync(app, descriptor, ct);
+        cache.Remove(CorsCacheKeys.DynamicPolicy);
         LogClientUpdated(command.ClientId);
         return CommandResult.Success();
     }
@@ -187,6 +192,7 @@ public sealed partial class ClientCommandService(
         }
 
         await applicationManager.DeleteAsync(app, ct);
+        cache.Remove(CorsCacheKeys.DynamicPolicy);
         LogClientDeleted(command.ClientId);
         return CommandResult.Success();
     }
