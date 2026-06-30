@@ -16,4 +16,4 @@ public sealed record UserSummaryDto(
 public sealed record UserProfileDto(string? Email, string? PhoneNumber);
 
 /// <summary>Represents the result of a find-user-by-email query.</summary>
-public sealed record FindUserByEmailResult(string? UserId);
+public sealed record FindUserByEmailDto(string? UserId);

@@ -104,14 +104,14 @@ public sealed partial class UserQueryService(
         return new UserProfileDto(user.Email, user.PhoneNumber);
     }
 
-    public async Task<FindUserByEmailResult> FindUserIdByEmailAsync(
+    public async Task<FindUserByEmailDto> FindUserIdByEmailAsync(
         FindUserByEmailQuery query,
         CancellationToken ct = default
     )
     {
         var user = await userManager.FindByEmailAsync(query.Email);
         if (user is null)
-            return new FindUserByEmailResult(null);
-        return new FindUserByEmailResult(await userManager.GetUserIdAsync(user));
+            return new FindUserByEmailDto(null);
+        return new FindUserByEmailDto(await userManager.GetUserIdAsync(user));
     }
 }
