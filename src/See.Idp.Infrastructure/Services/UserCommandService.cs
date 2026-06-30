@@ -221,13 +221,6 @@ public sealed partial class UserCommandService(
     private partial void LogUserAdminRemoved(string userId);
 
     [LoggerMessage(
-        EventId = EventIds.UserAlreadyInRole,
-        Level = LogLevel.Information,
-        Message = "User already in role: {UserId} -> {RoleName}"
-    )]
-    private partial void LogUserAlreadyInRole(string userId, string roleName);
-
-    [LoggerMessage(
         EventId = EventIds.UserLocked,
         Level = LogLevel.Information,
         Message = "User locked: {UserId}"
