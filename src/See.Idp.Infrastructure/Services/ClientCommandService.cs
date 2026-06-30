@@ -75,7 +75,15 @@ public sealed partial class ClientCommandService(
             descriptor.ClientType = OpenIddictConstants.ClientTypes.Public;
         }
 
-        await applicationManager.CreateAsync(descriptor, ct);
+        try
+        {
+            await applicationManager.CreateAsync(descriptor, ct);
+        }
+        catch (Exception ex)
+        {
+            LogClientCommandRejected(nameof(CreateClientAsync), ex.Message);
+            return CreateClientResult.Failure("Unable to create client.");
+        }
 
         cache.Remove(CorsCacheKeys.DynamicPolicy);
         LogClientCreated(command.ClientId);
@@ -123,7 +131,16 @@ public sealed partial class ClientCommandService(
             return CommandResult.Failure(configurationError);
         }
 
-        await applicationManager.UpdateAsync(app, descriptor, ct);
+        try
+        {
+            await applicationManager.UpdateAsync(app, descriptor, ct);
+        }
+        catch (Exception ex)
+        {
+            LogClientCommandRejected(nameof(UpdateClientAsync), ex.Message);
+            return CommandResult.Failure("Unable to update client.");
+        }
+
         cache.Remove(CorsCacheKeys.DynamicPolicy);
         LogClientUpdated(command.ClientId);
         return CommandResult.Success();
@@ -191,7 +208,16 @@ public sealed partial class ClientCommandService(
             return CommandResult.Failure("Client not found.");
         }
 
-        await applicationManager.DeleteAsync(app, ct);
+        try
+        {
+            await applicationManager.DeleteAsync(app, ct);
+        }
+        catch (Exception ex)
+        {
+            LogClientCommandRejected(nameof(DeleteClientAsync), ex.Message);
+            return CommandResult.Failure("Unable to delete client.");
+        }
+
         cache.Remove(CorsCacheKeys.DynamicPolicy);
         LogClientDeleted(command.ClientId);
         return CommandResult.Success();

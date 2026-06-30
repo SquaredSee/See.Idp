@@ -460,6 +460,86 @@ public sealed class ClientCommandServiceTests
     }
 
     [TestMethod]
+    public async Task CreateClientAsync_ReturnsFailure_WhenManagerThrows()
+    {
+        var applicationManager = CreateApplicationManager();
+        applicationManager
+            .FindByClientIdAsync("client-1", Ct)
+            .Returns(new ValueTask<object?>(default(object?)));
+        applicationManager
+            .CreateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), Ct)
+            .Returns(ValueTask.FromException<object>(new InvalidOperationException("DB error")));
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.CreateClientAsync(
+            new CreateClientCommand(
+                "client-1",
+                "Display",
+                true,
+                false,
+                false,
+                false,
+                ["https://app.example.com/callback"],
+                [],
+                []
+            ),
+            Ct
+        );
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual("Unable to create client.", result.Error);
+    }
+
+    [TestMethod]
+    public async Task UpdateClientAsync_ReturnsFailure_WhenManagerThrows()
+    {
+        var app = new object();
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager
+            .PopulateAsync(Arg.Any<OpenIddictApplicationDescriptor>(), app, Ct)
+            .Returns(ValueTask.CompletedTask);
+        applicationManager
+            .UpdateAsync(app, Arg.Any<OpenIddictApplicationDescriptor>(), Ct)
+            .Returns(ValueTask.FromException(new InvalidOperationException("DB error")));
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.UpdateClientAsync(
+            new UpdateClientCommand(
+                "client-1",
+                "Display",
+                true,
+                false,
+                false,
+                ["https://app.example.com/callback"],
+                [],
+                []
+            ),
+            Ct
+        );
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual("Unable to update client.", result.Error);
+    }
+
+    [TestMethod]
+    public async Task DeleteClientAsync_ReturnsFailure_WhenManagerThrows()
+    {
+        var app = new object();
+        var applicationManager = CreateApplicationManager();
+        applicationManager.FindByClientIdAsync("client-1", Ct).Returns(new ValueTask<object?>(app));
+        applicationManager
+            .DeleteAsync(app, Ct)
+            .Returns(ValueTask.FromException(new InvalidOperationException("DB error")));
+        var sut = CreateSut(applicationManager);
+
+        var result = await sut.DeleteClientAsync(new DeleteClientCommand("client-1"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.AreEqual("Unable to delete client.", result.Error);
+    }
+
+    [TestMethod]
     public async Task CreateClientAsync_InvalidatesCorsCache_WhenSuccessful()
     {
         var applicationManager = CreateApplicationManager();
