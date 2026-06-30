@@ -67,6 +67,24 @@ public sealed class TwoFactorCommandServiceTests
     }
 
     [TestMethod]
+    public async Task ProvisionAuthenticatorKeyAsync_ReturnsFailure_WhenResetAuthenticatorKeyFails()
+    {
+        var user = new ApplicationUser { Id = "u1" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("u1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager.GetAuthenticatorKeyAsync(user).Returns(Task.FromResult<string?>(null));
+        userManager
+            .ResetAuthenticatorKeyAsync(user)
+            .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Key reset failed.")));
+
+        var result = await CreateSut(userManager)
+            .ProvisionAuthenticatorKeyAsync(new ProvisionAuthenticatorKeyCommand("u1"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+    }
+
+    [TestMethod]
     public async Task EnableTwoFactorAsync_ReturnsFailure_WhenUserNotFound()
     {
         var userManager = IdentityTestFactory.CreateUserManager();
@@ -94,6 +112,31 @@ public sealed class TwoFactorCommandServiceTests
 
         Assert.IsFalse(result.Succeeded);
         StringAssert.Contains(result.Error, "invalid");
+    }
+
+    [TestMethod]
+    public async Task EnableTwoFactorAsync_ReturnsFailure_WhenSetTwoFactorEnabledFails()
+    {
+        var user = new ApplicationUser { Id = "u1" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("u1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager
+            .VerifyTwoFactorTokenAsync(user, Arg.Any<string>(), Arg.Any<string>())
+            .Returns(Task.FromResult(true));
+        userManager
+            .SetTwoFactorEnabledAsync(user, true)
+            .Returns(
+                Task.FromResult(IdentityTestFactory.FailedResult("Cannot enable two-factor."))
+            );
+
+        var result = await CreateSut(userManager)
+            .EnableTwoFactorAsync(new EnableTwoFactorCommand("u1", "123456"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+        await userManager
+            .DidNotReceive()
+            .GenerateNewTwoFactorRecoveryCodesAsync(Arg.Any<ApplicationUser>(), Arg.Any<int>());
     }
 
     [TestMethod]
@@ -155,6 +198,46 @@ public sealed class TwoFactorCommandServiceTests
         Assert.IsTrue(result.Succeeded);
         await userManager.Received(1).SetTwoFactorEnabledAsync(user, false);
         await userManager.Received(1).ResetAuthenticatorKeyAsync(user);
+    }
+
+    [TestMethod]
+    public async Task ResetAuthenticatorKeyAsync_ReturnsFailure_WhenSetTwoFactorEnabledFails()
+    {
+        var user = new ApplicationUser { Id = "u1" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("u1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager
+            .SetTwoFactorEnabledAsync(user, false)
+            .Returns(
+                Task.FromResult(IdentityTestFactory.FailedResult("Cannot disable two-factor."))
+            );
+
+        var result = await CreateSut(userManager)
+            .ResetAuthenticatorKeyAsync(new ResetAuthenticatorKeyCommand("u1"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
+        await userManager.DidNotReceive().ResetAuthenticatorKeyAsync(Arg.Any<ApplicationUser>());
+    }
+
+    [TestMethod]
+    public async Task ResetAuthenticatorKeyAsync_ReturnsFailure_WhenResetAuthenticatorKeyFails()
+    {
+        var user = new ApplicationUser { Id = "u1" };
+        var userManager = IdentityTestFactory.CreateUserManager();
+        userManager.FindByIdAsync("u1").Returns(Task.FromResult<ApplicationUser?>(user));
+        userManager
+            .SetTwoFactorEnabledAsync(user, false)
+            .Returns(Task.FromResult(IdentityResult.Success));
+        userManager
+            .ResetAuthenticatorKeyAsync(user)
+            .Returns(Task.FromResult(IdentityTestFactory.FailedResult("Key reset failed.")));
+
+        var result = await CreateSut(userManager)
+            .ResetAuthenticatorKeyAsync(new ResetAuthenticatorKeyCommand("u1"), Ct);
+
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsNotNull(result.Error);
     }
 
     [TestMethod]

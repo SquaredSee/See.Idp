@@ -30,7 +30,12 @@ public sealed partial class TwoFactorCommandService(
         if (!string.IsNullOrEmpty(existing))
             return CommandResult.Success();
 
-        await userManager.ResetAuthenticatorKeyAsync(user);
+        var result = await userManager.ResetAuthenticatorKeyAsync(user);
+        if (!result.Succeeded)
+            return CommandResult.Failure(
+                string.Join(", ", result.Errors.Select(e => e.Description))
+            );
+
         LogAuthenticatorKeyProvisioned(command.UserId);
         return CommandResult.Success();
     }
@@ -55,7 +60,12 @@ public sealed partial class TwoFactorCommandService(
         if (!isValid)
             return EnableTwoFactorResult.Failure("Verification code is invalid.");
 
-        await userManager.SetTwoFactorEnabledAsync(user, true);
+        var enableResult = await userManager.SetTwoFactorEnabledAsync(user, true);
+        if (!enableResult.Succeeded)
+            return EnableTwoFactorResult.Failure(
+                string.Join(", ", enableResult.Errors.Select(e => e.Description))
+            );
+
         var codes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
         LogTwoFactorEnabled(command.UserId);
         return EnableTwoFactorResult.Success(codes ?? Array.Empty<string>());
@@ -89,8 +99,18 @@ public sealed partial class TwoFactorCommandService(
         if (user is null)
             return CommandResult.Failure($"User '{command.UserId}' not found.");
 
-        await userManager.SetTwoFactorEnabledAsync(user, false);
-        await userManager.ResetAuthenticatorKeyAsync(user);
+        var disableResult = await userManager.SetTwoFactorEnabledAsync(user, false);
+        if (!disableResult.Succeeded)
+            return CommandResult.Failure(
+                string.Join(", ", disableResult.Errors.Select(e => e.Description))
+            );
+
+        var resetResult = await userManager.ResetAuthenticatorKeyAsync(user);
+        if (!resetResult.Succeeded)
+            return CommandResult.Failure(
+                string.Join(", ", resetResult.Errors.Select(e => e.Description))
+            );
+
         LogAuthenticatorKeyReset(command.UserId);
         return CommandResult.Success();
     }
