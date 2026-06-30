@@ -12,6 +12,7 @@
   --color-app-fg: oklch(0.23 0.02 255);
   --color-surface: oklch(1 0 0);
   --color-border-soft: oklch(0.9 0.01 255);
+  --color-muted: oklch(0.55 0.015 255);
   --radius-panel: 1rem;
   --shadow-panel: 0 14px 40px rgb(15 23 42 / 0.08);
 }
