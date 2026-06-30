@@ -13,15 +13,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
-using See.Idp.Infrastructure;
+using See.Idp.Core.Services.Auth;
 
 namespace See.Idp.Web.Controllers;
 
 public sealed class AuthorizationController(
     IOpenIddictApplicationManager applicationManager,
     IOpenIddictAuthorizationManager authorizationManager,
-    SignInManager<ApplicationUser> signInManager,
-    UserManager<ApplicationUser> userManager
+    IAuthenticationQueryService authenticationQueryService,
+    IAuthenticationCommandService authenticationCommandService
 ) : Controller
 {
     [HttpGet("~/connect/authorize")]
@@ -55,8 +55,8 @@ public sealed class AuthorizationController(
             );
         }
 
-        var user =
-            await userManager.GetUserAsync(result.Principal)
+        var userId =
+            result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? throw new InvalidOperationException("The user details cannot be retrieved.");
 
         var application =
@@ -66,7 +66,6 @@ public sealed class AuthorizationController(
             );
 
         var applicationId = (await applicationManager.GetIdAsync(application))!;
-        var userId = await userManager.GetUserIdAsync(user);
 
         // Look for an existing permanent authorization for this user/client/scopes combo.
         object? authorization = null;
@@ -83,7 +82,12 @@ public sealed class AuthorizationController(
             authorization = auth;
         }
 
-        var identity = await BuildUserIdentityAsync(user, request.GetScopes());
+        var identity =
+            await authenticationQueryService.BuildUserIdentityAsync(
+                userId,
+                request.GetScopes(),
+                HttpContext.RequestAborted
+            ) ?? throw new InvalidOperationException("The user details cannot be retrieved.");
 
         // Create an ad-hoc authorization if no permanent one exists.
         // Note: a consent page (issue 03) will replace this with an explicit approval step.
@@ -96,7 +100,6 @@ public sealed class AuthorizationController(
         );
 
         identity.SetAuthorizationId(await authorizationManager.GetIdAsync(authorization));
-        identity.SetDestinations(GetDestinations);
 
         return SignIn(
             new ClaimsPrincipal(identity),
@@ -123,9 +126,14 @@ public sealed class AuthorizationController(
             );
 
             var userId = result.Principal!.GetClaim(OpenIddictConstants.Claims.Subject)!;
-            var user = await userManager.FindByIdAsync(userId);
 
-            if (user is null)
+            var identity = await authenticationQueryService.BuildUserIdentityAsync(
+                userId,
+                result.Principal!.GetScopes(),
+                HttpContext.RequestAborted
+            );
+
+            if (identity is null)
                 return Forbid(
                     authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                     properties: new AuthenticationProperties(
@@ -138,23 +146,6 @@ public sealed class AuthorizationController(
                         }
                     )
                 );
-
-            if (!await signInManager.CanSignInAsync(user))
-                return Forbid(
-                    authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
-                    properties: new AuthenticationProperties(
-                        new Dictionary<string, string?>
-                        {
-                            [OpenIddictServerAspNetCoreConstants.Properties.Error] =
-                                OpenIddictConstants.Errors.InvalidGrant,
-                            [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
-                                "The user is no longer allowed to sign in.",
-                        }
-                    )
-                );
-
-            var identity = await BuildUserIdentityAsync(user, result.Principal!.GetScopes());
-            identity.SetDestinations(GetDestinations);
 
             return SignIn(
                 new ClaimsPrincipal(identity),
@@ -186,8 +177,28 @@ public sealed class AuthorizationController(
     public async Task<IActionResult> UserInfo()
     {
         var userId = User.GetClaim(OpenIddictConstants.Claims.Subject);
-        var user = userId is not null ? await userManager.FindByIdAsync(userId) : null;
-        if (user is null)
+        if (userId is null)
+            return Challenge(
+                authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                properties: new AuthenticationProperties(
+                    new Dictionary<string, string?>
+                    {
+                        [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants
+                            .Errors
+                            .InvalidToken,
+                        [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] =
+                            "The access token is bound to an account that no longer exists.",
+                    }
+                )
+            );
+
+        var identity = await authenticationQueryService.BuildUserIdentityAsync(
+            userId,
+            User.GetScopes(),
+            HttpContext.RequestAborted
+        );
+
+        if (identity is null)
             return Challenge(
                 authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                 properties: new AuthenticationProperties(
@@ -204,27 +215,31 @@ public sealed class AuthorizationController(
 
         var claims = new Dictionary<string, object>(StringComparer.Ordinal)
         {
-            [OpenIddictConstants.Claims.Subject] = await userManager.GetUserIdAsync(user),
+            [OpenIddictConstants.Claims.Subject] = userId,
         };
 
         if (User.HasScope(OpenIddictConstants.Scopes.Email))
         {
             claims[OpenIddictConstants.Claims.Email] =
-                await userManager.GetEmailAsync(user) ?? string.Empty;
-            claims[OpenIddictConstants.Claims.EmailVerified] =
-                await userManager.IsEmailConfirmedAsync(user);
+                identity.GetClaim(OpenIddictConstants.Claims.Email) ?? string.Empty;
+            bool.TryParse(
+                identity.FindFirst(OpenIddictConstants.Claims.EmailVerified)?.Value,
+                out var emailVerified
+            );
+            claims[OpenIddictConstants.Claims.EmailVerified] = emailVerified;
         }
 
         if (User.HasScope(OpenIddictConstants.Scopes.Profile))
         {
-            claims[OpenIddictConstants.Claims.Name] =
-                await userManager.GetUserNameAsync(user) ?? string.Empty;
-            claims[OpenIddictConstants.Claims.PreferredUsername] =
-                await userManager.GetUserNameAsync(user) ?? string.Empty;
+            var name = identity.GetClaim(OpenIddictConstants.Claims.Name) ?? string.Empty;
+            claims[OpenIddictConstants.Claims.Name] = name;
+            claims[OpenIddictConstants.Claims.PreferredUsername] = name;
         }
 
         if (User.HasScope(OpenIddictConstants.Scopes.Roles))
-            claims[OpenIddictConstants.Claims.Role] = await userManager.GetRolesAsync(user);
+            claims[OpenIddictConstants.Claims.Role] = identity
+                .GetClaims(OpenIddictConstants.Claims.Role)
+                .ToArray();
 
         return Ok(claims);
     }
@@ -234,74 +249,11 @@ public sealed class AuthorizationController(
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await signInManager.SignOutAsync();
+        await authenticationCommandService.SignOutAsync(HttpContext.RequestAborted);
 
         return SignOut(
             authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
             properties: new AuthenticationProperties { RedirectUri = "/Identity/Account/Login" }
         );
-    }
-
-    private async Task<ClaimsIdentity> BuildUserIdentityAsync(
-        ApplicationUser user,
-        ImmutableArray<string> scopes
-    )
-    {
-        var identity = new ClaimsIdentity(
-            authenticationType: "Bearer",
-            nameType: OpenIddictConstants.Claims.Name,
-            roleType: OpenIddictConstants.Claims.Role
-        );
-
-        identity
-            .SetClaim(OpenIddictConstants.Claims.Subject, await userManager.GetUserIdAsync(user))
-            .SetClaim(OpenIddictConstants.Claims.Email, await userManager.GetEmailAsync(user))
-            .SetClaim(
-                OpenIddictConstants.Claims.EmailVerified,
-                await userManager.IsEmailConfirmedAsync(user)
-            )
-            .SetClaim(OpenIddictConstants.Claims.Name, await userManager.GetUserNameAsync(user))
-            .SetClaims(
-                OpenIddictConstants.Claims.Role,
-                (await userManager.GetRolesAsync(user)).ToImmutableArray()
-            );
-
-        identity.SetScopes(scopes);
-
-        return identity;
-    }
-
-    private static IEnumerable<string> GetDestinations(Claim claim)
-    {
-        switch (claim.Type)
-        {
-            case OpenIddictConstants.Claims.Name:
-            case OpenIddictConstants.Claims.PreferredUsername:
-                yield return OpenIddictConstants.Destinations.AccessToken;
-                if (claim.Subject!.HasScope(OpenIddictConstants.Scopes.Profile))
-                    yield return OpenIddictConstants.Destinations.IdentityToken;
-                yield break;
-
-            case OpenIddictConstants.Claims.Email:
-            case OpenIddictConstants.Claims.EmailVerified:
-                yield return OpenIddictConstants.Destinations.AccessToken;
-                if (claim.Subject!.HasScope(OpenIddictConstants.Scopes.Email))
-                    yield return OpenIddictConstants.Destinations.IdentityToken;
-                yield break;
-
-            case OpenIddictConstants.Claims.Role:
-                yield return OpenIddictConstants.Destinations.AccessToken;
-                if (claim.Subject!.HasScope(OpenIddictConstants.Scopes.Roles))
-                    yield return OpenIddictConstants.Destinations.IdentityToken;
-                yield break;
-
-            // Never include the ASP.NET Identity security stamp in tokens.
-            case "AspNet.Identity.SecurityStamp":
-                yield break;
-
-            default:
-                yield return OpenIddictConstants.Destinations.AccessToken;
-                yield break;
-        }
     }
 }

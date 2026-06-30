@@ -77,6 +77,11 @@ public static class EventIds
     public const int RecoveryCodesGenerated = 1719;
     public const int AuthenticatorKeyProvisioned = 1720;
 
+    // Authentication query service: 1725 - 1729
+    public const int AuthenticationQueryIdentityBuilt = 1725;
+    public const int AuthenticationQueryUserNotFound = 1726;
+    public const int AuthenticationQuerySignInNotAllowed = 1727;
+
     // Two-factor query service
     public const int TwoFactorInfoRetrieved = 1721;
     public const int TwoFactorSetupRetrieved = 1722;
