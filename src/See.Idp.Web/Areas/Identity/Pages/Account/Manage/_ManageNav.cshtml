@@ -10,15 +10,18 @@
 <nav class="flex flex-col gap-1">
   <p class="mb-2 truncate text-sm font-semibold">@username</p>
   <a asp-page="./Index"
-     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage.EndsWith("/Index") ? "bg-border-soft font-medium" : "")">
+     aria-current="@(currentPage == "/Account/Manage/Index" ? "page" : null)"
+     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage == "/Account/Manage/Index" ? "bg-border-soft font-medium" : "")">
     Profile
   </a>
   <a asp-page="./ChangePassword"
-     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage.EndsWith("/ChangePassword") ? "bg-border-soft font-medium" : "")">
+     aria-current="@(currentPage == "/Account/Manage/ChangePassword" ? "page" : null)"
+     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage == "/Account/Manage/ChangePassword" ? "bg-border-soft font-medium" : "")">
     Change password
   </a>
   <a asp-page="./TwoFactorAuthentication"
-     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage.EndsWith("/TwoFactorAuthentication") ? "bg-border-soft font-medium" : "")">
+     aria-current="@(currentPage == "/Account/Manage/TwoFactorAuthentication" ? "page" : null)"
+     class="rounded-lg px-3 py-2 text-sm no-underline hover:bg-border-soft @(currentPage == "/Account/Manage/TwoFactorAuthentication" ? "bg-border-soft font-medium" : "")">
     Two-factor authentication
   </a>
 </nav>
