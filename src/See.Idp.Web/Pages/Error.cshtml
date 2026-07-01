@@ -4,13 +4,15 @@
   ViewData["Title"] = "Error";
 }
 
-<h1>Something went wrong</h1>
-<p>An unexpected error occurred. Please try again, or contact support if the problem persists.</p>
+<div class="panel">
+  <h1>Something went wrong</h1>
+  <p class="mt-2 text-muted">An unexpected error occurred. Please try again, or contact support if the problem persists.</p>
 
-@if (Model.ShowRequestId)
-{
-  <p>
-    If you contact support, please include this reference ID:<br />
-    <code>@Model.RequestId</code>
-  </p>
-}
+  @if (Model.ShowRequestId)
+  {
+    <p class="mt-4 text-sm">
+      If you contact support, please include this reference ID:<br />
+      <code class="rounded bg-app-bg px-1 py-0.5 font-mono text-xs">@Model.RequestId</code>
+    </p>
+  }
+</div>
