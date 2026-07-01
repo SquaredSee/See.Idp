@@ -17,7 +17,7 @@
   <header class="border-b border-border-soft bg-surface/95">
     <div class="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-4">
       <a asp-area="" asp-page="/Index" class="font-semibold no-underline">See.Idp</a>
-      <div class="flex items-center gap-4 text-sm">
+      <nav aria-label="Account" class="flex items-center gap-4 text-sm">
         @if (SignInManager.IsSignedIn(User))
         {
           <a asp-area="Identity" asp-page="/Account/Manage/Index">My Account</a>
@@ -31,7 +31,7 @@
           <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>
           <a asp-area="Identity" asp-page="/Account/Register" class="btn-primary py-1! px-3! no-underline">Register</a>
         }
-      </div>
+      </nav>
     </div>
   </header>
 

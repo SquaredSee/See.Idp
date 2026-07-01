@@ -15,11 +15,15 @@
       <div class="flex items-center gap-4">
         <a asp-area="Admin" asp-page="/Index"
            class="font-semibold text-app-fg no-underline hover:text-brand-600">See.Idp Admin</a>
-        <a asp-area="Admin" asp-page="/Clients/Index" class="text-sm">Clients</a>
-        <a asp-area="Admin" asp-page="/Users/Index" class="text-sm">Users</a>
+        <nav aria-label="Admin navigation" class="flex items-center gap-4">
+          <a asp-area="Admin" asp-page="/Clients/Index" class="text-sm">Clients</a>
+          <a asp-area="Admin" asp-page="/Users/Index" class="text-sm">Users</a>
+        </nav>
       </div>
       <div class="flex items-center gap-4">
-        <a asp-area="Identity" asp-page="/Account/Logout" class="btn-primary text-sm no-underline">Logout</a>
+        <form method="post" asp-area="Identity" asp-page="/Account/Logout">
+          <button type="submit" class="btn-primary text-sm">Logout</button>
+        </form>
       </div>
     </div>
   </header>
@@ -28,11 +32,12 @@
   </main>
 
   <footer class="border-t border-border-soft">
-    <div class="mx-auto w-full max-w-6xl px-6 py-4 text-sm text-slate-600">
+    <div class="mx-auto w-full max-w-6xl px-6 py-4 text-sm text-muted">
       &copy; 2026 - See.Idp Admin Portal - <a asp-area="" asp-page="/Privacy">Privacy</a>
     </div>
   </footer>
 
+  <script src="~/lib/jquery/dist/jquery.min.js"></script>
   @await RenderSectionAsync("Scripts", required: false)
 </body>
 
