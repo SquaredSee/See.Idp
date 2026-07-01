@@ -6,7 +6,6 @@
 }
 
 @section Scripts {
-  <script src="~/lib/jquery/dist/jquery.min.js"></script>
   <partial name="_ValidationScriptsPartial" />
 }
 
@@ -30,8 +29,8 @@
     <input asp-for="Input.ClientId" type="hidden" />
 
     <div>
-      <label class="field-label">Client ID</label>
-      <input value="@Model.Input.ClientId" class="field-input" readonly />
+      <label for="client-id-display" class="field-label">Client ID</label>
+      <input id="client-id-display" value="@Model.Input.ClientId" class="field-input" readonly />
     </div>
 
     <div>
@@ -62,25 +61,25 @@
     <div>
       <label asp-for="Input.RedirectUrisText" class="field-label"></label>
       <textarea asp-for="Input.RedirectUrisText" class="field-input" rows="4"></textarea>
-      <p class="mt-1 text-xs text-slate-600">Enter one absolute URI per line.</p>
+      <p class="mt-1 text-xs text-muted">Enter one absolute URI per line.</p>
       <span asp-validation-for="Input.RedirectUrisText" class="mt-1 block text-sm text-red-600"></span>
     </div>
 
     <div>
       <label asp-for="Input.PostLogoutRedirectUrisText" class="field-label"></label>
       <textarea asp-for="Input.PostLogoutRedirectUrisText" class="field-input" rows="3"></textarea>
-      <p class="mt-1 text-xs text-slate-600">Enter one absolute URI per line. Used by the end-session (logout) flow.</p>
+      <p class="mt-1 text-xs text-muted">Enter one absolute URI per line. Used by the end-session (logout) flow.</p>
       <span asp-validation-for="Input.PostLogoutRedirectUrisText" class="mt-1 block text-sm text-red-600"></span>
     </div>
 
     <div>
       <label asp-for="Input.PermissionsText" class="field-label"></label>
       <textarea asp-for="Input.PermissionsText" class="field-input" rows="6"></textarea>
-      <p class="mt-1 text-xs text-slate-600">Advanced mode: enter one OpenIddict permission per line.</p>
+      <p class="mt-1 text-xs text-muted">Advanced mode: enter one OpenIddict permission per line.</p>
       <span asp-validation-for="Input.PermissionsText" class="mt-1 block text-sm text-red-600"></span>
     </div>
 
-    <div asp-validation-summary="ModelOnly" class="text-sm text-red-600"></div>
+    <div asp-validation-summary="ModelOnly" role="alert" class="alert-error mb-4"></div>
 
     <div class="flex items-center gap-3 pt-2">
       <button type="submit" class="btn-primary">Save</button>
@@ -90,10 +89,10 @@
 
   <section class="mt-4 space-y-2 border-t border-border-soft pt-4">
     <h2 class="field-label">Client secret</h2>
-    <p class="text-xs text-slate-600">
+    <p class="text-xs text-muted">
       Existing client secrets are never displayed. Generate a new one to rotate credentials.
     </p>
-    <p class="text-xs text-slate-600">
+    <p class="text-xs text-muted">
       Current client type:
       <strong>@(Model.Input.IsConfidential ? "Confidential" : "Public")</strong>
       @if (!Model.Input.HasClientSecret)
