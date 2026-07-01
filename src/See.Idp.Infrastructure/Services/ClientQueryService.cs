@@ -79,15 +79,20 @@ public sealed partial class ClientQueryService(
             );
         }
 
+        // PopulateAsync transfers all OpenIddict store fields into a typed descriptor —
+        // the only way to read permissions, URIs, and secret state through the
+        // storage-agnostic IOpenIddictApplicationManager abstraction.
         var descriptor = new OpenIddictApplicationDescriptor();
         await applicationManager.PopulateAsync(descriptor, app, ct);
 
+        // Deduplicate and sort permissions for consistent display and downstream checks.
         var permissions = descriptor
             .Permissions.Where(p => !string.IsNullOrWhiteSpace(p))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(p => p, StringComparer.Ordinal)
             .ToList();
 
+        // Convert URI objects to strings, removing any duplicates the store may hold.
         var redirectUris = descriptor
             .RedirectUris.Select(uri => uri.AbsoluteUri)
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -100,6 +105,9 @@ public sealed partial class ClientQueryService(
             .OrderBy(uri => uri, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        // A client is confidential if it has a secret OR if the type is explicitly set —
+        // the two flags are separate because a confidential client may have had its secret
+        // cleared while retaining its confidential type.
         var hasClientSecret = !string.IsNullOrWhiteSpace(descriptor.ClientSecret);
         var isConfidential =
             hasClientSecret
