@@ -45,7 +45,7 @@
           integrity="sha256-G9EvFdSMhqMKNbwqiNMnrkrBuGvUflKNL8MFzMnS/Yg=" crossorigin="anonymous"></script>
   <script>
     new QRCode(document.getElementById("qrcode"), {
-      text: "@Html.Raw(Model.AuthenticatorUri)",
+      text: @Json.Serialize(Model.AuthenticatorUri),
       width: 160,
       height: 160
     });
