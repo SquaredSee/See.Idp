@@ -9,7 +9,6 @@
   <div class="flex items-center justify-between">
     <h1>Clients</h1>
     <div class="flex items-center gap-4">
-      <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
       <a asp-page="/Clients/Create" asp-area="Admin" class="btn-primary text-sm no-underline">Create client</a>
     </div>
   </div>
@@ -17,8 +16,8 @@
   @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
   {
     var statusClasses = Model.StatusKind == "error"
-      ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-      : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+      ? "alert-error"
+      : "alert-success";
 
     <div class="@statusClasses">@Model.StatusMessage</div>
   }
@@ -58,8 +57,8 @@
   </table>
   </div>
 
-  <div class="flex items-center justify-between border-t border-slate-200 pt-4">
-    <div class="text-sm text-slate-600">Showing @Model.Clients.Count clients on this page</div>
+  <div class="flex items-center justify-between border-t border-border-soft pt-4">
+    <div class="text-sm text-muted">Showing @Model.Clients.Count clients on this page</div>
     <div class="flex items-center gap-2">
       @if (Model.HasPreviousPage)
       {
@@ -69,10 +68,10 @@
       }
       else
       {
-        <span class="btn-primary text-xs opacity-50">Previous</span>
+        <button type="button" disabled class="btn-primary text-xs opacity-50 cursor-not-allowed">Previous</button>
       }
 
-      <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
+      <span class="text-sm text-muted">Page @Model.CurrentPage</span>
 
       @if (Model.HasNextPage)
       {
@@ -82,7 +81,7 @@
       }
       else
       {
-        <span class="btn-primary text-xs opacity-50">Next</span>
+        <button type="button" disabled class="btn-primary text-xs opacity-50 cursor-not-allowed">Next</button>
       }
     </div>
   </div>

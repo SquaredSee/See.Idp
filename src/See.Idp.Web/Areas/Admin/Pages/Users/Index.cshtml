@@ -8,21 +8,20 @@
 <div class="panel space-y-5">
   <div class="flex items-center justify-between">
     <h1>Users</h1>
-    <p class="text-sm text-slate-600">Page @Model.CurrentPage</p>
   </div>
 
   @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
   {
     var statusClasses = Model.StatusKind == "error"
-      ? "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-      : "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+      ? "alert-error"
+      : "alert-success";
 
     <div class="@statusClasses">@Model.StatusMessage</div>
   }
 
   @if (Model.Users.Count == 0)
   {
-    <p class="text-sm text-slate-600">No users found.</p>
+    <p class="text-sm text-muted">No users found.</p>
   }
   else
   {
@@ -43,7 +42,7 @@
           <tr>
             <td>
               <div class="font-medium">@(user.Email ?? user.UserName ?? "(no identifier)")</div>
-              <div class="text-xs text-slate-500">@user.UserId</div>
+              <div class="text-xs text-muted">@user.UserId</div>
             </td>
             <td>
               <span class="@(user.EmailConfirmed ? "text-emerald-700" : "text-amber-700")">
@@ -57,7 +56,7 @@
               </span>
               @if (user.IsCurrentUser)
               {
-                <span class="ml-2 text-xs text-slate-500">(You)</span>
+                <span class="ml-2 text-xs text-muted">(You)</span>
               }
             </td>
             <td>
@@ -97,8 +96,8 @@
     </table>
     </div>
 
-    <div class="flex items-center justify-between border-t border-slate-200 pt-4">
-      <div class="text-sm text-slate-600">Showing @Model.Users.Count users on this page</div>
+    <div class="flex items-center justify-between border-t border-border-soft pt-4">
+      <div class="text-sm text-muted">Showing @Model.Users.Count users on this page</div>
       <div class="flex items-center gap-2">
         @if (Model.HasPreviousPage)
         {
@@ -108,10 +107,10 @@
         }
         else
         {
-          <span class="btn-primary text-xs opacity-50">Previous</span>
+          <button type="button" disabled class="btn-primary text-xs opacity-50 cursor-not-allowed">Previous</button>
         }
 
-        <span class="text-sm text-slate-600">Page @Model.CurrentPage</span>
+        <span class="text-sm text-muted">Page @Model.CurrentPage</span>
 
         @if (Model.HasNextPage)
         {
@@ -121,7 +120,7 @@
         }
         else
         {
-          <span class="btn-primary text-xs opacity-50">Next</span>
+          <button type="button" disabled class="btn-primary text-xs opacity-50 cursor-not-allowed">Next</button>
         }
       </div>
     </div>

@@ -12,6 +12,7 @@
   --color-app-fg: oklch(0.25 0.02 230);
   --color-surface: oklch(1 0 0);
   --color-border-soft: oklch(0.88 0.01 230);
+  --color-muted: oklch(0.5 0.015 230);
   --radius-panel: 0.75rem;
   --shadow-panel: 0 10px 30px rgb(2 6 23 / 0.1);
 }
@@ -46,6 +47,15 @@
   }
   .btn-danger {
     @apply inline-flex items-center justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500;
+  }
+  .alert-success {
+    @apply rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700;
+  }
+  .alert-error {
+    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700;
+  }
+  .alert-warning {
+    @apply rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800;
   }
   .table-admin {
     @apply w-full border-collapse text-sm;
