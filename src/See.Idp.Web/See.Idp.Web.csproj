@@ -35,7 +35,8 @@
     Inputs="@(TailwindBuildInputs);$(IntermediateOutputPath)npm-install.stamp"
     Outputs="$(IntermediateOutputPath)npm-build.stamp"
   >
-    <Exec Command="npm run build:css" />
+    <Exec Command="npm run build:css" Condition="'$(Configuration)' == 'Release'" />
+    <Exec Command="npm run build:css:dev" Condition="'$(Configuration)' != 'Release'" />
     <!-- Use dedicated output stamp to prevent unnecessary rebuilds -->
     <Touch Files="$(IntermediateOutputPath)npm-build.stamp" AlwaysCreate="true" />
   </Target>

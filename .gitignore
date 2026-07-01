@@ -507,3 +507,6 @@ FodyWeavers.xsd
 # Cave
 .cave/worktrees/
 .cave/goal/
+
+# Generated CSS bundles
+**/wwwroot/css/*.out.css
